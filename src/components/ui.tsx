@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 export function Card({ judul, aksi, children, className = "" }: { judul?: string; aksi?: ReactNode; children: ReactNode; className?: string }) {
   return (
@@ -137,3 +137,52 @@ export function TdTotal({ kanan, lengket, colSpan, children }: SelProps) {
 }
 
 export const Kosong = ({ teks }: { teks: string }) => <p className="py-4 text-center text-sm text-stone-500">{teks}</p>;
+
+export const Teks = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <textarea {...p} className={`min-h-20 w-full rounded-xl border border-garis bg-white px-3 py-2 text-base outline-none focus:border-hijau focus:ring-2 focus:ring-hijau/20 ${p.className ?? ""}`} />
+);
+
+/** Jendela formulir: dari bawah di HP, di tengah di laptop. Esc menutup. */
+export function Dialog({ judul, onTutup, children }: { judul: string; onTutup: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const tutup = (e: KeyboardEvent) => e.key === "Escape" && onTutup();
+    window.addEventListener("keydown", tutup);
+    return () => window.removeEventListener("keydown", tutup);
+  }, [onTutup]);
+  return (
+    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 md:items-center" role="dialog" aria-modal="true" aria-label={judul}>
+      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl md:max-w-xl md:rounded-2xl">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-bold">{judul}</h2>
+          <button onClick={onTutup} className="min-h-11 min-w-11 text-xl text-stone-500" aria-label="Tutup">
+            ✕
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export function Tabs<T extends string>({ daftar, aktif, onPilih }: { daftar: { id: T; label: string }[]; aktif: T; onPilih: (id: T) => void }) {
+  return (
+    <div className="flex gap-1 overflow-x-auto rounded-xl bg-stone-200 p-1" role="tablist">
+      {daftar.map((t) => (
+        <button
+          key={t.id}
+          role="tab"
+          aria-selected={aktif === t.id}
+          onClick={() => onPilih(t.id)}
+          className={`min-h-10 whitespace-nowrap rounded-lg px-4 text-sm font-semibold ${aktif === t.id ? "bg-white text-hijau shadow-sm" : "text-stone-600"}`}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Lencana({ children, warna = "abu" }: { children: ReactNode; warna?: "hijau" | "oranye" | "merah" | "abu" }) {
+  const w = { hijau: "bg-hijau-muda text-hijau", oranye: "bg-oranye-muda text-coklat", merah: "bg-red-50 text-red-700", abu: "bg-stone-100 text-stone-600" }[warna];
+  return <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${w}`}>{children}</span>;
+}

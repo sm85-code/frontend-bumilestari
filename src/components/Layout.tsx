@@ -5,15 +5,37 @@ interface Menu {
   ke: string;
   label: string;
   ikon: string;
+  admin?: boolean;
 }
 
+/** Menu utama pemilik: tampil di navigasi bawah (HP). Sisanya lewat halaman "Lainnya". */
+const MENU_UTAMA: Menu[] = [
+  { ke: "/", label: "Beranda", ikon: "🏠" },
+  { ke: "/order", label: "Order", ikon: "📦" },
+  { ke: "/selasa", label: "Selasa", ikon: "📅" },
+  { ke: "/keuangan", label: "Keuangan", ikon: "💰" },
+  { ke: "/lainnya", label: "Lainnya", ikon: "☰" },
+];
+
+/** Semua menu pemilik (menu samping di laptop dan halaman Lainnya). */
 const MENU_PEMILIK: Menu[] = [
   { ke: "/", label: "Beranda", ikon: "🏠" },
+  { ke: "/selasa", label: "Selasa", ikon: "📅" },
+  { ke: "/order", label: "Order", ikon: "📦" },
+  { ke: "/pesanan-tukang", label: "Pesanan ke tukang", ikon: "🪚" },
+  { ke: "/penjual-lain", label: "Penjual lain", ikon: "🧾" },
   { ke: "/keuangan", label: "Keuangan", ikon: "💰" },
   { ke: "/kas-kecil", label: "Kas kecil", ikon: "👛" },
+  { ke: "/gaji", label: "Gaji & langganan", ikon: "👥" },
+  { ke: "/bagi-hasil", label: "Bagi hasil", ikon: "🤝" },
   { ke: "/laporan", label: "Laporan", ikon: "📊" },
+  { ke: "/master", label: "Master data", ikon: "🗂️" },
   { ke: "/akun", label: "Akun", ikon: "👤" },
 ];
+
+/** Isi halaman "Lainnya" (menu yang tidak ada di navigasi bawah). */
+export const MENU_LAINNYA: Menu[] = MENU_PEMILIK.filter((m) => !MENU_UTAMA.some((u) => u.ke === m.ke));
+
 const MENU_STAF: Menu[] = [
   { ke: "/kas-kecil", label: "Kas kecil", ikon: "👛" },
   { ke: "/laporan/kas-kecil", label: "Laporan", ikon: "📊" },
@@ -26,7 +48,9 @@ const MENU_STAF: Menu[] = [
  */
 export default function Layout() {
   const { user, keluar } = useAuth();
-  const menu = isPemilik(user?.role) ? MENU_PEMILIK : MENU_STAF;
+  const pemilik = isPemilik(user?.role);
+  const menu = pemilik ? MENU_PEMILIK : MENU_STAF; // menu samping (laptop)
+  const menuBawah = pemilik ? MENU_UTAMA : MENU_STAF; // navigasi bawah (HP)
   return (
     <div className="min-h-full md:flex">
       <aside className="hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col" aria-label="Menu samping">
@@ -39,7 +63,7 @@ export default function Layout() {
             </p>
           </div>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {menu.map((m) => (
             <NavLink
               key={m.ke}
@@ -79,7 +103,7 @@ export default function Layout() {
         aria-label="Navigasi utama"
       >
         <ul className="flex">
-          {menu.map((m) => (
+          {menuBawah.map((m) => (
             <li key={m.ke} className="flex-1">
               <NavLink
                 to={m.ke}

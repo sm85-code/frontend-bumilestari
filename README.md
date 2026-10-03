@@ -26,21 +26,23 @@ npm run build            # tsc + vite build -> dist/
 - **Produksi:** isi `VITE_API_URL` dengan alamat backend. Alamat frontend harus ditambahkan ke `CORS_ORIGINS` di backend
   (login memakai cookie lintas situs, `COOKIE_SECURE=true`, `COOKIE_SAMESITE=none`).
 
-## Halaman yang sudah ada
+## Halaman
 | Rute | Peran | Isi |
 |---|---|---|
-| `/masuk` | semua | Login |
-| `/akun` | semua | Ganti password (wajib bila password masih bawaan), keluar |
-| `/` | admin, owner | Beranda: total kas, laba bulan ini, bayar tukang Selasa ini, tagihan penjual lain, order, kas kecil/iklan, bagi hasil |
-| `/keuangan` | admin, owner | Saldo akun, catat transaksi, riwayat, batalkan transaksi |
-| `/kas-kecil` | semua | Saldo kas kecil, catat pengeluaran, riwayat (staf hanya melihat ini) |
-| `/laporan` | admin, owner | Laporan umum: pemasukan, biaya, laba, arus kas |
-| `/laporan/kas-kecil` | semua | Laporan kas kecil bulanan, rincian mingguan, cek selisih uang fisik |
+| `/masuk`, `/akun` | semua | Login; ganti password (wajib bila password masih bawaan) |
+| `/` | admin, owner | Beranda: total kas, laba, bayar tukang Selasa ini, tagihan penjual lain, order, kas kecil/iklan, bagi hasil |
+| `/selasa` | admin, owner | Langkah mingguan berurutan: terima bayar, tarik saldo toko, isi kas kecil/iklan (iklan hanya admin), sisihkan dana gaji, bayar tukang |
+| `/order` | admin, owner | Daftar order, order baru, pindah status (alur kayu/non kayu/polos), batalkan |
+| `/pesanan-tukang` | admin, owner | Siap dibayar per tukang/supplier, **Kirim ke laporan** (1 transaksi + rincian), PDF/WhatsApp PO, riwayat |
+| `/penjual-lain` | admin, owner | Invoice mingguan per penjual lain (PDF, WhatsApp), catat pembayaran diterima, riwayat |
+| `/keuangan` | admin, owner | Saldo akun, catat/batalkan transaksi |
+| `/kas-kecil` | semua | Saldo, catat pengeluaran, riwayat (staf hanya melihat ini dan laporannya) |
+| `/gaji` | admin, owner | Karyawan tetap, gaji bulanan (siapkan/bayar), langganan dan tagihan |
+| `/bagi-hasil` | admin, owner | Pratinjau, simpan, bayar bagi hasil admin/owner |
+| `/laporan`, `/laporan/kas-kecil` | admin, owner / semua | Laporan umum; laporan kas kecil + cek uang fisik |
+| `/master` | admin, owner | Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun & kategori, pengguna (admin), profil UMKM + proporsi bagi hasil (ubah: admin) |
+| `/lainnya` | admin, owner | Menu lengkap di HP |
 
-Staf pemegang kas kecil otomatis diarahkan ke Kas kecil. Kas iklan hanya tampil untuk admin (diatur backend).
-
-## Berikutnya
-Order dan pesanan ke tukang, penjual lain (invoice + kirim WhatsApp), siklus Selasa, gaji dan langganan, bagi hasil,
-halaman master (produk, tukang, penjual lain, pengguna, profil).
+Laporan kas iklan terpisah dikerjakan admin nanti (backend belum membukanya).
 
 Logo: `public/logo.png` (sementara; ganti dengan logo final, ikon PWA di `public/icon-*.png`).
