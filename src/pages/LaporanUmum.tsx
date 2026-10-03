@@ -1,22 +1,41 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Baris, Card, ErrorBox, Field, Input, Memuat } from "../components/ui";
+import { Card, ErrorBox, Field, Input, Kosong, Memuat, Tabel, Td, TdTotal, Th } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
 import type { BarisKategori, LaporanUmum } from "../lib/types";
 
-function Bagian({ judul, baris, total, labelTotal }: { judul: string; baris: BarisKategori[]; total?: string; labelTotal?: string }) {
+function TabelKategori({ judul, baris, total, labelTotal }: { judul: string; baris: BarisKategori[]; total?: string; labelTotal?: string }) {
   return (
-    <Card judul={judul}>
-      {baris.length === 0 && <p className="text-sm text-stone-500">Tidak ada.</p>}
-      {baris.map((b) => (
-        <Baris key={b.kategori} kiri={b.kategori} kanan={rp(b.jumlah)} />
-      ))}
-      {total !== undefined && (
-        <div className="mt-1 border-t border-garis pt-1">
-          <Baris kiri={labelTotal ?? "Total"} kanan={rp(total)} tebal />
-        </div>
+    <Card judul={judul} className="min-w-0">
+      {baris.length === 0 ? (
+        <Kosong teks="Tidak ada." />
+      ) : (
+        <Tabel minLebar={320}>
+          <thead>
+            <tr>
+              <Th lengket>Kategori</Th>
+              <Th kanan>Transaksi</Th>
+              <Th kanan>Jumlah</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {baris.map((b) => (
+              <tr key={b.kategori}>
+                <Td lengket>{b.kategori}</Td>
+                <Td kanan className="text-stone-500">{b.jumlah_transaksi || "—"}</Td>
+                <Td kanan>{rp(b.jumlah)}</Td>
+              </tr>
+            ))}
+            {total !== undefined && (
+              <tr>
+                <TdTotal lengket colSpan={2}>{labelTotal ?? "Total"}</TdTotal>
+                <TdTotal kanan>{rp(total)}</TdTotal>
+              </tr>
+            )}
+          </tbody>
+        </Tabel>
       )}
     </Card>
   );
@@ -31,6 +50,7 @@ export default function LaporanUmumPage() {
     queryFn: () => api<LaporanUmum>(`/laporan/umum${query({ dari, sampai })}`),
     enabled: !!dari && !!sampai,
   });
+  const d = q.data;
 
   return (
     <>
@@ -41,7 +61,7 @@ export default function LaporanUmumPage() {
         </Link>
       </div>
       <Card>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid max-w-md grid-cols-2 gap-3">
           <Field label="Dari">
             <Input type="date" value={dari} onChange={(e) => setDari(e.target.value)} />
           </Field>
@@ -53,37 +73,53 @@ export default function LaporanUmumPage() {
 
       {q.isLoading && <Memuat />}
       <ErrorBox error={q.error} />
-      {q.data && (
+      {d && (
         <>
-          <Bagian judul="Pemasukan" baris={q.data.pemasukan} total={q.data.total_pemasukan} labelTotal="Total pemasukan" />
-          <Bagian judul="Biaya" baris={q.data.biaya} total={q.data.total_biaya} labelTotal="Total biaya" />
+          <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+            <TabelKategori judul="Pemasukan" baris={d.pemasukan} total={d.total_pemasukan} labelTotal="Total pemasukan" />
+            <TabelKategori judul="Biaya" baris={d.biaya} total={d.total_biaya} labelTotal="Total biaya" />
+          </div>
           <Card>
-            <Baris
-              kiri="Laba bersih"
-              kanan={<span className={num(q.data.laba_bersih) < 0 ? "text-red-600" : "text-hijau"}>{rp(q.data.laba_bersih)}</span>}
-              tebal
-            />
+            <div className="flex items-baseline justify-between text-base font-bold">
+              <span>Laba bersih</span>
+              <span className={num(d.laba_bersih) < 0 ? "text-red-600" : "text-hijau"}>{rp(d.laba_bersih)}</span>
+            </div>
           </Card>
-          {q.data.di_luar_laba.length > 0 && <Bagian judul="Di luar laba (prive, bagi hasil)" baris={q.data.di_luar_laba} />}
+          {d.di_luar_laba.length > 0 && <TabelKategori judul="Di luar laba (prive, bagi hasil)" baris={d.di_luar_laba} />}
 
-          <Card judul={`Arus kas ${tanggal(q.data.dari)} – ${tanggal(q.data.sampai)}`}>
-            <div className="space-y-3">
-              {q.data.arus_kas.map((a) => (
-                <div key={a.akun_id} className="rounded-xl bg-stone-50 p-3">
-                  <p className="text-sm font-semibold">{a.nama}</p>
-                  <Baris kiri="Saldo awal" kanan={rp(a.saldo_awal)} />
-                  <Baris kiri="Masuk" kanan={rp(a.masuk)} />
-                  <Baris kiri="Keluar" kanan={rp(a.keluar)} />
-                  <Baris kiri="Transfer masuk" kanan={rp(a.transfer_masuk)} />
-                  <Baris kiri="Transfer keluar" kanan={rp(a.transfer_keluar)} />
-                  <Baris kiri="Saldo akhir" kanan={rp(a.saldo_akhir)} tebal />
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 border-t border-garis pt-1">
-              <Baris kiri="Total kas awal" kanan={rp(q.data.total_kas_awal)} />
-              <Baris kiri="Total kas akhir" kanan={rp(q.data.total_kas_akhir)} tebal />
-            </div>
+          <Card judul={`Arus kas ${tanggal(d.dari)} – ${tanggal(d.sampai)}`}>
+            <Tabel minLebar={760}>
+              <thead>
+                <tr>
+                  <Th lengket>Akun</Th>
+                  <Th kanan>Saldo awal</Th>
+                  <Th kanan>Masuk</Th>
+                  <Th kanan>Keluar</Th>
+                  <Th kanan>Transfer masuk</Th>
+                  <Th kanan>Transfer keluar</Th>
+                  <Th kanan>Saldo akhir</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.arus_kas.map((a) => (
+                  <tr key={a.akun_id}>
+                    <Td lengket>{a.nama}</Td>
+                    <Td kanan>{rp(a.saldo_awal)}</Td>
+                    <Td kanan>{rp(a.masuk)}</Td>
+                    <Td kanan>{rp(a.keluar)}</Td>
+                    <Td kanan>{rp(a.transfer_masuk)}</Td>
+                    <Td kanan>{rp(a.transfer_keluar)}</Td>
+                    <Td kanan tebal>{rp(a.saldo_akhir)}</Td>
+                  </tr>
+                ))}
+                <tr>
+                  <TdTotal lengket>Total kas</TdTotal>
+                  <TdTotal kanan>{rp(d.total_kas_awal)}</TdTotal>
+                  <TdTotal colSpan={4} />
+                  <TdTotal kanan>{rp(d.total_kas_akhir)}</TdTotal>
+                </tr>
+              </tbody>
+            </Tabel>
           </Card>
         </>
       )}

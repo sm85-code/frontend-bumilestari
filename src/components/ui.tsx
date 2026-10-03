@@ -81,3 +81,59 @@ export function Progress({ nilai, maks }: { nilai: number; maks: number }) {
     </div>
   );
 }
+
+/** Tabel sungguhan di semua ukuran layar: di layar sempit digulir ke samping (bukan diubah jadi kartu). */
+export function Tabel({ children, minLebar = 520, className = "" }: { children: ReactNode; minLebar?: number; className?: string }) {
+  return (
+    <div className={`overflow-x-auto rounded-xl border border-garis bg-white ${className}`}>
+      <table className="w-full border-collapse text-sm" style={{ minWidth: minLebar }}>
+        {children}
+      </table>
+    </div>
+  );
+}
+
+interface SelProps {
+  kanan?: boolean;
+  /** Kolom pertama tetap terlihat saat tabel digulir ke samping. */
+  lengket?: boolean;
+  tebal?: boolean;
+  className?: string;
+  colSpan?: number;
+  children?: ReactNode;
+}
+
+export function Th({ kanan, lengket, className = "", colSpan, children }: SelProps) {
+  return (
+    <th
+      colSpan={colSpan}
+      className={`whitespace-nowrap bg-stone-50 px-3 py-2 text-xs font-semibold text-coklat ${kanan ? "text-right" : "text-left"} ${lengket ? "sticky left-0 z-[1] min-w-[7rem]" : ""} ${className}`}
+    >
+      {children}
+    </th>
+  );
+}
+
+export function Td({ kanan, lengket, tebal, className = "", colSpan, children }: SelProps) {
+  return (
+    <td
+      colSpan={colSpan}
+      className={`border-t border-garis px-3 py-2 align-top ${kanan ? "whitespace-nowrap text-right tabular-nums" : ""} ${tebal ? "font-semibold" : ""} ${lengket ? "sticky left-0 min-w-[7rem] bg-white" : ""} ${className}`}
+    >
+      {children}
+    </td>
+  );
+}
+
+export function TdTotal({ kanan, lengket, colSpan, children }: SelProps) {
+  return (
+    <td
+      colSpan={colSpan}
+      className={`border-t-2 border-stone-400 bg-stone-50 px-3 py-2 font-semibold ${kanan ? "whitespace-nowrap text-right tabular-nums" : ""} ${lengket ? "sticky left-0" : ""}`}
+    >
+      {children}
+    </td>
+  );
+}
+
+export const Kosong = ({ teks }: { teks: string }) => <p className="py-4 text-center text-sm text-stone-500">{teks}</p>;

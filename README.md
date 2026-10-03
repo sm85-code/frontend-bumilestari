@@ -1,10 +1,17 @@
 # Frontend Bumi Lestari
 
-Aplikasi web (PWA, mobile-first) untuk keuangan UMKM dan pengelolaan order Bumi Lestari.
+Aplikasi web (PWA) untuk keuangan UMKM dan pengelolaan order Bumi Lestari.
 Backend: [`sm85-code/sm85-arch`](https://github.com/sm85-code/sm85-arch), tenant `bumi_lestari` (`/api/bumi-lestari`).
 
 ## Teknologi
 React 19, Vite, TypeScript, Tailwind CSS 4, TanStack Query, React Router, vite-plugin-pwa.
+
+## Prinsip tampilan
+- **Bukan mobile-first**: dipakai di laptop dan HP. Laptop (lebar ≥768px) memakai menu samping dan area konten lebar; HP memakai
+  header ringkas dan navigasi bawah.
+- **Data tabular selalu tabel**, termasuk di HP (digulir ke samping, kolom pertama tetap terlihat). Tidak diubah menjadi kartu
+  supaya data tetap terbaca menyeluruh. Gunakan komponen `Tabel`, `Th`, `Td`, `TdTotal` di `src/components/ui.tsx`.
+- Kartu hanya untuk ringkasan angka (mis. Beranda).
 
 ## Menjalankan
 ```bash
