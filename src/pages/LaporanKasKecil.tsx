@@ -88,6 +88,12 @@ export default function LaporanKasKecilPage() {
                 <Baris kiri="Total dipakai" kanan={rp(d.total_pemakaian)} />
                 <Baris kiri="Total pengisian" kanan={rp(d.total_pengisian)} />
                 <Baris kiri="Saldo akhir" kanan={rp(d.saldo_akhir)} tebal />
+                {num(d.total_draf_belum_dikirim) > 0 && (
+                  <Typography.Paragraph type="warning" style={{ margin: "4px 0" }}>
+                    Ada pengeluaran draf {rp(d.total_draf_belum_dikirim)} yang belum dikirim ke laporan keuangan (belum dihitung di sini).{" "}
+                    <Link to="/kas-kecil">Kirim dari halaman Kas kecil</Link>
+                  </Typography.Paragraph>
+                )}
                 <Typography.Text type={d.sesuai_plafon ? "success" : "warning"}>
                   {d.sesuai_plafon ? `Sudah sesuai plafon ${rp(d.plafon)}` : `Belum kembali ke plafon ${rp(d.plafon)}`}
                 </Typography.Text>

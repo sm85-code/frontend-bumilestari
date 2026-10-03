@@ -31,6 +31,13 @@ describe("daftarTugas", () => {
     expect(ids).toEqual(["selasa", "tukang", "penjual-lain", "kas-kecil"]);
     expect(daftarTugas({ ...dasar, utangTukang: 500000, tukangSudahDibayar: true })).toEqual([]);
   });
+  it("draf belum dikirim ke laporan keuangan", () => {
+    expect(daftarTugas({ ...dasar, draf: { jumlah: 0, total: 0, tertua: null } })).toEqual([]);
+    const t = daftarTugas({ ...dasar, draf: { jumlah: 3, total: 75000, tertua: "2026-10-14" } });
+    expect(t.map((x) => x.id)).toEqual(["kirim"]);
+    expect(t[0].teks).toBe("Kirim 3 catatan draf (Rp75.000, paling lama 14/10/2026) ke laporan keuangan");
+    expect(t[0].ke).toBe("/kiriman");
+  });
   it("tugas awal bulan", () => {
     const t = daftarTugas({ ...dasar, hariIni: "2026-10-03", gajiBelumDibayar: true, tagihanRutinBelum: 2 });
     expect(t.map((x) => x.id)).toEqual(["gaji", "tagihan", "cek-fisik"]);

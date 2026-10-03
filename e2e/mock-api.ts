@@ -5,6 +5,8 @@ export interface Panggilan {
   metode: string;
   path: string;
   body: unknown;
+  /** Query string (mis. "?tanggal=2026-09-29"). */
+  cari: string;
 }
 
 export type Peran = "admin" | "owner" | "staff";
@@ -31,11 +33,20 @@ const kategori = [
   ["k12", "Langganan & utilitas", "pengeluaran"],
   ["k13", "Prive", "pengeluaran"],
   ["k14", "Pengeluaran lain", "pengeluaran"],
-].map(([id, nama, jenis]) => ({ id, nama, jenis }));
+  ["k15", "Setoran modal", "pemasukan"],
+].map(([id, nama, jenis]) => ({
+  id,
+  nama,
+  jenis,
+  // Tanda terhitung dari backend Fase 1 (kategori_core.py).
+  sistem: ["Penjualan marketplace", "Penjualan toko web", "Penjualan reseller", "Biaya produksi / pembelian barang", "Gaji karyawan", "Langganan & utilitas", "Bagi hasil"].includes(nama),
+  untuk_staf: ["Transport", "Packing", "Operasional", "Pengeluaran lain"].includes(nama),
+  khusus_admin: ["Prive", "Setoran modal"].includes(nama),
+}));
 const akun = [
   { id: "a1", kode: "KAS_UTAMA", nama: "Kas utama", jenis: "kas", plafon: null, saldo: "3400000.00" },
   { id: "a2", kode: "SALDO_SHOPEE", nama: "Saldo Shopee", jenis: "ewallet", plafon: null, saldo: "1250000.00" },
-  { id: "a3", kode: "KAS_KECIL", nama: "Kas kecil", jenis: "kas_kecil", plafon: "3000000.00", saldo: "2850000.00" },
+  { id: "a3", kode: "KAS_KECIL", nama: "Kas kecil", jenis: "kas_kecil", plafon: "3000000.00", saldo: "2850000.00", saldo_setelah_draf: "2825000.00" },
   { id: "a4", kode: "DANA_CADANGAN", nama: "Dana cadangan (gaji)", jenis: "kas", plafon: null, saldo: "1000000.00" },
   { id: "a5", kode: "KAS_IKLAN", nama: "Kas iklan", jenis: "kas_iklan", plafon: "2000000.00", saldo: "1600000.00" },
 ];
@@ -70,6 +81,26 @@ function invoice() {
     total_barang: "725000", total_jasa_pengecatan: "220000", total_biaya_proses: "0", grand_total: "945000",
   };
 }
+
+/** Draf belum dikirim: 1 catatan kas kecil. */
+const draf = [
+  {
+    sumber: "kas_kecil", label: "Kas kecil", jumlah_entri: 1, total_masuk: "0", total_keluar: "25000", total: "25000", tanggal_tertua: "2026-09-23",
+    entri: [{ ref_jenis: "transaksi", ref_id: "t3", tanggal: "2026-09-23", jenis: "keluar", jumlah: "25000", keterangan: "lakban packing" }],
+  },
+];
+function kiriman(id: string, extra: Record<string, unknown> = {}) {
+  return {
+    id, nomor: "KRM-20260922-001", sumber: "kas_kecil", sampai_tanggal: null, jumlah_entri: 1, total: "40000", status: "terkirim",
+    dikirim_oleh: "u1", dikirim_pada: "2026-09-22T09:00:00Z", dibatalkan_oleh: null, dibatalkan_pada: null, alasan_batal: null, tutup_kas_mingguan_id: null, ...extra,
+  };
+}
+
+/** Balasan permintaan tulis yang isinya dipakai layar (selain itu {id: "x"}). */
+const BALASAN_TULIS: Record<string, unknown> = {
+  "/kiriman": kiriman("krbaru", { nomor: "KRM-20260929-001", total: "25000" }),
+  "/kiriman/semua": [kiriman("krbaru", { nomor: "KRM-20260929-001", total: "25000" })],
+};
 
 function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
   return {
@@ -113,12 +144,18 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
       order_per_status: { diambil: 1, dipesan: 1 }, order_bulan_ini: 2, omzet_order_bulan_ini: "1910000", piutang_penjual_lain: "1795000",
       utang_pemasok_siap_bayar: "500000", dana_cadangan: "1000000",
       kas_kecil: { saldo: "2850000", plafon: "3000000", perlu_diisi: "150000" }, kas_iklan: { saldo: "300000", plafon: "2000000", perlu_diisi: "1700000" },
-      bagian_admin_pratinjau: null, bagian_owner_pratinjau: null,
+      bagian_admin_pratinjau: null, bagian_owner_pratinjau: null, draf_belum_dikirim: draf,
     },
+    "/kiriman/draf": draf,
+    "/kiriman": [
+      kiriman("kr1"),
+      kiriman("kr0", { nomor: "KRM-20260915-001", status: "dibatalkan", dibatalkan_oleh: "u1", dibatalkan_pada: "2026-09-16T02:00:00Z", alasan_batal: "salah jumlah" }),
+    ],
     "/transaksi": [
-      { id: "t1", tanggal: "2026-09-22", akun_id: "a1", kategori_id: "k1", jenis: "keluar", jumlah: "50000", keterangan: "lakban", dibatalkan: false, ref_jenis: null, ref_id: null },
-      { id: "t2", tanggal: "2026-09-22", akun_id: "a1", kategori_id: "k6", jenis: "keluar", jumlah: "500000", keterangan: "Bayar tukang & supplier Selasa 22/09", dibatalkan: false, ref_jenis: "pembayaran_pemasok", ref_id: "pp1" },
-      { id: "t3", tanggal: "2026-09-23", akun_id: "a3", kategori_id: "k10", jenis: "keluar", jumlah: "25000", keterangan: "lakban packing", dibatalkan: false, ref_jenis: null, ref_id: null },
+      { id: "t1", tanggal: "2026-09-22", akun_id: "a1", kategori_id: "k1", jenis: "keluar", jumlah: "50000", keterangan: "lakban", dibatalkan: false, ref_jenis: null, ref_id: null, status_kirim: "terkirim", kiriman_id: null },
+      { id: "t2", tanggal: "2026-09-22", akun_id: "a1", kategori_id: "k6", jenis: "keluar", jumlah: "500000", keterangan: "Bayar tukang & supplier Selasa 22/09", dibatalkan: false, ref_jenis: "pembayaran_pemasok", ref_id: "pp1", status_kirim: "terkirim", kiriman_id: "kr2" },
+      { id: "t3", tanggal: "2026-09-23", akun_id: "a3", kategori_id: "k10", jenis: "keluar", jumlah: "25000", keterangan: "lakban packing", dibatalkan: false, ref_jenis: null, ref_id: null, status_kirim: "draf", kiriman_id: null },
+      { id: "t4", tanggal: "2026-09-21", akun_id: "a3", kategori_id: "k9", jenis: "keluar", jumlah: "40000", keterangan: "ojek kirim barang", dibatalkan: false, ref_jenis: null, ref_id: null, status_kirim: "terkirim", kiriman_id: "kr1" },
     ],
     "/transfer": [
       { id: "tr1", tanggal: "2026-09-22", dari_akun_id: "a2", ke_akun_id: "a1", jumlah: "400000", jenis: "biasa", keterangan: "Tarik saldo toko", dibatalkan: false, alasan_batal: null },
@@ -137,7 +174,9 @@ export interface OpsiTiruan {
   /** Ganti/tambah respons GET per path. */
   data?: Record<string, unknown>;
   /** Paksa permintaan tulis ke path tertentu gagal dengan pesan backend apa adanya. */
-  galat?: Record<string, { status: number; detail: string }>;
+  galat?: Record<string, { status: number; detail: string; sekali?: boolean }>;
+  /** Ganti balasan permintaan tulis per path. */
+  balasan?: Record<string, unknown>;
 }
 
 /** Pasang API tiruan pada halaman. Mengembalikan daftar permintaan tulis (POST/PATCH/PUT) yang terjadi. */
@@ -148,7 +187,8 @@ export async function pasangApiTiruan(page: Page, opsi: OpsiTiruan = {}): Promis
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
   await page.route("**/api/bumi-lestari/**", async (route) => {
     const req = route.request();
-    const path = new URL(req.url()).pathname.replace("/api/bumi-lestari", "");
+    const url = new URL(req.url());
+    const path = url.pathname.replace("/api/bumi-lestari", "");
     if (req.method() !== "GET") {
       let body: unknown = null;
       try {
@@ -156,10 +196,13 @@ export async function pasangApiTiruan(page: Page, opsi: OpsiTiruan = {}): Promis
       } catch {
         body = req.postData();
       }
-      panggilan.push({ metode: req.method(), path, body });
+      panggilan.push({ metode: req.method(), path, body, cari: url.search });
       const g = opsi.galat?.[path];
-      if (g) return json(route, { detail: g.detail }, g.status);
-      return json(route, { id: "x" });
+      if (g) {
+        if (g.sekali) delete opsi.galat![path];
+        return json(route, { detail: g.detail }, g.status);
+      }
+      return json(route, opsi.balasan?.[path] ?? BALASAN_TULIS[path] ?? { id: "x" });
     }
     return path in data ? json(route, data[path]) : json(route, { detail: `tidak ada ${path}` }, 404);
   });

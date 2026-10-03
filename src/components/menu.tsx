@@ -9,6 +9,7 @@ import {
   HomeOutlined,
   InboxOutlined,
   PieChartOutlined,
+  SendOutlined,
   ShopOutlined,
   TeamOutlined,
   ToolOutlined,
@@ -63,6 +64,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
     item: [
       { ke: "/laporan", label: "Laba rugi", ikon: <BarChartOutlined /> },
       { ke: "/laporan/kas-kecil", label: "Kas kecil", ikon: <FileTextOutlined /> },
+      { ke: "/kiriman", label: "Kirim ke laporan keuangan", ikon: <SendOutlined /> },
     ],
   },
   {

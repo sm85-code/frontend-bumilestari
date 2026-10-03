@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import BagikanWA from "../components/BagikanWA";
+import KirimKeLaporan from "../components/KirimKeLaporan";
 import { Alert, Col, Flex, Row, Space, Typography } from "antd";
 import type { TableColumnsType } from "antd";
 import { Angka, BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox, Field, InputTanggal, Kosong, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
@@ -51,10 +53,15 @@ export default function PesananTukang() {
   const { konfirmasi, tanya } = useDialog();
   const siap = siapQ.data;
 
-  async function catatPembayaran() {
-    if (!siap || !(await konfirmasi(`Catat pembayaran ${rp(siap.total)} ke tukang & supplier?`, { teks: `Uang keluar dari Kas utama, tanggal ${tanggal(tgl)}.`, ok: "Catat pembayaran" }))) return;
-    aksi.mutate({ path: "/pembayaran-pemasok", body: { tanggal: tgl } });
+  /** Tanpa `g`: bayar semua yang belum dibayar; dengan `g`: hanya satu tukang/supplier (boleh beberapa pembayaran per minggu). */
+  async function catatPembayaran(g?: SiapBayar["pemasok"][number]) {
+    if (!siap) return;
+    const judul = g ? `Catat pembayaran ${rp(g.subtotal)} ke ${g.nama}?` : `Catat pembayaran ${rp(siap.total)} ke semua tukang & supplier?`;
+    const teks = `Uang keluar dari Kas utama, tanggal ${tanggal(tgl)}. Tersimpan sebagai draf sampai dikirim ke laporan keuangan.`;
+    if (!(await konfirmasi(judul, { teks, ok: "Catat pembayaran" }))) return;
+    aksi.mutate({ path: "/pembayaran-pemasok", body: g ? { tanggal: tgl, pemasok_id: g.pemasok_id } : { tanggal: tgl } });
   }
+  const sudahDibayar = siap?.pembayaran_ids ?? (siap?.sudah_dicatat_id ? [siap.sudah_dicatat_id] : []);
 
   const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomSiap: TableColumnsType<SiapBayar["pemasok"][number]["items"][number]> = [
@@ -85,14 +92,24 @@ export default function PesananTukang() {
     { title: "Selasa", dataIndex: "selasa", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Tanggal catat", dataIndex: "tanggal", render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Total", dataIndex: "total", align: "right", render: angka },
-    { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>) },
+    {
+      title: "Status",
+      dataIndex: "dibatalkan",
+      render: (v: boolean, p) =>
+        v ? <Lencana warna="merah">dibatalkan</Lencana> : p.status_kirim === "draf" ? <Lencana warna="oranye">draf</Lencana> : <Lencana warna="hijau">terkirim</Lencana>,
+    },
     {
       title: "Aksi",
       width: 170,
       render: (_, p) => (
         <Space size={0}>
           <TombolLink onClick={() => setLihat(p.id)}>Rincian</TombolLink>
-          {!p.dibatalkan && (
+          {!p.dibatalkan && p.status_kirim === "terkirim" && p.kiriman_id && (
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              terkunci · <Link to="/kiriman">batalkan kiriman</Link>
+            </Typography.Text>
+          )}
+          {!p.dibatalkan && !(p.status_kirim === "terkirim" && p.kiriman_id) && (
             <TombolLink
               bahaya
               onClick={() =>
@@ -111,7 +128,7 @@ export default function PesananTukang() {
 
   return (
     <>
-      <PageHeader judul="Bayar tukang & supplier" sub="Utang ke tukang & supplier dibayar tiap Selasa, dicatat sebagai 1 transaksi" />
+      <PageHeader judul="Bayar tukang & supplier" sub="Utang ke tukang & supplier dibayar tiap Selasa; boleh per tukang atau sekaligus" />
       <Card>
         <Row>
           <Col xs={24} md={8}>
@@ -128,17 +145,15 @@ export default function PesananTukang() {
           <Typography.Text type="secondary">
             Selasa acuan <b>{tanggal(siap.selasa)}</b> · diambil sampai <b>{tanggal(siap.batas_diambil)}</b> (Sabtu)
           </Typography.Text>
-          {siap.sudah_dicatat_id && (
+          {sudahDibayar.length > 0 && (
             <Alert
               type="success"
               showIcon
-              title="Pembayaran Selasa ini sudah dicatat."
-              action={
-                <TombolLink onClick={() => setLihat(siap.sudah_dicatat_id)}>Lihat rincian</TombolLink>
-              }
+              title={`${sudahDibayar.length} pembayaran Selasa ini sudah dicatat.`}
+              action={<TombolLink onClick={() => setLihat(sudahDibayar[sudahDibayar.length - 1])}>Lihat rincian</TombolLink>}
             />
           )}
-          {siap.pemasok.length === 0 && !siap.sudah_dicatat_id && <Kosong teks="Tidak ada utang ke tukang & supplier untuk Selasa ini. Order muncul di sini setelah barang diambil/diterima (Senin–Sabtu minggu lalu)." />}
+          {siap.pemasok.length === 0 && sudahDibayar.length === 0 && <Kosong teks="Tidak ada utang ke tukang & supplier untuk Selasa ini. Order muncul di sini setelah barang diambil/diterima (Senin–Sabtu minggu lalu)." />}
           {siap.pemasok.map((g) => (
             <Card
               key={g.pemasok_id}
@@ -149,6 +164,9 @@ export default function PesananTukang() {
                     PDF rekap pembayaran
                   </a>
                   <BagikanWA jenis="po" id={g.pemasok_id} tanggal={tgl} label="Kirim rekap" />
+                  <Button kecil disabled={aksi.isPending} onClick={() => void catatPembayaran(g)}>
+                    Bayar {rp(g.subtotal)}
+                  </Button>
                 </Space>
               }
             >
@@ -161,23 +179,26 @@ export default function PesananTukang() {
               />
             </Card>
           ))}
-          {siap.pemasok.length > 0 && !siap.sudah_dicatat_id && (
+          {siap.pemasok.length > 0 && (
             <Card>
               <Flex wrap justify="space-between" align="center" gap="middle">
                 <Typography.Title level={4} style={{ margin: 0 }}>
-                  Total dibayar Selasa: {rp(siap.total)}
+                  Belum dibayar: {rp(siap.total)}
                 </Typography.Title>
                 <Button disabled={aksi.isPending} onClick={() => void catatPembayaran()}>
-                  Catat pembayaran
+                  Bayar semua
                 </Button>
               </Flex>
-              <Typography.Text type="secondary">Dicatat 1 kali per Selasa sebagai 1 transaksi; rincian barang tersimpan di dalamnya.</Typography.Text>
+              <Typography.Text type="secondary">Setiap pembayaran menjadi 1 transaksi dengan rincian barang di dalamnya. Boleh dibayar per tukang di kartu masing-masing.</Typography.Text>
             </Card>
           )}
         </>
       )}
 
       <Card judul="Riwayat pembayaran">
+        <div style={{ marginBottom: 12 }}>
+          <KirimKeLaporan sumber="pembayaran_pemasok" />
+        </div>
         <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran ke tukang & supplier." />
       </Card>
       {lihat && <Rincian id={lihat} onTutup={() => setLihat(null)} />}

@@ -21,8 +21,8 @@ describe("selasa", () => {
   });
 
   it("urutan langkah sesuai spesifikasi; langkah tanpa backend ditandai segera hadir", () => {
-    expect(LANGKAH.map((l) => l.id)).toEqual(["terima", "pencairan", "tarik", "bayar_tukang", "talangan", "sisihan", "isi_kas"]);
-    expect(LANGKAH_AKTIF.map((l) => l.id)).toEqual(["terima", "tarik", "bayar_tukang", "sisihan", "isi_kas"]);
+    expect(LANGKAH.map((l) => l.id)).toEqual(["terima", "pencairan", "tarik", "bayar_tukang", "talangan", "sisihan", "isi_kas", "kirim"]);
+    expect(LANGKAH_AKTIF.map((l) => l.id)).toEqual(["terima", "tarik", "bayar_tukang", "sisihan", "isi_kas", "kirim"]);
   });
 
   it("status otomatis dari data endpoint", () => {
@@ -35,6 +35,13 @@ describe("selasa", () => {
     expect(selesaiOtomatis({ selasa: s, akun, transfer: [trf({ tanggal: "2026-09-28" })] }).tarik).toBe(false); // minggu lalu
     expect(selesaiOtomatis({ selasa: s, akun: [akun[0], { ...akun[1], saldo: "0" }], transfer: [] }).tarik).toBe(true);
     expect(selesaiOtomatis({ selasa: s, siap: { selasa: s, batas_diambil: "2026-09-26", sudah_dicatat_id: null, total: "0", pemasok: [] } }).bayar_tukang).toBe(true);
+    // Sudah ada pembayaran tapi masih ada tukang yang belum dibayar: belum selesai (boleh beberapa pembayaran per minggu).
+    const sisa = [{ pemasok_id: "p1", nama: "Pak Ade", jenis: "tukang", subtotal: "100000", items: [] }];
+    expect(selesaiOtomatis({ selasa: s, siap: { selasa: s, batas_diambil: "2026-09-26", sudah_dicatat_id: "pb1", total: "100000", pemasok: sisa } }).bayar_tukang).toBe(false);
+    const draf = (n: number) => [{ sumber: "kas_kecil" as const, label: "Kas kecil", jumlah_entri: n, total_masuk: "0", total_keluar: "0", total: "0", tanggal_tertua: null, entri: [] }];
+    expect(selesaiOtomatis({ selasa: s, draf: draf(2) }).kirim).toBe(false);
+    expect(selesaiOtomatis({ selasa: s, draf: draf(0) }).kirim).toBe(true);
+    expect(selesaiOtomatis({ selasa: s }).kirim).toBeUndefined();
     expect(selesaiOtomatis({ selasa: s, transfer: [], isiKasKecil: isi("150000") }).isi_kas).toBe(false);
     expect(selesaiOtomatis({ selasa: s, transfer: [trf({ jenis: "pengisian_kas_kecil", dari_akun_id: "a1", ke_akun_id: "k" })], isiKasKecil: isi("50000") }).isi_kas).toBe(true);
     expect(selesaiOtomatis({ selasa: s, transfer: [], isiKasKecil: isi("0"), isiKasIklan: isi("400000", "2000000") }).isi_kas).toBe(false);

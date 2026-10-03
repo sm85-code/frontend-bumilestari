@@ -117,15 +117,19 @@ export default function OrderPage() {
         return (
           <>
             <Lencana warna={WARNA[o.status]}>{LABEL_STATUS[o.status]}</Lencana>
+            {o.dibayar_tukang && <Lencana warna="hijau">tukang dibayar</Lencana>}
+            {o.dibayar_penjual_lain && <Lencana warna="hijau">dibayar penjual lain</Lencana>}
             {berikut && (
               <div>
                 <TombolLink disabled={aksi.isPending} onClick={() => majukan(o, berikut)}>
                   → {LABEL_STATUS[berikut]}
                 </TombolLink>
                 <TombolLink onClick={() => setUbah(o)}>Ubah</TombolLink>
-                <TombolLink bahaya onClick={() => void konfirmasi("Batalkan order ini?", { ok: "Batalkan order", bahaya: true }).then((ya) => ya && aksi.mutate({ path: `/order/${o.id}/status`, body: { status: "batal" } }))}>
-                  Batalkan
-                </TombolLink>
+                {!o.terkunci && (
+                  <TombolLink bahaya onClick={() => void konfirmasi("Batalkan order ini?", { ok: "Batalkan order", bahaya: true }).then((ya) => ya && aksi.mutate({ path: `/order/${o.id}/status`, body: { status: "batal" } }))}>
+                    Batalkan
+                  </TombolLink>
+                )}
               </div>
             )}
           </>

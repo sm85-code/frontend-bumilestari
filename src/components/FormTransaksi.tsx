@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button as AButton, Form, Segmented, Typography } from "antd";
 import { useMemo, useState } from "react";
-import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select } from "./ui";
-import { api } from "../lib/api";
+import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, useDialog } from "./ui";
+import { useAuth } from "../auth/AuthContext";
+import { api, isSetoranKedua } from "../lib/api";
 import { bersihkanAngka, hariIni, rp } from "../lib/format";
 import { labelKategori, pilihanKategori } from "../lib/kategori";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
@@ -27,6 +28,9 @@ interface Props {
  */
 export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, staf, tombolKategori, onSukses }: Props) {
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const admin = user?.role === "admin";
+  const { konfirmasi } = useDialog();
   const [akunId, setAkunId] = useState(akunAwal ?? akun[0]?.id ?? "");
   const [jenis, setJenis] = useState<"masuk" | "keluar">(jenisTetap ?? "keluar");
   const [kategoriId, setKategoriId] = useState("");
@@ -35,12 +39,25 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const [tgl, setTgl] = useState(hariIni());
   const akunPilih = akun.find((a) => a.id === akunId);
 
-  const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, akun: akunPilih }), [kategori, jenis, staf, akunPilih]);
+  const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, admin, akun: akunPilih }), [kategori, jenis, staf, admin, akunPilih]);
   // Ganti akun/jenis: kategori yang tidak ada lagi di daftar dianggap belum dipilih.
   const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : "";
 
   const simpan = useMutation({
-    mutationFn: (body: TransaksiIn) => api<Transaksi>("/transaksi", { body }),
+    mutationFn: async (body: TransaksiIn) => {
+      try {
+        return await api<Transaksi>("/transaksi", { body });
+      } catch (e) {
+        // Setoran modal kedua (aturan 8.x): backend minta konfirmasi eksplisit admin.
+        if (!isSetoranKedua(e)) throw e;
+        const ok = await konfirmasi("Setoran modal sudah pernah dicatat", {
+          teks: `Setoran awal sudah ada. Catat ${rp(body.jumlah)} ini sebagai setoran modal TAMBAHAN dari pemilik?`,
+          ok: "Ya, setoran tambahan",
+        });
+        if (!ok) throw e;
+        return api<Transaksi>("/transaksi", { body: { ...body, konfirmasi_setoran_modal_kedua: true } });
+      }
+    },
     onSuccess: () => {
       setJumlah("");
       setKeterangan("");

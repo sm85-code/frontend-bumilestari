@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Col, Row, Typography } from "antd";
+import { Alert, Col, Row, Typography } from "antd";
 import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { ringkasDraf, teksDraf } from "../lib/kiriman";
 import { Angka, BarisTotal, Card, DataTabel, ErrorBox, Field, InputTanggal, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
@@ -53,6 +54,15 @@ export default function LaporanUmumPage() {
   return (
     <>
       <PageHeader judul="Laba rugi" sub="Pemasukan, biaya, laba bersih, dan arus kas per akun kas" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
+      {d?.draf_belum_dikirim && d.draf_belum_dikirim.length > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          title={`${teksDraf(ringkasDraf(d.draf_belum_dikirim))} belum dikirim, jadi belum dihitung di laporan ini.`}
+          action={<Link to="/kiriman">Kirim sekarang</Link>}
+        />
+      )}
       <Card>
         <Row gutter={16}>
           <Col xs={12} md={6}>

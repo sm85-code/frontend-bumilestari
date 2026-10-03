@@ -4,11 +4,13 @@ import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Input, InputTanggal, Kosong, Lencana, Memuat, PageHeader, Progress, Select, useDialog } from "../components/ui";
+import { query } from "../lib/api";
 import { useAksi } from "../lib/data";
 import { bersihkanAngka, hariIni, num, rp, tanggal, tanggalHari } from "../lib/format";
+import { LABEL_SUMBER, ringkasDraf, teksDraf } from "../lib/kiriman";
 import { LANGKAH, LANGKAH_AKTIF, akunSaldoToko, selasaAcuan, type IdLangkah, type StatusLangkah } from "../lib/selasa";
 import { useSelasa } from "../lib/useSelasa";
-import type { Invoice, PengisianImprest, SiapBayar, Sisihan } from "../lib/types";
+import type { DrafSumber, Invoice, Kiriman, PengisianImprest, SiapBayar, SumberKiriman, Sisihan } from "../lib/types";
 
 type DataSelasa = ReturnType<typeof useSelasa>;
 
@@ -144,29 +146,47 @@ function LangkahBayarTukang({ d, tgl }: { d: DataSelasa; tgl: string }) {
   const aksi = useAksi();
   const { konfirmasi } = useDialog();
   const siap = d.siapQ.data;
+  const sudah = siap?.pembayaran_ids?.length ?? (siap?.sudah_dicatat_id ? 1 : 0);
+
+  async function bayar(p?: SiapBayar["pemasok"][number]) {
+    if (!siap) return;
+    const jumlah = p ? p.subtotal : siap.total;
+    const ok = await konfirmasi(p ? `Catat pembayaran ${rp(jumlah)} ke ${p.nama}?` : `Catat pembayaran ${rp(jumlah)} ke semua tukang & supplier?`, {
+      teks: `Uang keluar dari Kas utama, tanggal ${tanggal(tgl)}. Tersimpan sebagai draf sampai dikirim ke laporan keuangan.`,
+      ok: "Catat pembayaran",
+    });
+    if (ok) aksi.mutate({ path: "/pembayaran-pemasok", body: p ? { tanggal: tgl, pemasok_id: p.pemasok_id } : { tanggal: tgl } });
+  }
+
+  const kolom: TableColumnsType<SiapBayar["pemasok"][number]> = [
+    ...kolomTukang,
+    {
+      title: "",
+      width: 90,
+      render: (_, p) => (
+        <Button kecil variant="pinggir" disabled={aksi.isPending} onClick={() => void bayar(p)}>
+          Bayar
+        </Button>
+      ),
+    },
+  ];
   return (
     <Flex vertical gap="small" align="flex-start" style={{ width: "100%" }}>
       <ErrorBox error={d.siapQ.error ?? aksi.error} />
       {d.siapQ.isLoading && <Memuat />}
-      {siap?.sudah_dicatat_id && <Alert type="success" showIcon title="Pembayaran tukang & supplier minggu ini sudah dicatat." />}
-      {siap && !siap.sudah_dicatat_id && siap.pemasok.length === 0 && <Kosong teks={`Tidak ada yang perlu dibayar. Barang yang diambil sampai ${tanggal(siap.batas_diambil)} sudah lunas.`} />}
-      {siap && !siap.sudah_dicatat_id && siap.pemasok.length > 0 && (
+      {sudah > 0 && <Alert type="success" showIcon title={`${sudah} pembayaran tukang & supplier sudah dicatat minggu ini.`} />}
+      {siap && siap.pemasok.length === 0 && <Kosong teks={`Tidak ada yang perlu dibayar. Barang yang diambil sampai ${tanggal(siap.batas_diambil)} sudah lunas.`} />}
+      {siap && siap.pemasok.length > 0 && (
         <>
-          <Typography.Text type="secondary">Barang yang diambil sampai {tanggal(siap.batas_diambil)}. Uang keluar dari Kas utama.</Typography.Text>
+          <Typography.Text type="secondary">
+            Barang yang diambil sampai {tanggal(siap.batas_diambil)} dan belum dibayar. Bayar per tukang, atau semua sekaligus. Uang keluar dari Kas utama.
+          </Typography.Text>
           <div style={{ width: "100%" }}>
-            <DataTabel kolom={kolomTukang} data={siap.pemasok} rowKey="pemasok_id" minLebar={360} ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(siap.total), kanan: true }]} />} />
+            <DataTabel kolom={kolom} data={siap.pemasok} rowKey="pemasok_id" minLebar={420} ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(siap.total), kanan: true }, { isi: "" }]} />} />
           </div>
-          <Button
-            disabled={aksi.isPending}
-            onClick={() =>
-              void konfirmasi(`Catat pembayaran ${rp(siap.total)} ke tukang & supplier?`, { teks: `Uang keluar dari Kas utama, tanggal ${tanggal(tgl)}.`, ok: "Catat pembayaran" }).then(
-                (ok) => ok && aksi.mutate({ path: "/pembayaran-pemasok", body: { tanggal: tgl } }),
-              )
-            }
-          >
-            Catat pembayaran {rp(siap.total)}
+          <Button disabled={aksi.isPending} onClick={() => void bayar()}>
+            Bayar semua {rp(siap.total)}
           </Button>
-          <Typography.Text type="secondary">Saat ini satu pembayaran untuk semua tukang & supplier per minggu.</Typography.Text>
         </>
       )}
       <Link to="/pesanan-tukang">Rincian, PDF rekap & kirim rekap di Bayar tukang & supplier →</Link>
@@ -227,7 +247,7 @@ function LangkahSisihan({ d, tgl }: { d: DataSelasa; tgl: string }) {
 }
 
 /* ---------- Langkah 7: isi kas kecil & kas iklan ---------- */
-function Pengisian({ jenis, label, q }: { jenis: "kas-kecil" | "kas-iklan"; label: string; q: { data?: PengisianImprest; error: unknown } }) {
+function Pengisian({ jenis, label, q, tgl }: { jenis: "kas-kecil" | "kas-iklan"; label: string; q: { data?: PengisianImprest; error: unknown }; tgl: string }) {
   const aksi = useAksi();
   const d = q.data;
   const perlu = num(d?.perlu_diisi);
@@ -243,7 +263,7 @@ function Pengisian({ jenis, label, q }: { jenis: "kas-kecil" | "kas-iklan"; labe
             </Typography.Text>
           </Typography.Text>
           {perlu > 0 && !d.cukup && <Typography.Text type="danger">Saldo Kas utama {rp(d.saldo_kas_utama)} belum cukup. Tarik saldo toko dulu (langkah 3).</Typography.Text>}
-          <Button disabled={aksi.isPending || perlu <= 0 || !d.cukup} onClick={() => aksi.mutate({ path: `/${jenis}/pengisian` })}>
+          <Button disabled={aksi.isPending || perlu <= 0 || !d.cukup} onClick={() => aksi.mutate({ path: `/${jenis}/pengisian${query({ tanggal: tgl })}` })}>
             {perlu <= 0 ? "Sudah penuh" : `Isi ${label} ${rp(perlu)}`}
           </Button>
         </>
@@ -252,13 +272,64 @@ function Pengisian({ jenis, label, q }: { jenis: "kas-kecil" | "kas-iklan"; labe
   );
 }
 
-function LangkahIsiKas({ d, admin }: { d: DataSelasa; admin: boolean }) {
+function LangkahIsiKas({ d, admin, tgl }: { d: DataSelasa; admin: boolean; tgl: string }) {
   const iklan = d.kasIklanQ.data;
   return (
     <Flex vertical gap="middle" align="flex-start">
-      <Typography.Text type="secondary">Isi ulang = transfer dari Kas utama sampai plafon, bukan biaya. Tercatat dengan tanggal hari ini ({tanggal(hariIni())}).</Typography.Text>
-      <Pengisian jenis="kas-kecil" label="kas kecil" q={d.kasKecilQ} />
-      {admin && iklan && num(iklan.plafon) > 0 && <Pengisian jenis="kas-iklan" label="kas iklan" q={d.kasIklanQ} />}
+      <Typography.Text type="secondary">Isi ulang = transfer dari Kas utama sampai plafon, bukan biaya. Tercatat dengan tanggal pencatatan ({tanggal(tgl)}).</Typography.Text>
+      <Pengisian jenis="kas-kecil" label="kas kecil" q={d.kasKecilQ} tgl={tgl} />
+      {admin && iklan && num(iklan.plafon) > 0 && <Pengisian jenis="kas-iklan" label="kas iklan" q={d.kasIklanQ} tgl={tgl} />}
+    </Flex>
+  );
+}
+
+/* ---------- Langkah akhir: kirim semua ke laporan keuangan ---------- */
+const kolomDraf: TableColumnsType<DrafSumber> = [
+  { title: "Sumber", dataIndex: "sumber", render: (v: SumberKiriman, r) => LABEL_SUMBER[v] ?? r.label },
+  { title: "Catatan draf", dataIndex: "jumlah_entri", align: "right", width: 110 },
+  { title: "Paling lama", dataIndex: "tanggal_tertua", render: (v: string | null) => tanggal(v) },
+  { title: "Total", dataIndex: "total", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
+];
+
+function LangkahKirim({ d }: { d: DataSelasa }) {
+  const aksi = useAksi<Kiriman[]>();
+  const { konfirmasi, message } = useDialog();
+  const draf = d.drafQ.data ?? [];
+  const isi = draf.filter((x) => x.jumlah_entri > 0);
+  const r = ringkasDraf(isi);
+
+  async function kirimSemua() {
+    const ok = await konfirmasi("Kirim semua ke laporan keuangan?", {
+      teks: `${teksDraf(r)} dari ${isi.length} sumber. Setelah dikirim catatan terkunci dan masuk laporan, saldo resmi dan laba.`,
+      ok: "Kirim semua",
+    });
+    if (!ok) return;
+    aksi.mutate(
+      { path: "/kiriman/semua", body: { tutup_kas_mingguan_id: `selasa-${d.selasa}` } },
+      { onSuccess: (hasil) => void message.success(Array.isArray(hasil) ? `Terkirim ${hasil.length} kiriman: ${hasil.map((k) => k.nomor).join(", ")}.` : "Terkirim.") },
+    );
+  }
+
+  return (
+    <Flex vertical gap="small" align="flex-start" style={{ width: "100%" }}>
+      <Typography.Text type="secondary">
+        Catatan kas kecil, kas iklan, penerimaan penjual lain dan pembayaran tukang & supplier masih draf sampai dikirim. Periksa ringkasannya, lalu kirim
+        semuanya sekaligus.
+      </Typography.Text>
+      <ErrorBox error={d.drafQ.error ?? aksi.error} />
+      {d.drafQ.isLoading && <Memuat />}
+      {d.drafQ.data && isi.length === 0 && <Kosong teks="Semua catatan sudah dikirim ke laporan keuangan." />}
+      {isi.length > 0 && (
+        <>
+          <div style={{ width: "100%" }}>
+            <DataTabel kolom={kolomDraf} data={isi} rowKey="sumber" minLebar={420} ringkasan={() => <BarisTotal sel={[{ isi: "Total" }, { isi: String(r.jumlah), kanan: true }, { isi: "" }, { isi: rp(r.total), kanan: true }]} />} />
+          </div>
+          <Button disabled={aksi.isPending} onClick={() => void kirimSemua()}>
+            Kirim semua ke laporan keuangan
+          </Button>
+        </>
+      )}
+      <Link to="/kiriman">Riwayat kiriman & pembatalan →</Link>
     </Flex>
   );
 }
@@ -283,7 +354,8 @@ export default function Selasa() {
     tarik: <LangkahTarik d={d} tgl={tgl} />,
     bayar_tukang: <LangkahBayarTukang d={d} tgl={tgl} />,
     sisihan: <LangkahSisihan d={d} tgl={tgl} />,
-    isi_kas: <LangkahIsiKas d={d} admin={admin} />,
+    isi_kas: <LangkahIsiKas d={d} admin={admin} tgl={tgl} />,
+    kirim: <LangkahKirim d={d} />,
   };
 
   const ke = (geser: number) => {

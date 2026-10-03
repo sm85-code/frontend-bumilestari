@@ -1,5 +1,5 @@
 import { num } from "./format";
-import type { AkunKas, Invoice, PengisianImprest, SiapBayar, Sisihan, Transfer } from "./types";
+import type { AkunKas, DrafSumber, Invoice, PengisianImprest, SiapBayar, Sisihan, Transfer } from "./types";
 
 /** Selasa terakhir pada atau sebelum `iso` (sama dengan `selasa_acuan` di backend). */
 export function selasaAcuan(iso: string): string {
@@ -17,18 +17,18 @@ export function tambahHari(iso: string, hari: number): string {
   return t.toISOString().slice(0, 10);
 }
 
-export type IdLangkah = "terima" | "pencairan" | "tarik" | "bayar_tukang" | "talangan" | "sisihan" | "isi_kas";
+export type IdLangkah = "terima" | "pencairan" | "tarik" | "bayar_tukang" | "talangan" | "sisihan" | "isi_kas" | "kirim";
 export type StatusLangkah = "selesai" | "belum" | "dilewati";
 
 export interface Langkah {
   id: IdLangkah;
   judul: string;
-  bagian: "Uang masuk" | "Uang keluar";
+  bagian: "Uang masuk" | "Uang keluar" | "Penutup";
   /** Backend belum ada: tampil "segera hadir" dan tidak bisa dikerjakan (tidak memalsukan data). */
   segera?: string;
 }
 
-/** Urutan langkah sesuai spesifikasi 7.4. Langkah 2 dan 5 menunggu backend Fase 1/2. */
+/** Urutan langkah sesuai spesifikasi 7.4 + langkah akhir "Kirim semua ke laporan keuangan" (1.13). Langkah 2 dan 5 menunggu Fase 2. */
 export const LANGKAH: Langkah[] = [
   { id: "terima", judul: "Terima bayar penjual lain", bagian: "Uang masuk" },
   {
@@ -42,6 +42,7 @@ export const LANGKAH: Langkah[] = [
   { id: "talangan", judul: "Lunasi talangan", bagian: "Uang keluar", segera: "Pencatatan talangan belum tersedia." },
   { id: "sisihan", judul: "Sisihkan dana gaji", bagian: "Uang keluar" },
   { id: "isi_kas", judul: "Isi kas kecil & kas iklan sampai plafon", bagian: "Uang keluar" },
+  { id: "kirim", judul: "Kirim semua ke laporan keuangan", bagian: "Penutup" },
 ];
 
 export const LANGKAH_AKTIF = LANGKAH.filter((l) => !l.segera);
@@ -56,6 +57,8 @@ export interface DataSelasa {
   isiKasKecil?: PengisianImprest;
   /** undefined bila pengguna bukan admin (kas iklan khusus admin). */
   isiKasIklan?: PengisianImprest;
+  /** Draf yang belum dikirim ke laporan keuangan (semua sumber yang boleh). */
+  draf?: DrafSumber[];
 }
 
 const dalamMinggu = (tgl: string, selasa: string) => tgl >= selasa && tgl <= tambahHari(selasa, 6);
@@ -87,11 +90,13 @@ export function selesaiOtomatis(d: DataSelasa): Partial<Record<IdLangkah, boolea
     const sudahTarik = transfer.some((t) => !t.dibatalkan && idToko.has(t.dari_akun_id) && t.ke_akun_id === kasUtama?.id && dalamMinggu(t.tanggal, d.selasa));
     hasil.tarik = sudahTarik || toko.every((a) => num(a.saldo) <= 0);
   }
-  if (d.siap) hasil.bayar_tukang = Boolean(d.siap.sudah_dicatat_id) || d.siap.pemasok.length === 0;
+  // Pembayaran boleh lebih dari satu per minggu (per tukang); selesai bila tidak ada lagi yang belum dibayar.
+  if (d.siap) hasil.bayar_tukang = d.siap.pemasok.length === 0;
   if (d.sisihan) hasil.sisihan = Boolean(d.sisihan.sudah_dicatat_id) || d.sisihan.items.length === 0;
   const kecil = imprestBeres(d.isiKasKecil, transfer, "pengisian_kas_kecil", d.selasa);
   const iklan = d.isiKasIklan ? imprestBeres(d.isiKasIklan, transfer, "pengisian_kas_iklan", d.selasa) : true;
   if (kecil !== undefined && iklan !== undefined) hasil.isi_kas = kecil && iklan;
+  if (d.draf) hasil.kirim = d.draf.every((x) => x.jumlah_entri === 0);
   return hasil;
 }
 

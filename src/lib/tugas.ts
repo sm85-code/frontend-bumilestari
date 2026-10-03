@@ -29,6 +29,8 @@ export interface InputTugas {
   gajiBelumDibayar?: boolean;
   tagihanRutinBelum?: number;
   cekFisikSelesai: boolean;
+  /** Catatan draf yang belum dikirim ke laporan keuangan (semua sumber). */
+  draf?: { jumlah: number; total: number; tertua: string | null };
 }
 
 /** Awal bulan = tanggal 1–10: waktunya bayar gaji, tagihan rutin, dan cek fisik kas kecil bulan lalu. */
@@ -46,6 +48,10 @@ export function daftarTugas(i: InputTugas): Tugas[] {
     t.push({ id: "selasa", teks: `Tutup Kas Mingguan (Selasa ${tanggal(i.selasa)}): ${i.selasaBeres} dari ${i.selasaTotal} langkah beres`, ke: "/selasa", penting: true });
   }
   if (i.utangTukang > 0 && !i.tukangSudahDibayar) t.push({ id: "tukang", teks: `Bayar tukang & supplier ${rp(i.utangTukang)}`, ke: "/selasa" });
+  if (i.draf && i.draf.jumlah > 0) {
+    const lama = i.draf.tertua ? `, paling lama ${tanggal(i.draf.tertua)}` : "";
+    t.push({ id: "kirim", teks: `Kirim ${i.draf.jumlah} catatan draf (${rp(i.draf.total)}${lama}) ke laporan keuangan`, ke: "/kiriman" });
+  }
   if (i.tagihanPenjualLain > 0) t.push({ id: "penjual-lain", teks: `Terima bayar ${i.jumlahInvoice} penjual lain: ${rp(i.tagihanPenjualLain)} jatuh tempo Selasa ini`, ke: "/selasa" });
   for (const [id, label, d, ke] of [
     ["kas-kecil", "Kas kecil", i.kasKecil, "/kas-kecil"],
