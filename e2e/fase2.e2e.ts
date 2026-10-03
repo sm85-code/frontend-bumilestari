@@ -95,3 +95,45 @@ test("catat transaksi: koreksi bulan yang sudah tutup buku", async ({ page }) =>
   await page.getByRole("button", { name: "Simpan" }).click();
   expect(await tulisanTerkirim(panggilan, "POST", "/transaksi")).toMatchObject({ jumlah: "20000", koreksi_periode: "2026-08" });
 });
+
+test("order: lencana cair/belum cair dan retur sebelum cair", async ({ page }) => {
+  const panggilan = await pasangApiTiruan(page);
+  await page.goto("/order");
+  const belum = page.locator("tr", { hasText: "SHP-777" });
+  await expect(belum.getByText("belum cair", { exact: true })).toBeVisible();
+  const cair = page.locator("tr", { hasText: "SHP-888" });
+  await expect(cair.getByText("cair 27/09/2026")).toBeVisible();
+  await expect(cair.getByRole("button", { name: "Retur" })).toHaveCount(0); // sudah cair: lewat file pencairan
+  await expect(page.locator("tr", { hasText: "260922PJ9B35EN" }).first().getByRole("button", { name: "Retur" })).toHaveCount(0); // penjual lain
+
+  await belum.getByRole("button", { name: "Retur" }).click();
+  const dlg = page.locator(".ant-modal", { hasText: "Retur order SHP-777" });
+  await expect(dlg.getByRole("button", { name: "Tandai retur" })).toBeDisabled();
+  await dlg.getByLabel("Alasan retur").fill("rusak saat dikirim");
+  await dlg.getByRole("checkbox").check();
+  await dlg.getByRole("button", { name: "Tandai retur" }).click();
+  expect(await tulisanTerkirim(panggilan, "POST", "/order/o3/retur")).toMatchObject({ alasan: "rusak saat dikirim", kembali_stok: true });
+});
+
+test("laporan belum cair per saluran", async ({ page }) => {
+  await pasangApiTiruan(page);
+  await page.goto("/laporan/belum-cair");
+  await expect(page.getByText("Shopee: 1 order, perkiraan cair Rp905.000")).toBeVisible();
+  await expect(page.locator('[data-saluran="Shopee"]')).toContainText("SHP-777");
+});
+
+test("laba rugi menampilkan belum cair sebagai informasi", async ({ page }) => {
+  await pasangApiTiruan(page, {
+    data: {
+      "/laporan/umum": {
+        dari: "2026-09-01", sampai: "2026-09-30", pemasukan: [], total_pemasukan: "0", biaya: [], total_biaya: "0", laba_bersih: "100000",
+        di_luar_laba: [], arus_kas: [], total_kas_awal: "0", total_kas_akhir: "0", belum_cair: "905000", perkiraan_laba_jika_cair: "1005000",
+      },
+    },
+  });
+  await page.goto("/laporan");
+  const bc = page.locator("[data-belum-cair]");
+  await expect(bc).toContainText("Rp905.000");
+  await expect(bc).toContainText("Perkiraan laba jika semua cair");
+  await expect(bc).toContainText("Rp1.005.000");
+});

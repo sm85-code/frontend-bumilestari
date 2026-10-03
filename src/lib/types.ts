@@ -147,6 +147,7 @@ export interface Dashboard {
   order_aktif_per_status?: Record<string, number>;
   tagihan_penjual_lain_minggu_ini?: string;
   belum_cair_sementara?: string;
+  belum_cair?: string;
   draf_belum_dikirim?: DrafSumber[];
 }
 
@@ -183,6 +184,9 @@ export interface LaporanUmum {
   /** Draf yang belum dikirim (tidak dihitung di laporan ini). */
   draf_belum_dikirim?: DrafSumber[];
   /** Bulan tutup buku: angka dari snapshot saat ditutup. */
+  /** Belum cair per tanggal akhir (AB-BC-2): tidak masuk laba; perkiraan laba jika cair hanya informasi. */
+  belum_cair?: string;
+  perkiraan_laba_jika_cair?: string | null;
   dari_snapshot?: boolean;
   ditutup_pada?: string | null;
 }
@@ -262,7 +266,7 @@ export interface HargaGrosir {
   harga_packing_kayu: string;
 }
 
-export type StatusOrder = "dipesan" | "dikerjakan" | "diambil" | "diterima" | "dicat" | "dikirim" | "selesai" | "batal";
+export type StatusOrder = "dipesan" | "dikerjakan" | "diambil" | "diterima" | "dicat" | "dikirim" | "selesai" | "batal" | "retur";
 
 export interface Order {
   id: string;
@@ -290,6 +294,13 @@ export interface Order {
   tgl_dikirim: string | null;
   tgl_selesai: string | null;
   catatan: string;
+  /* Fase 2.7: status cair diisi oleh pencairan; retur sebelum cair lewat POST /order/{id}/retur. */
+  status_cair?: "belum" | "cair";
+  tgl_cair?: string | null;
+  potongan_aktual?: string | null;
+  tgl_retur?: string | null;
+  alasan_retur?: string | null;
+  kembali_stok?: boolean;
   total_penjualan: string;
   laba_kotor: string;
   /** Sudah masuk pembayaran tukang / penerimaan penjual lain (draf maupun terkirim): harga & batal terkunci. */
@@ -530,4 +541,36 @@ export interface RincianPembayaran extends PembayaranPemasok {
   transaksi_id: string | null;
   total_qty: number;
   items: { order_id: string; no_order: string; produk_sku: string; produk_nama: string; qty: number; pemasok_nama: string; jumlah: string }[];
+}
+
+/* ---------- Belum cair (Fase 2.7) ---------- */
+
+export interface OrderBelumCair {
+  order_id: string;
+  no_order: string;
+  tgl_dikirim: string;
+  penjualan: string;
+  potongan: string;
+  perkiraan_cair: string;
+  status: StatusOrder;
+}
+
+export interface SaluranBelumCair {
+  saluran_id: string;
+  nama: string;
+  akun_id: string | null;
+  jumlah_order: number;
+  total_penjualan: string;
+  total_perkiraan_cair: string;
+  tgl_kirim_tertua: string | null;
+  order: OrderBelumCair[];
+}
+
+export interface BelumCair {
+  per_tanggal: string;
+  jumlah_order: number;
+  total_penjualan: string;
+  total_perkiraan_cair: string;
+  tgl_kirim_tertua: string | null;
+  per_saluran: SaluranBelumCair[];
 }
