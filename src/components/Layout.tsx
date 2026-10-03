@@ -55,7 +55,7 @@ export default function Layout() {
     <div className="min-h-full md:flex">
       <aside className="hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col" aria-label="Menu samping">
         <div className="flex items-center gap-3 bg-hijau px-4 py-4 text-white">
-          <img src="/logo.png" alt="" className="h-10 w-10 rounded-lg bg-white p-0.5" />
+          <img src="/logo.png" alt="" className="h-10 w-10" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold leading-tight">Bumi Lestari</p>
             <p className="truncate text-xs text-white/80">
