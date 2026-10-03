@@ -1,3 +1,4 @@
+import { labelPeran } from "../../lib/format";
 import { Space, Typography } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -65,7 +66,7 @@ export default function MasterPengguna() {
   const kolom: TableColumnsType<User> = [
     { title: "Nama", dataIndex: "nama", fixed: "left", width: 150 },
     { title: "Email", dataIndex: "email", render: (v: string) => <Typography.Text type="secondary">{v}</Typography.Text> },
-    { title: "Peran", dataIndex: "role", render: (v: string) => <Lencana warna={v === "admin" ? "oranye" : v === "owner" ? "hijau" : "abu"}>{v}</Lencana> },
+    { title: "Peran", dataIndex: "role", render: (v: string) => <Lencana warna={v === "admin" ? "oranye" : v === "owner" ? "hijau" : "abu"}>{labelPeran(v)}</Lencana> },
     {
       title: "Status",
       render: (_, u) => (

@@ -39,3 +39,24 @@ export function bulanIni(): string {
 export function bersihkanAngka(teks: string): string {
   return teks.replace(/[^\d]/g, "");
 }
+
+const BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+/** "2026-10" -> "Oktober 2026" */
+export function bulanTahun(periode: string | null | undefined): string {
+  if (!periode) return "-";
+  const [y, m] = periode.split("-");
+  const nama = BULAN[Number(m) - 1];
+  return nama ? `${nama} ${y}` : periode;
+}
+
+/** Huruf pertama kapital, sisanya apa adanya: "tukang kayu" -> "Tukang kayu". */
+export function kapital(teks: string | null | undefined): string {
+  if (!teks) return "";
+  const t = teks.replace(/_/g, " ");
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
+
+const PERAN: Record<string, string> = { admin: "Admin", owner: "Owner", staff: "Staf" };
+export function labelPeran(role: string | null | undefined): string {
+  return role ? (PERAN[role] ?? kapital(role)) : "";
+}

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { Angka, Baris, Card, ErrorBox, Memuat, PageHeader, Progress, Stat, TautanBulat } from "../components/ui";
 import { api } from "../lib/api";
-import { num, rp, tanggal } from "../lib/format";
+import { bulanTahun, num, rp, tanggal } from "../lib/format";
 import type { AkunKas, Dashboard, Imprest } from "../lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -31,6 +31,8 @@ const GAYA_LAIN = { warna: ["#8aa0b3", "#52687c"] as [string, string], ikon: <Wa
 
 function KartuAkun({ akun }: { akun: AkunKas }) {
   const g = GAYA_AKUN[akun.kode] ?? GAYA_LAIN;
+  const [nama, sisa] = akun.nama.split(/\s*\(/);
+  const rincian = sisa?.replace(/\)$/, "");
   return (
     <div
       style={{
@@ -49,7 +51,10 @@ function KartuAkun({ akun }: { akun: AkunKas }) {
         <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 14, background: "rgba(255,255,255,0.92)", color: g.warna[1], display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
           {g.ikon}
         </span>
-        <Typography.Text style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{akun.nama}</Typography.Text>
+        <div style={{ minWidth: 0, lineHeight: 1.25 }}>
+          <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{nama}</div>
+          {rincian && <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>{rincian}</div>}
+        </div>
       </Flex>
       <div>
         <div style={{ fontSize: "clamp(17px, 2.4vw, 24px)", fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{rp(akun.saldo)}</div>
@@ -99,7 +104,7 @@ export default function Beranda() {
           <Stat hero label="Total kas" nilai={rp(data.total_kas)} ke="/keuangan" />
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Stat label={`Laba ${data.periode}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} ke="/laporan" />
+          <Stat label={`Laba ${bulanTahun(data.periode)}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} ke="/laporan" />
         </Col>
         <Col xs={24} sm={12} xl={6}>
           <Stat label="Bayar tukang Selasa ini" nilai={rp(data.utang_pemasok_siap_bayar)} warna="oranye" ke="/pesanan-tukang" />
@@ -110,7 +115,7 @@ export default function Beranda() {
       </Row>
 
       <Card judul="Akun" sub="Saldo setiap akun kas" aksi={<TautanBulat ke="/keuangan" />}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16 }}>
           {data.akun.map((a) => (
             <KartuAkun key={a.id} akun={a} />
           ))}
@@ -145,7 +150,7 @@ export default function Beranda() {
       </Row>
 
       {data.bagian_admin_pratinjau !== null && data.bagian_owner_pratinjau !== null && (
-        <Card judul={`Pratinjau bagi hasil ${data.periode}`} sub="Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan." aksi={<TautanBulat ke="/bagi-hasil" />}>
+        <Card judul={`Pratinjau bagi hasil ${bulanTahun(data.periode)}`} sub="Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan." aksi={<TautanBulat ke="/bagi-hasil" />}>
           <Baris kiri="Admin" kanan={rp(data.bagian_admin_pratinjau)} />
           <Baris kiri="Owner" kanan={rp(data.bagian_owner_pratinjau)} />
         </Card>
