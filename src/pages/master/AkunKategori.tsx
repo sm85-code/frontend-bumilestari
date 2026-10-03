@@ -2,7 +2,8 @@ import { Typography } from "antd";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
-import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Select } from "../../components/ui";
+import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Lencana, Select } from "../../components/ui";
+import { isKategoriSistem, KATEGORI_KAS_KECIL, labelKategori } from "../../lib/kategori";
 import type { AkunKas, Kategori } from "../../lib/types";
 import { useAkun, useAksi, useKategori } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -18,25 +19,40 @@ export default function MasterAkunKategori() {
   const a = useFields({ kode: "", nama: "", jenis: "ewallet", saldo_awal: "" });
   const k = useFields({ nama: "", jenis: "pengeluaran" });
   const kolomAkun: TableColumnsType<AkunKas> = [
-    { title: "Akun", dataIndex: "nama", fixed: "left", width: 170 },
+    { title: "Akun kas", dataIndex: "nama", fixed: "left", width: 170 },
+    { title: "Plafon", dataIndex: "plafon", align: "right", render: (v: string | null) => (v ? <Angka>{rp(v)}</Angka> : "—") },
     { title: "Kode", dataIndex: "kode", render: (v: string) => <Typography.Text type="secondary">{v}</Typography.Text> },
     { title: "Jenis", dataIndex: "jenis", render: (v: string) => JENIS_AKUN[v] ?? v },
     { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
   ];
   const kolomKategori: TableColumnsType<Kategori> = [
-    { title: "Kategori", dataIndex: "nama" },
+    { title: "Kategori", dataIndex: "nama", render: (v: string) => (labelKategori(v) !== v ? <>{labelKategori(v)} <Typography.Text type="secondary">({v})</Typography.Text></> : v) },
     { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "pemasukan" ? "Pemasukan" : "Pengeluaran") },
+    {
+      title: "Dipakai di",
+      render: (_, k) =>
+        isKategoriSistem(k) ? (
+          <Lencana warna="oranye">sistem (otomatis)</Lencana>
+        ) : KATEGORI_KAS_KECIL.some((n) => n.toLowerCase() === k.nama.trim().toLowerCase()) && k.jenis === "pengeluaran" ? (
+          <Lencana warna="hijau">kas kecil & manual</Lencana>
+        ) : (
+          <Lencana>manual</Lencana>
+        ),
+    },
   ];
 
   return (
     <>
-      <Card judul="Akun kas" aksi={<Button kecil onClick={() => setDialog("akun")}><PlusOutlined /> Akun</Button>}>
+      <Card judul="Akun kas & plafon" aksi={<Button kecil onClick={() => setDialog("akun")}><PlusOutlined /> Akun kas</Button>}>
         <ErrorBox error={akunQ.error} />
         <DataTabel kolom={kolomAkun} data={akunQ.data ?? []} rowKey="id" minLebar={460} />
       </Card>
       <Card judul="Kategori transaksi" aksi={<Button kecil onClick={() => setDialog("kategori")}><PlusOutlined /> Kategori</Button>}>
         <ErrorBox error={kategoriQ.error} />
-        <DataTabel kolom={kolomKategori} data={kategoriQ.data ?? []} rowKey="id" minLebar={320} />
+        <Typography.Paragraph type="secondary">
+          Kategori <b>sistem</b> hanya dipakai transaksi otomatis (bayar tukang & supplier, penerimaan penjual lain, gaji, tagihan rutin, bagi hasil) dan tidak muncul di form manual. Staf hanya melihat Transport, Packing, Operasional, Lainnya.
+        </Typography.Paragraph>
+        <DataTabel kolom={kolomKategori} data={kategoriQ.data ?? []} rowKey="id" minLebar={420} />
       </Card>
 
       {dialog === "akun" && (

@@ -46,6 +46,10 @@ export interface Transaksi {
   jumlah: string;
   keterangan: string;
   dibatalkan: boolean;
+  /** Sumber transaksi otomatis (pembayaran_pemasok, penerimaan_reseller, gaji, tagihan, bagi_hasil, sisihan); null = manual. */
+  ref_jenis?: string | null;
+  ref_id?: string | null;
+  created_at?: string;
 }
 
 export interface TransaksiIn {

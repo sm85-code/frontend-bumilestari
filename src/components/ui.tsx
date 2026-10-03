@@ -250,16 +250,27 @@ function ambilOpsi(anak: ReactNode, hasil: OpsiSelect[] = []): OpsiSelect[] {
   return hasil;
 }
 
-export const Select = ({ children, value, onChange, disabled }: SelectHTMLAttributes<HTMLSelectElement>) => (
-  <ASelect
-    style={{ width: "100%" }}
-    value={value === undefined || value === null ? undefined : String(value)}
-    options={ambilOpsi(children)}
-    disabled={disabled}
-    showSearch={{ optionFilterProp: "label" }}
-    onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
-  />
-);
+/**
+ * Pilihan (antd Select) dengan anak `<option>`. Nilai "" tanpa opsi bernilai "" berarti belum dipilih,
+ * sehingga `placeholder` (mis. "Pilih kategori") yang tampil.
+ */
+export const Select = ({ children, value, onChange, disabled, placeholder, ...p }: SelectHTMLAttributes<HTMLSelectElement> & { placeholder?: string }) => {
+  const opsi = ambilOpsi(children);
+  const v = value === undefined || value === null ? undefined : String(value);
+  const tampil = v === "" && !opsi.some((o) => o.value === "") ? undefined : v;
+  return (
+    <ASelect
+      style={{ width: "100%" }}
+      value={tampil}
+      options={opsi}
+      disabled={disabled}
+      placeholder={placeholder}
+      aria-label={p["aria-label"]}
+      showSearch={{ optionFilterProp: "label" }}
+      onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
+    />
+  );
+};
 
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null;

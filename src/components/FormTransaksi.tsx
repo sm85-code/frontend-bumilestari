@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Form, Segmented } from "antd";
+import { Button as AButton, Form, Segmented, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select } from "./ui";
 import { api } from "../lib/api";
 import { bersihkanAngka, hariIni, rp } from "../lib/format";
+import { labelKategori, pilihanKategori } from "../lib/kategori";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
 
 interface Props {
@@ -12,10 +13,19 @@ interface Props {
   /** Kunci jenis transaksi (mis. staf hanya pengeluaran). */
   jenisTetap?: "masuk" | "keluar";
   akunAwal?: string;
+  /** Staf: hanya 4 kategori kas kecil. */
+  staf?: boolean;
+  /** Kategori sebagai tombol besar (layar kas kecil), bukan daftar pilihan. */
+  tombolKategori?: boolean;
   onSukses?: () => void;
 }
 
-export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, onSukses }: Props) {
+/**
+ * Form transaksi manual. Kategori sengaja TIDAK punya nilai bawaan (wajib dipilih) dan kategori sistem
+ * (bagi hasil, gaji, biaya produksi, tagihan rutin, penjualan penjual lain) tidak ditawarkan: transaksi itu
+ * dibuat otomatis dari halaman asalnya. Aturan daftar ada di `lib/kategori.ts`.
+ */
+export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, staf, tombolKategori, onSukses }: Props) {
   const qc = useQueryClient();
   const [akunId, setAkunId] = useState(akunAwal ?? akun[0]?.id ?? "");
   const [jenis, setJenis] = useState<"masuk" | "keluar">(jenisTetap ?? "keluar");
@@ -23,24 +33,25 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
   const [jumlah, setJumlah] = useState("");
   const [keterangan, setKeterangan] = useState("");
   const [tgl, setTgl] = useState(hariIni());
+  const akunPilih = akun.find((a) => a.id === akunId);
 
-  const pilihan = useMemo(
-    () => kategori.filter((k) => k.jenis === (jenis === "masuk" ? "pemasukan" : "pengeluaran")),
-    [kategori, jenis],
-  );
-  const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : (pilihan[0]?.id ?? "");
+  const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, akun: akunPilih }), [kategori, jenis, staf, akunPilih]);
+  // Ganti akun/jenis: kategori yang tidak ada lagi di daftar dianggap belum dipilih.
+  const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : "";
 
   const simpan = useMutation({
     mutationFn: (body: TransaksiIn) => api<Transaksi>("/transaksi", { body }),
     onSuccess: () => {
       setJumlah("");
       setKeterangan("");
+      setKategoriId("");
       void qc.invalidateQueries();
       onSukses?.();
     },
   });
 
   function kirim() {
+    if (!kategoriAktif) return;
     simpan.mutate({
       tanggal: tgl,
       akun_id: akunId,
@@ -54,7 +65,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
   return (
     <Formulir onKirim={kirim}>
       {akun.length > 1 && (
-        <Field label="Akun">
+        <Field label="Akun kas">
           <Select value={akunId} onChange={(e) => setAkunId(e.target.value)}>
             {akun.map((a) => (
               <option key={a.id} value={a.id}>
@@ -66,38 +77,63 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
       )}
       {!jenisTetap && (
         <Form.Item>
-        <Segmented
-          block
-          value={jenis}
-          onChange={(v) => setJenis(v as "keluar" | "masuk")}
-          options={[
-            { label: "Pengeluaran", value: "keluar" },
-            { label: "Pemasukan", value: "masuk" },
-          ]}
-          aria-label="Jenis transaksi"
-        />
+          <Segmented
+            block
+            value={jenis}
+            onChange={(v) => setJenis(v as "keluar" | "masuk")}
+            options={[
+              { label: "Pengeluaran", value: "keluar" },
+              { label: "Pemasukan", value: "masuk" },
+            ]}
+            aria-label="Jenis transaksi"
+          />
         </Form.Item>
       )}
-      <Field label="Kategori">
-        <Select value={kategoriAktif} onChange={(e) => setKategoriId(e.target.value)} required>
-          {pilihan.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.nama}
-            </option>
-          ))}
-        </Select>
-      </Field>
+      {tombolKategori ? (
+        <Form.Item label="Kategori" required labelCol={{ span: 24 }}>
+          <div role="radiogroup" aria-label="Kategori" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {pilihan.map((k) => {
+              const on = k.id === kategoriAktif;
+              return (
+                <AButton
+                  key={k.id}
+                  role="radio"
+                  aria-checked={on}
+                  size="large"
+                  type={on ? "primary" : "default"}
+                  onClick={() => setKategoriId(k.id)}
+                  style={{ height: 52, fontWeight: 600 }}
+                >
+                  {labelKategori(k.nama)}
+                </AButton>
+              );
+            })}
+          </div>
+          {pilihan.length === 0 && <Typography.Text type="danger">Kategori kas kecil belum tersedia. Hubungi admin.</Typography.Text>}
+        </Form.Item>
+      ) : (
+        <Field label="Kategori">
+          <Select aria-label="Kategori" placeholder="Pilih kategori" value={kategoriAktif} onChange={(e) => setKategoriId(e.target.value)} required>
+            {pilihan.map((k) => (
+              <option key={k.id} value={k.id}>
+                {labelKategori(k.nama)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
       <Field label="Jumlah (Rp)" hint={jumlah ? rp(bersihkanAngka(jumlah)) : undefined}>
-        <Input inputMode="numeric" required placeholder="0" value={jumlah} onChange={(e) => setJumlah(e.target.value)} />
+        <Input inputMode="numeric" required placeholder="0" aria-label="Jumlah" value={jumlah} onChange={(e) => setJumlah(e.target.value)} />
       </Field>
       <Field label="Keterangan">
-        <Input value={keterangan} onChange={(e) => setKeterangan(e.target.value)} placeholder="mis. beli lakban" />
+        <Input value={keterangan} onChange={(e) => setKeterangan(e.target.value)} placeholder="mis. lakban 5 gulung" />
       </Field>
-      <Field label="Tanggal">
+      <Field label="Tanggal" hint="Lupa mencatat kemarin? Pilih tanggal kemarin.">
         <InputTanggal value={tgl} onChange={setTgl} />
       </Field>
       <AksiForm error={simpan.error}>
-        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !jumlah} penuh>
+        {!kategoriAktif && <Typography.Text type="secondary">Pilih kategori dulu.</Typography.Text>}
+        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah)} penuh>
           {simpan.isPending ? "Menyimpan…" : "Simpan"}
         </Button>
       </AksiForm>
