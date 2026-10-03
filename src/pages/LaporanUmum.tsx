@@ -30,7 +30,7 @@ function TabelKategori({ judul, baris, total, labelTotal }: { judul: string; bar
   );
 }
 
-export default function LaporanUmumPage() {
+export default function LaporanUmumPage({ tertanam }: { tertanam?: boolean } = {}) {
   const awalBulan = `${hariIni().slice(0, 7)}-01`;
   const [dari, setDari] = useState(awalBulan);
   const [sampai, setSampai] = useState(hariIni());
@@ -53,7 +53,7 @@ export default function LaporanUmumPage() {
 
   return (
     <>
-      <PageHeader judul="Laba rugi" sub="Pemasukan, biaya, laba bersih, dan arus kas per akun kas" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
+      {!tertanam && <PageHeader judul="Laba rugi" sub="Pemasukan, biaya, laba bersih, dan arus kas per akun kas" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />}
       {d?.dari_snapshot && (
         <Alert type="success" showIcon style={{ marginBottom: 16 }} title={`Bulan ini sudah tutup buku${d.ditutup_pada ? ` (${waktu(d.ditutup_pada)})` : ""}: angka terkunci dari snapshot.`} />
       )}

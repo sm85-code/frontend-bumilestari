@@ -19,6 +19,7 @@ import {
   ToolOutlined,
   UserOutlined,
   WalletOutlined,
+  DashboardOutlined,
 } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
@@ -70,6 +71,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
   {
     grup: "Laporan",
     item: [
+      { ke: "/ringkasan", label: "Ringkasan", ikon: <DashboardOutlined /> },
       { ke: "/laporan", label: "Laba rugi", ikon: <BarChartOutlined /> },
       { ke: "/laporan/kas-kecil", label: "Kas kecil", ikon: <FileTextOutlined /> },
       { ke: "/laporan/belum-cair", label: "Belum cair", ikon: <HourglassOutlined /> },

@@ -8,7 +8,8 @@ const Beranda = lazy(() => import("./pages/Beranda"));
 const KasKecil = lazy(() => import("./pages/KasKecil"));
 const Keuangan = lazy(() => import("./pages/Keuangan"));
 const LaporanKasKecilPage = lazy(() => import("./pages/LaporanKasKecil"));
-const LaporanUmumPage = lazy(() => import("./pages/LaporanUmum"));
+const LaporanKeuanganPage = lazy(() => import("./pages/LaporanKeuangan"));
+const RingkasanOwnerPage = lazy(() => import("./pages/RingkasanOwner"));
 import Masuk from "./pages/Masuk";
 const BagiHasilPage = lazy(() => import("./pages/BagiHasil"));
 const GajiPage = lazy(() => import("./pages/Gaji"));
@@ -218,7 +219,17 @@ export default function App() {
           element={
             <WajibGantiPassword>
               <HanyaPemilik>
-                <LaporanUmumPage />
+                <LaporanKeuanganPage />
+              </HanyaPemilik>
+            </WajibGantiPassword>
+          }
+        />
+        <Route
+          path="/ringkasan"
+          element={
+            <WajibGantiPassword>
+              <HanyaPemilik>
+                <RingkasanOwnerPage />
               </HanyaPemilik>
             </WajibGantiPassword>
           }

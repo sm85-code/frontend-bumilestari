@@ -123,17 +123,10 @@ test("laporan belum cair per saluran", async ({ page }) => {
 });
 
 test("laba rugi menampilkan belum cair sebagai informasi", async ({ page }) => {
-  await pasangApiTiruan(page, {
-    data: {
-      "/laporan/umum": {
-        dari: "2026-09-01", sampai: "2026-09-30", pemasukan: [], total_pemasukan: "0", biaya: [], total_biaya: "0", laba_bersih: "100000",
-        di_luar_laba: [], arus_kas: [], total_kas_awal: "0", total_kas_akhir: "0", belum_cair: "905000", perkiraan_laba_jika_cair: "1005000",
-      },
-    },
-  });
+  await pasangApiTiruan(page);
   await page.goto("/laporan");
   const bc = page.locator("[data-belum-cair]");
   await expect(bc).toContainText("Rp905.000");
   await expect(bc).toContainText("Perkiraan laba jika semua cair");
-  await expect(bc).toContainText("Rp1.005.000");
+  await expect(bc).toContainText("Rp1.770.000");
 });
