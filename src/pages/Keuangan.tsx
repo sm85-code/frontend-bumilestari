@@ -6,15 +6,18 @@ import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import FormTransaksi from "../components/FormTransaksi";
+import { OtomatisDari } from "../components/OtomatisDari";
 import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Lencana, Memuat, PageHeader, Select, TombolLink, useDialog } from "../components/ui";
 import { api, query } from "../lib/api";
 import { num, rp, tanggal } from "../lib/format";
+import { LABEL_JENIS_TRANSFER, sumberTransfer } from "../lib/sumber";
 import type { AkunKas, Kategori, Transaksi, Transfer } from "../lib/types";
 
 const JENIS: Record<string, string> = { kas: "Kas", bank: "Bank", ewallet: "E-wallet", kas_kecil: "Kas kecil", kas_iklan: "Kas iklan" };
 
 const kolomAkun: TableColumnsType<AkunKas> = [
-  { title: "Akun", dataIndex: "nama" },
+  { title: "Akun kas", dataIndex: "nama" },
+  { title: "Plafon", dataIndex: "plafon", align: "right", render: (v: string | null) => (v ? <Angka>{rp(v)}</Angka> : "—") },
   { title: "Jenis", dataIndex: "jenis", render: (v: string) => JENIS[v] ?? v },
   { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
 ];
@@ -41,14 +44,18 @@ export default function Keuangan() {
   const kolomTransfer: TableColumnsType<Transfer> = [
     { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Dari → ke", render: (_, t) => `${namaAkun.get(t.dari_akun_id) ?? "—"} → ${namaAkun.get(t.ke_akun_id) ?? "—"}` },
+    { title: "Jenis", dataIndex: "jenis", render: (v: string) => LABEL_JENIS_TRANSFER[v] ?? v },
     { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
     { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
     { title: "Status", render: (_, t) => (t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>) },
     {
       title: "Aksi",
-      width: 100,
-      render: (_, t) =>
-        !t.dibatalkan && (
+      width: 190,
+      render: (_, t) => {
+        if (t.dibatalkan) return null;
+        const sumber = sumberTransfer(t);
+        if (sumber) return <OtomatisDari sumber={sumber} />;
+        return (
           <TombolLink
             bahaya
             disabled={aksi.isPending}
@@ -60,14 +67,16 @@ export default function Keuangan() {
           >
             Batalkan
           </TombolLink>
-        ),
+        );
+      },
     },
   ];
 
   return (
     <>
       <PageHeader
-        judul="Keuangan"
+        judul="Kas & transaksi"
+        sub="Saldo akun kas, transaksi manual, dan transfer antar akun kas"
         aksi={
           <Button variant={form ? "pinggir" : "utama"} onClick={() => setForm(!form)}>
             {form ? "Tutup formulir" : <><PlusOutlined /> Catat transaksi</>}
@@ -84,7 +93,7 @@ export default function Keuangan() {
         )}
         <Col xs={24} lg={form ? 16 : 24}>
           <Flex vertical gap="middle">
-            <Card judul="Saldo akun">
+            <Card judul="Saldo akun kas">
               <DataTabel
                 kolom={kolomAkun}
                 data={akun}
@@ -96,9 +105,9 @@ export default function Keuangan() {
             <Card judul="Riwayat transaksi">
               <Row>
                 <Col xs={24} md={8}>
-                  <Field label="Filter akun">
+                  <Field label="Filter akun kas">
                     <Select value={akunId} onChange={(e) => setAkunId(e.target.value)}>
-                      <option value="">Semua akun</option>
+                      <option value="">Semua akun kas</option>
                       {akun.map((a) => (
                         <option key={a.id} value={a.id}>
                           {a.nama}
@@ -108,11 +117,11 @@ export default function Keuangan() {
                   </Field>
                 </Col>
               </Row>
-              <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal memuat={trxQ.isLoading} />
+              <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal memuat={trxQ.isLoading} kosong="Belum ada transaksi. Tekan 'Catat transaksi' untuk mencatat pemasukan atau pengeluaran manual." />
             </Card>
-            <Card judul="Riwayat transfer antar akun">
+            <Card judul="Riwayat transfer antar akun kas">
               <ErrorBox error={transferQ.error ?? aksi.error} />
-              <DataTabel kolom={kolomTransfer} data={transferQ.data ?? []} rowKey="id" minLebar={640} kosong="Belum ada transfer." />
+              <DataTabel kolom={kolomTransfer} data={transferQ.data ?? []} rowKey="id" minLebar={760} kosong="Belum ada transfer. Tarik saldo dan isi ulang kas dicatat dari Rutinitas Selasa." />
             </Card>
           </Flex>
         </Col>
