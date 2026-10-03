@@ -6,12 +6,13 @@ import { Link } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { Angka, Baris, BarisTotal, Card, DataTabel, ErrorBox, Field, Input, InputTanggal, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
-import { bersihkanAngka, bulanIni, num, rp, tanggal } from "../lib/format";
+import { bersihkanAngka, bulanIni, bulanTahun, num, rp, tanggal } from "../lib/format";
+import { labelKategori } from "../lib/kategori";
 import type { LaporanKasKecil } from "../lib/types";
 
 const angka = (v: string) => <Angka>{rp(v)}</Angka>;
 const kolomKategori: TableColumnsType<LaporanKasKecil["per_kategori"][number]> = [
-  { title: "Kategori", dataIndex: "kategori" },
+  { title: "Kategori", dataIndex: "kategori", render: (v: string) => labelKategori(v) },
   { title: "Transaksi", dataIndex: "jumlah_transaksi", align: "right", width: 100, render: (v: number) => <Typography.Text type="secondary">{v}</Typography.Text> },
   { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
 ];
@@ -24,14 +25,17 @@ const kolomMinggu: TableColumnsType<LaporanKasKecil["per_minggu"][number]> = [
 ];
 const kolomRincian: TableColumnsType<LaporanKasKecil["transaksi"][number]> = [
   { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
-  { title: "Kategori", dataIndex: "kategori" },
+  { title: "Kategori", dataIndex: "kategori", render: (v: string) => labelKategori(v) },
   { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
   { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
 ];
 
 export default function LaporanKasKecilPage() {
   const { user } = useAuth();
-  const [periode, setPeriode] = useState(bulanIni());
+  const pemilik = isPemilik(user?.role);
+  const [pilihPeriode, setPeriode] = useState(bulanIni());
+  // Staf hanya melihat riwayat bulan ini (Bagian 4.2); cek uang fisik khusus admin.
+  const periode = pemilik ? pilihPeriode : bulanIni();
   const [fisik, setFisik] = useState("");
   const saldoFisik = bersihkanAngka(fisik);
   const q = useQuery({
@@ -43,7 +47,12 @@ export default function LaporanKasKecilPage() {
 
   return (
     <>
-      <PageHeader judul="Laporan kas kecil" aksi={isPemilik(user?.role) && <Link to="/laporan">← Laporan umum</Link>} />
+      <PageHeader
+        judul={pemilik ? "Laporan kas kecil" : "Riwayat bulan ini"}
+        sub={pemilik ? undefined : `Catatan kas kecil ${bulanTahun(periode)}. Salah catat? Minta admin membatalkan.`}
+        aksi={pemilik ? <Link to="/laporan">← Laba rugi</Link> : <Link to="/kas-kecil">← Kas kecil</Link>}
+      />
+      {pemilik && (
       <Card>
         <Row gutter={16}>
           <Col xs={24} md={8}>
@@ -58,6 +67,7 @@ export default function LaporanKasKecilPage() {
           </Col>
         </Row>
       </Card>
+      )}
 
       {q.isLoading && <Memuat />}
       <ErrorBox error={q.error} />
@@ -73,19 +83,19 @@ export default function LaporanKasKecilPage() {
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={12}>
-              <Card judul={`Ringkasan ${d.periode}`}>
+              <Card judul={`Ringkasan ${bulanTahun(d.periode)}`}>
                 <Baris kiri="Saldo awal bulan" kanan={rp(d.saldo_awal)} />
                 <Baris kiri="Total dipakai" kanan={rp(d.total_pemakaian)} />
                 <Baris kiri="Total pengisian" kanan={rp(d.total_pengisian)} />
                 <Baris kiri="Saldo akhir" kanan={rp(d.saldo_akhir)} tebal />
                 <Typography.Text type={d.sesuai_plafon ? "success" : "warning"}>
-                  {d.sesuai_plafon ? `Sudah sesuai jatah ${rp(d.plafon)}` : `Belum kembali ke jatah ${rp(d.plafon)}`}
+                  {d.sesuai_plafon ? `Sudah sesuai plafon ${rp(d.plafon)}` : `Belum kembali ke plafon ${rp(d.plafon)}`}
                 </Typography.Text>
               </Card>
             </Col>
             <Col xs={24} lg={12}>
               <Card judul="Dipakai per kategori">
-                <DataTabel kolom={kolomKategori} data={d.per_kategori} rowKey="kategori" minLebar={300} kosong="Belum ada pengeluaran." />
+                <DataTabel kolom={kolomKategori} data={d.per_kategori} rowKey="kategori" minLebar={300} kosong="Belum ada pengeluaran bulan ini." />
               </Card>
             </Col>
           </Row>
@@ -103,7 +113,7 @@ export default function LaporanKasKecilPage() {
           </Card>
 
           <Card judul="Rincian pengeluaran">
-            <DataTabel kolom={kolomRincian} data={d.transaksi} rowKey={(t) => `${t.tanggal}-${t.kategori}-${t.jumlah}-${t.keterangan}`} minLebar={500} kosong="Tidak ada." />
+            <DataTabel kolom={kolomRincian} data={d.transaksi} rowKey={(t) => `${t.tanggal}-${t.kategori}-${t.jumlah}-${t.keterangan}`} minLebar={500} kosong="Belum ada pengeluaran bulan ini." />
           </Card>
         </>
       )}

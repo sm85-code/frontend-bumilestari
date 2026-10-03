@@ -1,6 +1,7 @@
 import { labelPeran } from "../lib/format";
 import { useState } from "react";
-import { useAuth } from "../auth/AuthContext";
+import { isPemilik, useAuth } from "../auth/AuthContext";
+import { PanduanStaf, usePanduanStaf } from "../components/PanduanStaf";
 import { Alert, Descriptions } from "antd";
 import {
   AksiForm,
@@ -22,6 +23,8 @@ export default function Akun() {
   const [error, setError] = useState<unknown>(null);
   const [sukses, setSukses] = useState(false);
   const [proses, setProses] = useState(false);
+  const staf = Boolean(user) && !isPemilik(user?.role);
+  const panduan = usePanduanStaf(user?.id, false);
 
   async function ganti() {
     setError(null);
@@ -110,10 +113,18 @@ export default function Akun() {
             </AksiForm>
           </Formulir>
         </Card>
+        {staf && (
+          <Card judul="Panduan">
+            <Button variant="pinggir" onClick={panduan.tampilkan}>
+              Buka panduan kas kecil
+            </Button>
+          </Card>
+        )}
         <Button variant="pinggir" penuh onClick={() => void keluar()}>
           Keluar
         </Button>
       </div>
+      <PanduanStaf buka={panduan.buka} onTutup={panduan.tutup} />
     </>
   );
 }
