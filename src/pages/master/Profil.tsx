@@ -30,7 +30,7 @@ function FormProfil({ p, bolehUbah }: { p: Profil; bolehUbah: boolean }) {
     >
         <Row gutter={16}>
 <Col xs={24} md={12}>
-          <Field label="Nama usaha (tercetak di PO dan invoice)">
+          <Field label="Nama usaha (tercetak di rekap pembayaran dan invoice)">
             <Input required {...bind("nama_usaha")} />
           </Field>
 </Col>

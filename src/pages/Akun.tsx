@@ -27,7 +27,7 @@ export default function Akun() {
     setError(null);
     setSukses(false);
     if (baru !== ulang) {
-      setError(new Error("Password baru dan ulangannya tidak sama"));
+      setError(new Error("Kata sandi baru dan ulangannya tidak sama"));
       return;
     }
     setProses(true);
@@ -50,25 +50,25 @@ export default function Akun() {
 
   return (
     <>
-      <PageHeader judul="Akun" />
+      <PageHeader judul="Profil saya" />
       <div style={{ display: "grid", gap: 20, maxWidth: 640, width: "100%" }}>
         {user?.must_change_password && (
           <Alert
             type="warning"
             showIcon
-            title="Demi keamanan, ganti password bawaan Anda dulu sebelum memakai aplikasi."
+            title="Demi keamanan, ganti kata sandi bawaan Anda dulu sebelum memakai aplikasi."
           />
         )}
-        <Card judul="Akun saya">
+        <Card judul="Data saya">
           <Descriptions column={1} size="small" colon={false}>
             <Descriptions.Item label="Nama">{user?.nama}</Descriptions.Item>
             <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
             <Descriptions.Item label="Peran">{labelPeran(user?.role)}</Descriptions.Item>
           </Descriptions>
         </Card>
-        <Card judul="Ganti password">
+        <Card judul="Ganti kata sandi">
           <Formulir onKirim={ganti}>
-            <Field label="Password saat ini">
+            <Field label="Kata sandi saat ini">
               <Input
                 type="password"
                 autoComplete="current-password"
@@ -77,7 +77,7 @@ export default function Akun() {
                 onChange={(e) => setLama(e.target.value)}
               />
             </Field>
-            <Field label="Password baru" hint="Minimal 8 karakter">
+            <Field label="Kata sandi baru" hint="Minimal 8 karakter">
               <Input
                 type="password"
                 autoComplete="new-password"
@@ -87,7 +87,7 @@ export default function Akun() {
                 onChange={(e) => setBaru(e.target.value)}
               />
             </Field>
-            <Field label="Ulangi password baru">
+            <Field label="Ulangi kata sandi baru">
               <Input
                 type="password"
                 autoComplete="new-password"
@@ -101,11 +101,11 @@ export default function Akun() {
                 <Alert
                   type="success"
                   showIcon
-                  title="Password berhasil diganti."
+                  title="Kata sandi berhasil diganti."
                 />
               )}
               <Button type="submit" disabled={proses} penuh>
-                Simpan password
+                Simpan kata sandi
               </Button>
             </AksiForm>
           </Formulir>

@@ -87,7 +87,7 @@ export default function OrderPage() {
       ),
     },
     {
-      title: "Pemasok",
+      title: "Tukang & supplier",
       width: 130,
       render: (_, o) =>
         o.pemasok_id ? (

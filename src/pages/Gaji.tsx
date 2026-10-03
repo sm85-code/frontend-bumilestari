@@ -142,7 +142,7 @@ function TabKaryawan() {
           </Col>
         </Row>
         <Typography.Paragraph type="secondary">
-          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di halaman Selasa.
+          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di Rutinitas Selasa.
         </Typography.Paragraph>
         <ErrorBox error={gajiQ.error ?? aksi.error} />
         <DataTabel
@@ -178,7 +178,7 @@ function TabLangganan() {
   const [tglBayar, setTglBayar] = useState(hariIni());
   const rupiah = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomLangganan: TableColumnsType<Langganan> = [
-    { title: "Langganan", dataIndex: "nama", fixed: "left", width: 160 },
+    { title: "Tagihan rutin", dataIndex: "nama", fixed: "left", width: 160 },
     { title: "Perkiraan / bulan", dataIndex: "jumlah_bulanan", align: "right", render: rupiah },
     {
       title: "Aksi",
@@ -197,7 +197,7 @@ function TabLangganan() {
     },
   ];
   const kolomTagihan: TableColumnsType<Tagihan> = [
-    { title: "Langganan", dataIndex: "langganan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
+    { title: "Tagihan rutin", dataIndex: "langganan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
     { title: "Jumlah", dataIndex: "jumlah", align: "right", render: rupiah },
     { title: "Dibayar", render: (_, t) => (t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <Angka>{tanggal(t.tanggal_bayar)}</Angka>) },
     {
@@ -221,12 +221,12 @@ function TabLangganan() {
 
   return (
     <>
-      <Card judul="Daftar langganan" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Langganan</Button>}>
+      <Card judul="Daftar tagihan rutin" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Tagihan rutin</Button>}>
         <Typography.Paragraph type="secondary">Dibayar langsung saat tagihan datang (biasanya minggu ke-4); tidak dicicil. Nominal di sini hanya perkiraan.</Typography.Paragraph>
-        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada langganan." />
+        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada tagihan rutin (listrik, air, wifi, …). Tekan '+ Tagihan rutin'." />
       </Card>
 
-      <Card judul="Bayar tagihan">
+      <Card judul="Bayar tagihan rutin">
         <Row gutter={16} align="bottom">
           <Col xs={24} md={6}>
             <Field label="Periode tagihan">
@@ -252,7 +252,7 @@ function TabLangganan() {
       </Card>
 
       {baru && (
-        <Dialog judul="Langganan baru" onTutup={() => setBaru(false)}>
+        <Dialog judul="Tagihan rutin baru" onTutup={() => setBaru(false)}>
           <Formulir
             onKirim={() =>
               aksi.mutate(
@@ -281,7 +281,7 @@ function TabLangganan() {
         </Dialog>
       )}
       {bayar && (
-        <Dialog judul={`Bayar tagihan ${bulanTahun(periode)}`} onTutup={() => setBayar(false)}>
+        <Dialog judul={`Bayar tagihan rutin ${bulanTahun(periode)}`} onTutup={() => setBayar(false)}>
           <Typography.Paragraph type="secondary">Isi tagihan sebenarnya (kosongkan/0 untuk dilewati). Dibayar dari kas utama.</Typography.Paragraph>
           <Formulir
             onKirim={() => {
@@ -319,11 +319,11 @@ export default function GajiPage() {
   const [tab, setTab] = useState<"gaji" | "langganan">("gaji");
   return (
     <>
-      <PageHeader judul="Gaji dan langganan" sub="Karyawan tetap, gaji bulanan, dan tagihan langganan" />
+      <PageHeader judul="Gaji & tagihan rutin" sub="Karyawan tetap, gaji bulanan, dan tagihan rutin (listrik, air, wifi, …)" />
       <Tabs
         daftar={[
           { id: "gaji", label: "Karyawan & gaji" },
-          { id: "langganan", label: "Langganan" },
+          { id: "langganan", label: "Tagihan rutin" },
         ]}
         aktif={tab}
         onPilih={setTab}

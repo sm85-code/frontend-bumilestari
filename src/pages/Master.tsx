@@ -22,13 +22,13 @@ export default function Master() {
     { id: "pelanggan", label: "Penjual lain" },
     { id: "harga", label: "Harga grosir" },
     { id: "saluran", label: "Saluran" },
-    { id: "akun", label: "Akun & kategori" },
+    { id: "akun", label: "Akun kas & kategori" },
     ...(admin ? [{ id: "pengguna" as const, label: "Pengguna" }] : []),
     { id: "profil", label: "Profil UMKM" },
   ];
   return (
     <>
-      <PageHeader judul="Master data" sub="Produk, tukang, penjual lain, harga, akun, dan profil usaha" />
+      <PageHeader judul="Data master" sub="Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna, dan profil usaha" />
       <Tabs daftar={daftar} aktif={tab} onPilih={setTab} />
       {tab === "produk" && <MasterProduk />}
       {tab === "pemasok" && <MasterPemasok />}

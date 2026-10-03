@@ -153,7 +153,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Biaya ke pemasok (Rp)" hint="Kosong = biaya katalog">
+        <Field label="Biaya ke tukang & supplier (Rp)" hint="Kosong = biaya katalog">
           <Input inputMode="numeric" {...bind("biaya_pokok")} />
         </Field>
 </Col>
