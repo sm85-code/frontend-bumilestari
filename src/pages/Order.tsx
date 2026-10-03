@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import FormOrder from "../components/FormOrder";
+import FormUbahOrder from "../components/FormUbahOrder";
 import { PlusOutlined } from "@ant-design/icons";
 import { Col, Row, Typography } from "antd";
 import type { TableColumnsType } from "antd";
@@ -19,6 +20,7 @@ export default function OrderPage() {
   const [status, setStatus] = useState("");
   const [jenis, setJenis] = useState("");
   const [tambah, setTambah] = useState(false);
+  const [ubah, setUbah] = useState<Order | null>(null);
   const q = useQuery({
     queryKey: ["order", status, jenis],
     queryFn: () => api<Order[]>(`/order${query({ status_order: status, jenis_produk: jenis })}`),
@@ -37,6 +39,7 @@ export default function OrderPage() {
   function majukan(o: Order, berikut: StatusOrder) {
     if (!o.pemasok_id && (berikut === "dikerjakan" || berikut === "diterima")) {
       message.warning("Pilih tukang/supplier dulu sebelum order dikerjakan.");
+      setUbah(o);
       return;
     }
     aksi.mutate({ path: `/order/${o.id}/status`, body: { status: berikut } });
@@ -83,7 +86,18 @@ export default function OrderPage() {
         </>
       ),
     },
-    { title: "Pemasok", width: 120, render: (_, o) => (o.pemasok_id ? pemasok.get(o.pemasok_id)?.nama : <Typography.Text type="warning">belum dipilih</Typography.Text>) },
+    {
+      title: "Pemasok",
+      width: 130,
+      render: (_, o) =>
+        o.pemasok_id ? (
+          pemasok.get(o.pemasok_id)?.nama
+        ) : o.status === "selesai" || o.status === "batal" ? (
+          "—"
+        ) : (
+          <TombolLink onClick={() => setUbah(o)}>Pilih tukang</TombolLink>
+        ),
+    },
     {
       title: "Total",
       align: "right",
@@ -108,6 +122,7 @@ export default function OrderPage() {
                 <TombolLink disabled={aksi.isPending} onClick={() => majukan(o, berikut)}>
                   → {LABEL_STATUS[berikut]}
                 </TombolLink>
+                <TombolLink onClick={() => setUbah(o)}>Ubah</TombolLink>
                 <TombolLink bahaya onClick={() => void konfirmasi("Batalkan order ini?", { ok: "Batalkan order", bahaya: true }).then((ya) => ya && aksi.mutate({ path: `/order/${o.id}/status`, body: { status: "batal" } }))}>
                   Batalkan
                 </TombolLink>
@@ -156,6 +171,11 @@ export default function OrderPage() {
       </Card>
       <ErrorBox error={q.error ?? aksi.error} />
       {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={940} kosong="Belum ada order." />}
+      {ubah && (
+        <Dialog judul={`Ubah order ${ubah.no_order || ""}`.trim()} onTutup={() => setUbah(null)}>
+          <FormUbahOrder order={ubah} produk={produk.get(ubah.produk_id)} onSelesai={() => setUbah(null)} />
+        </Dialog>
+      )}
       {tambah && (
         <Dialog judul="Order baru" onTutup={() => setTambah(false)}>
           <FormOrder onSelesai={() => setTambah(false)} />

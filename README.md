@@ -19,6 +19,8 @@ npm install
 cp .env.example .env     # isi VITE_API_PROXY (dev) atau VITE_API_URL (produksi)
 npm run dev              # http://localhost:5173
 npm test                 # tes unit (vitest)
+npm run build && npm run test:e2e   # tes klik Playwright dengan API tiruan (laptop + HP); CI menjalankannya otomatis.
+                         # Tanpa Chromium bawaan Playwright: PW_CHROMIUM_PATH=/path/ke/chromium npm run test:e2e
 npm run build            # tsc + vite build -> dist/
 ```
 

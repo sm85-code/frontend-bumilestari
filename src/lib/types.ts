@@ -25,6 +25,18 @@ export interface Kategori {
   jenis: "pemasukan" | "pengeluaran";
 }
 
+export interface Transfer {
+  id: string;
+  tanggal: string;
+  dari_akun_id: string;
+  ke_akun_id: string;
+  jumlah: string;
+  jenis: string;
+  keterangan: string;
+  dibatalkan: boolean;
+  alasan_batal: string | null;
+}
+
 export interface Transaksi {
   id: string;
   tanggal: string;
