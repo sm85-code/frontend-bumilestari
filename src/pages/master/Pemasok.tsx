@@ -1,13 +1,15 @@
 import { Col, Row, Space, Typography } from "antd";
+import IsianKolomTambahan from "../../components/IsianKolomTambahan";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { AksiForm, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Lencana, Memuat, Select, TombolLink, useDialog } from "../../components/ui";
 import { useAksi, usePemasok } from "../../lib/data";
 import { useFields } from "../../lib/form";
-import type { Pemasok } from "../../lib/types";
+import type { Pemasok, NilaiKolom } from "../../lib/types";
 
 function Form({ awal, onSelesai }: { awal?: Pemasok; onSelesai: () => void }) {
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>(awal?.kolom_tambahan ?? {});
   const aksi = useAksi();
   const { f, bind } = useFields({
     nama: awal?.nama ?? "", jenis: awal?.jenis ?? "tukang_kayu", kode: awal?.kode ?? "", no_wa: awal?.no_wa ?? "",
@@ -16,7 +18,7 @@ function Form({ awal, onSelesai }: { awal?: Pemasok; onSelesai: () => void }) {
   return (
     <Formulir
       onKirim={() => {
-        const body = { ...f, nama: f.nama.trim() };
+        const body = { ...f, nama: f.nama.trim(), kolom_tambahan: kt };
         aksi.mutate(awal ? { path: `/pemasok/${awal.id}`, method: "PATCH", body } : { path: "/pemasok", body }, { onSuccess: onSelesai });
       }}
     >
@@ -65,6 +67,7 @@ function Form({ awal, onSelesai }: { awal?: Pemasok; onSelesai: () => void }) {
         </Field>
 </Col>
       </Row>
+      <IsianKolomTambahan entitas="pemasok" nilai={kt} onUbah={setKt} />
       <AksiForm error={aksi.error}>
         <Button type="submit" disabled={aksi.isPending} penuh>
         Simpan

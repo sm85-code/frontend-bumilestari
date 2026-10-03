@@ -49,6 +49,7 @@ export interface Transfer {
 }
 
 export interface Transaksi {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   tanggal: string;
   akun_id: string;
@@ -71,6 +72,7 @@ export interface Transaksi {
 }
 
 export interface TransaksiIn {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   tanggal?: string;
   akun_id: string;
   kategori_id: string;
@@ -222,6 +224,7 @@ export interface LaporanKasKecil {
 
 /* ---------- Master data & order ---------- */
 export interface Produk {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   sku: string;
   nama: string;
@@ -233,6 +236,7 @@ export interface Produk {
 }
 
 export interface Pemasok {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   nama: string;
   jenis: "tukang_kayu" | "supplier";
@@ -255,6 +259,7 @@ export interface Saluran {
 }
 
 export interface Pelanggan {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   nama: string;
   kode: string;
@@ -278,6 +283,7 @@ export interface HargaGrosir {
 export type StatusOrder = "dipesan" | "dikerjakan" | "diambil" | "diterima" | "dicat" | "dikirim" | "selesai" | "batal" | "retur";
 
 export interface Order {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   no_order: string;
   tanggal_order: string;
@@ -397,6 +403,7 @@ export interface Sisihan {
 
 /* ---------- Gaji, langganan, bagi hasil ---------- */
 export interface Karyawan {
+  kolom_tambahan?: Record<string, NilaiKolom>;
   id: string;
   nama: string;
   peran: string;
@@ -859,4 +866,32 @@ export interface RingkasanOwner {
   laba_ditahan: string;
   bagi_hasil_dibayar: string;
   bagi_hasil: { periode: string; laba_bersih: string; persen_owner: string; bagian_owner: string; dibayar: boolean; tanggal_bayar: string | null }[];
+}
+
+// Kolom tambahan (spesifikasi 10.4)
+export type EntitasKolom = "order" | "produk" | "pemasok" | "pelanggan" | "transaksi" | "karyawan";
+export type TipeKolom = "teks" | "angka" | "mata_uang" | "tanggal" | "pilihan" | "ya_tidak";
+export type NilaiKolom = string | boolean;
+export interface DefinisiKolom {
+  id: string | null;
+  entitas: EntitasKolom;
+  kunci: string;
+  lapisan: "inti" | "tambahan";
+  label: string;
+  label_bawaan: string | null;
+  tipe: TipeKolom | null;
+  wajib: boolean;
+  pilihan: { nilai: string; arsip: boolean }[];
+  nilai_bawaan: string | null;
+  min: string | null;
+  maks: string | null;
+  tampil_form: boolean;
+  tampil_tabel: boolean;
+  bisa_filter: boolean;
+  ikut_ekspor: boolean;
+  untuk_laporan: boolean;
+  tampil_staf: boolean;
+  urutan: number;
+  aktif: boolean;
+  terisi: number | null;
 }

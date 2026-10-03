@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { kolomTabelTambahan, useDefinisiKolom } from "../lib/kolom";
 import { useState } from "react";
 import FormOrder from "../components/FormOrder";
 import FormReturOrder from "../components/FormReturOrder";
@@ -52,6 +53,7 @@ export default function OrderPage() {
       {t}
     </Typography.Text>
   );
+  const ktKolom = kolomTabelTambahan<Order>(useDefinisiKolom("order").data);
   const kolom: TableColumnsType<Order> = [
     {
       title: "Tanggal / kode",
@@ -190,7 +192,7 @@ export default function OrderPage() {
         </Row>
       </Card>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={940} kosong="Belum ada order." />}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={[...kolom.slice(0, -1), ...ktKolom, ...kolom.slice(-1)]} data={q.data ?? []} rowKey="id" minLebar={940 + ktKolom.length * 120} kosong="Belum ada order." />}
       {ubah && (
         <Dialog judul={`Ubah order ${ubah.no_order || ""}`.trim()} onTutup={() => setUbah(null)}>
           <FormUbahOrder order={ubah} produk={produk.get(ubah.produk_id)} onSelesai={() => setUbah(null)} />

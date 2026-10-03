@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import IsianKolomTambahan from "./IsianKolomTambahan";
 import { Button as AButton, Form, Segmented, Typography } from "antd";
 import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, useDialog } from "./ui";
@@ -9,7 +10,7 @@ import { labelKategori, pilihanKategori } from "../lib/kategori";
 import { LABEL_GRUP, useBudgetIklan, usePlatformIklan } from "../lib/iklan";
 import { kekuranganSaldo, useNamaTalangan } from "../lib/talangan";
 import { bulanTertutup, useDaftarTutupBuku } from "../lib/tutupBuku";
-import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
+import type { AkunKas, Kategori, Transaksi, TransaksiIn, NilaiKolom } from "../lib/types";
 
 interface Props {
   akun: AkunKas[];
@@ -43,6 +44,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const [koreksi, setKoreksi] = useState("");
   const [talangan, setTalangan] = useState(user?.nama ?? "");
   const [platformId, setPlatformId] = useState("");
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>({});
   // Koreksi atas bulan yang sudah tutup buku (dicatat di bulan berjalan); staf tidak mengurus tutup buku.
   const tertutup = bulanTertutup(useDaftarTutupBuku(!staf).data);
   const akunPilih = akun.find((a) => a.id === akunId);
@@ -80,6 +82,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
     onSuccess: () => {
       setJumlah("");
       setKeterangan("");
+      setKt({});
       setKategoriId("");
       setKoreksi("");
       void qc.invalidateQueries();
@@ -99,6 +102,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       koreksi_periode: koreksi || null,
       talangan_oleh: kurang > 0 ? talangan.trim() : null,
       platform_iklan_id: iklan ? platformId : null,
+      kolom_tambahan: kt,
     });
   }
 
@@ -218,6 +222,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
           </Select>
         </Field>
       )}
+      <IsianKolomTambahan entitas="transaksi" nilai={kt} onUbah={setKt} />
       <AksiForm error={simpan.error}>
         {!kategoriAktif && <Typography.Text type="secondary">Pilih kategori dulu.</Typography.Text>}
         <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah) || (kurang > 0 && talangan.trim().length < 2) || (iklan && !platformId)} penuh>

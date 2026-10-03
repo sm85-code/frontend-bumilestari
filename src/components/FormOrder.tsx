@@ -1,10 +1,11 @@
 import { Checkbox, Col, Form, Row } from "antd";
-import { useMemo } from "react";
+import IsianKolomTambahan from "./IsianKolomTambahan";
+import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, Teks } from "./ui";
 import { useAksi, usePelanggan, usePemasok, useProduk, useSaluran } from "../lib/data";
 import { useFields } from "../lib/form";
 import { bersihkanAngka, hariIni } from "../lib/format";
-import type { Order } from "../lib/types";
+import type { Order, NilaiKolom } from "../lib/types";
 
 /** Form order baru. Harga dikosongkan = otomatis (harga grosir penjual lain atau harga katalog). */
 export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
@@ -13,6 +14,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
   const saluranQ = useSaluran();
   const pelangganQ = usePelanggan();
   const aksi = useAksi<Order>();
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>({});
   const { f, bind, bindNilai } = useFields({
     saluran_id: "", pelanggan_id: "", produk_id: "", pemasok_id: "", no_order: "", nama_pembeli: "", tanggal_order: hariIni(),
     qty: "1", warna: "", jenis_packing: "biasa", polos: "", biaya_pokok: "", harga_satuan: "", potongan_marketplace: "", catatan: "",
@@ -50,6 +52,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
           harga_satuan: opsi(f.harga_satuan),
           potongan_marketplace: opsi(f.potongan_marketplace) ?? "0",
           catatan: f.catatan.trim(),
+          kolom_tambahan: kt,
         },
       },
       { onSuccess: onSelesai },
@@ -173,6 +176,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
       <Field label="Catatan">
         <Teks {...bind("catatan")} />
       </Field>
+      <IsianKolomTambahan entitas="order" nilai={kt} onUbah={setKt} />
       <AksiForm error={aksi.error}>
         <Button type="submit" disabled={aksi.isPending || !saluranPilih || !produkPilih}>
           {aksi.isPending ? "Menyimpan…" : "Simpan order"}
