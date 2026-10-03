@@ -7,7 +7,7 @@ import { Angka, AksiForm, BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox,
 import { api, query } from "../lib/api";
 import { peta, useAkun, useAksi } from "../lib/data";
 import { useFields } from "../lib/form";
-import { bersihkanAngka, bulanIni, hariIni, num, rp, tanggal } from "../lib/format";
+import { bersihkanAngka, bulanIni, bulanTahun, hariIni, num, rp, tanggal } from "../lib/format";
 import type { Gaji, Karyawan, Langganan, Tagihan } from "../lib/types";
 
 const PERAN: Record<string, string> = {
@@ -129,7 +129,7 @@ function TabKaryawan() {
               <Button
                 disabled={aksi.isPending || belum.length === 0}
                 onClick={() =>
-                  void konfirmasi(`Bayar gaji ${periode} sebesar ${rp(totalBelum)} dari Dana cadangan?`, { ok: "Bayar gaji" }).then(
+                  void konfirmasi(`Bayar gaji ${bulanTahun(periode)} sebesar ${rp(totalBelum)} dari Dana cadangan?`, { ok: "Bayar gaji" }).then(
                     (ya) => ya && aksi.mutate({ path: "/gaji/bayar", body: { periode, tanggal: hariIni() } }),
                   )
                 }
@@ -277,7 +277,7 @@ function TabLangganan() {
         </Dialog>
       )}
       {bayar && (
-        <Dialog judul={`Bayar tagihan ${periode}`} onTutup={() => setBayar(false)}>
+        <Dialog judul={`Bayar tagihan ${bulanTahun(periode)}`} onTutup={() => setBayar(false)}>
           <Typography.Paragraph type="secondary">Isi tagihan sebenarnya (kosongkan/0 untuk dilewati). Dibayar dari kas utama.</Typography.Paragraph>
           <Formulir
             onKirim={() => {

@@ -5,7 +5,7 @@ import type { TableColumnsType } from "antd";
 import { Angka, Baris, Button, Card, DataTabel, ErrorBox, Field, InputTanggal, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
 import { api, query } from "../lib/api";
 import { useAksi } from "../lib/data";
-import { bulanIni, hariIni, num, rp, tanggal } from "../lib/format";
+import { bulanIni, bulanTahun, hariIni, num, rp, tanggal } from "../lib/format";
 import type { BagiHasil, BagiHasilHitung } from "../lib/types";
 
 export default function BagiHasilPage() {
@@ -19,7 +19,7 @@ export default function BagiHasilPage() {
 
   const persen = (n: string) => <Typography.Text type="secondary">({num(n)}%)</Typography.Text>;
   const kolom: TableColumnsType<BagiHasil> = [
-    { title: "Periode", dataIndex: "periode", fixed: "left", width: 100 },
+    { title: "Periode", dataIndex: "periode", fixed: "left", width: 130, render: (v: string) => bulanTahun(v) },
     { title: "Laba bersih", dataIndex: "laba_bersih", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
     { title: "Admin", align: "right", render: (_, b) => <Angka>{rp(b.bagian_admin)} {persen(b.persen_admin)}</Angka> },
     { title: "Owner", align: "right", render: (_, b) => <Angka>{rp(b.bagian_owner)} {persen(b.persen_owner)}</Angka> },
@@ -35,7 +35,7 @@ export default function BagiHasilPage() {
           {!b.dibatalkan && !b.tanggal_bayar && num(b.bagian_admin) + num(b.bagian_owner) > 0 && (
             <TombolLink
               onClick={() =>
-                void konfirmasi(`Bayar bagi hasil ${b.periode}?`, { teks: `${rp(num(b.bagian_admin) + num(b.bagian_owner))} dibayar tunai dari kas utama.`, ok: "Bayar" }).then(
+                void konfirmasi(`Bayar bagi hasil ${bulanTahun(b.periode)}?`, { teks: `${rp(num(b.bagian_admin) + num(b.bagian_owner))} dibayar tunai dari kas utama.`, ok: "Bayar" }).then(
                   (ya) => ya && aksi.mutate({ path: `/bagi-hasil/${b.id}/bayar?tanggal=${hariIni()}` }),
                 )
               }

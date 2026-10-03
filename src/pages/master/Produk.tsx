@@ -77,7 +77,7 @@ export default function MasterProduk() {
   const kolom: TableColumnsType<Produk> = [
     { title: "SKU", dataIndex: "sku", fixed: "left", width: 110 },
     { title: "Nama", dataIndex: "nama" },
-    { title: "Jenis", dataIndex: "jenis_produk", render: (v: string) => (v === "kayu" ? <Lencana warna="hijau">kayu</Lencana> : <Lencana>non kayu</Lencana>) },
+    { title: "Jenis", dataIndex: "jenis_produk", render: (v: string) => (v === "kayu" ? <Lencana warna="hijau">Kayu</Lencana> : <Lencana>Non kayu</Lencana>) },
     { title: "Ukuran", dataIndex: "ukuran", render: (v: string) => v || "—" },
     { title: "Harga jual", dataIndex: "harga_jual", align: "right", render: angka },
     { title: "Biaya pemasok", dataIndex: "biaya_pokok_default", align: "right", render: angka },

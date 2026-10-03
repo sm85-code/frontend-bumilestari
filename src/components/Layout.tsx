@@ -1,3 +1,4 @@
+import { labelPeran } from "../lib/format";
 import {
   AccountBookOutlined,
   AppstoreOutlined,
@@ -90,7 +91,7 @@ function Merek({ nama, peran, ukuran }: { nama?: string; peran?: string; ukuran:
           Bumi Lestari
         </Typography.Text>
         <Typography.Text type="secondary" ellipsis style={{ display: "block", fontSize: 12 }}>
-          {nama} · {peran}
+          {nama} · {labelPeran(peran)}
         </Typography.Text>
       </div>
     </Flex>

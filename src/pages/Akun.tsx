@@ -1,3 +1,4 @@
+import { labelPeran } from "../lib/format";
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { Alert, Descriptions } from "antd";
@@ -59,10 +60,10 @@ export default function Akun() {
           />
         )}
         <Card judul="Akun saya">
-          <Descriptions column={1} size="small">
+          <Descriptions column={1} size="small" colon={false}>
             <Descriptions.Item label="Nama">{user?.nama}</Descriptions.Item>
             <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
-            <Descriptions.Item label="Peran">{user?.role}</Descriptions.Item>
+            <Descriptions.Item label="Peran">{labelPeran(user?.role)}</Descriptions.Item>
           </Descriptions>
         </Card>
         <Card judul="Ganti password">

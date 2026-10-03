@@ -81,7 +81,7 @@ export default function MasterPemasok() {
   const [form, setForm] = useState<Pemasok | "baru" | null>(null);
   const kolom: TableColumnsType<Pemasok> = [
     { title: "Nama", dataIndex: "nama", fixed: "left", width: 170 },
-    { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "tukang_kayu" ? <Lencana warna="hijau">tukang kayu</Lencana> : <Lencana>supplier</Lencana>) },
+    { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "tukang_kayu" ? <Lencana warna="hijau">Tukang kayu</Lencana> : <Lencana>Supplier</Lencana>) },
     { title: "Kode PO", dataIndex: "kode", render: (v: string) => v || "—" },
     { title: "WhatsApp", dataIndex: "no_wa", render: (v: string) => v || <Typography.Text type="warning">belum diisi</Typography.Text> },
     { title: "Rekening", render: (_, p) => (p.no_rekening ? `${p.nama_bank} ${p.no_rekening}` : "—") },

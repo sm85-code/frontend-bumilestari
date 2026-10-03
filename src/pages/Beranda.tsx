@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { Angka, Baris, Card, ErrorBox, Memuat, PageHeader, Progress, Stat, TautanBulat } from "../components/ui";
 import { api } from "../lib/api";
-import { num, rp, tanggal } from "../lib/format";
+import { bulanTahun, num, rp, tanggal } from "../lib/format";
 import type { AkunKas, Dashboard, Imprest } from "../lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -104,7 +104,7 @@ export default function Beranda() {
           <Stat hero label="Total kas" nilai={rp(data.total_kas)} ke="/keuangan" />
         </Col>
         <Col xs={24} sm={12} xl={6}>
-          <Stat label={`Laba ${data.periode}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} ke="/laporan" />
+          <Stat label={`Laba ${bulanTahun(data.periode)}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} ke="/laporan" />
         </Col>
         <Col xs={24} sm={12} xl={6}>
           <Stat label="Bayar tukang Selasa ini" nilai={rp(data.utang_pemasok_siap_bayar)} warna="oranye" ke="/pesanan-tukang" />
@@ -150,7 +150,7 @@ export default function Beranda() {
       </Row>
 
       {data.bagian_admin_pratinjau !== null && data.bagian_owner_pratinjau !== null && (
-        <Card judul={`Pratinjau bagi hasil ${data.periode}`} sub="Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan." aksi={<TautanBulat ke="/bagi-hasil" />}>
+        <Card judul={`Pratinjau bagi hasil ${bulanTahun(data.periode)}`} sub="Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan." aksi={<TautanBulat ke="/bagi-hasil" />}>
           <Baris kiri="Admin" kanan={rp(data.bagian_admin_pratinjau)} />
           <Baris kiri="Owner" kanan={rp(data.bagian_owner_pratinjau)} />
         </Card>
