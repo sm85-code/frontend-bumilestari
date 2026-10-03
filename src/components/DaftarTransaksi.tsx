@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Memuat } from "./ui";
+import { Kosong, Memuat, Tabel, Td, Th } from "./ui";
 import { api } from "../lib/api";
 import { rp, tanggal } from "../lib/format";
 import type { Kategori, Transaksi } from "../lib/types";
 
+/** Riwayat transaksi sebagai tabel (digulir ke samping di layar sempit). */
 export default function DaftarTransaksi({
   data,
   kategori,
@@ -24,35 +25,44 @@ export default function DaftarTransaksi({
   });
 
   if (memuat) return <Memuat />;
-  if (!data || data.length === 0) return <p className="py-4 text-center text-sm text-stone-500">Belum ada transaksi.</p>;
+  if (!data || data.length === 0) return <Kosong teks="Belum ada transaksi." />;
   return (
-    <ul className="divide-y divide-garis">
-      {data.map((t) => (
-        <li key={t.id} className="flex items-start justify-between gap-3 py-2.5">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{nama.get(t.kategori_id) ?? "—"}</p>
-            <p className="truncate text-xs text-stone-500">
-              {tanggal(t.tanggal)}
-              {t.keterangan ? ` · ${t.keterangan}` : ""}
-            </p>
+    <Tabel minLebar={bolehBatal ? 560 : 460}>
+      <thead>
+        <tr>
+          <Th lengket>Tanggal</Th>
+          <Th>Kategori</Th>
+          <Th>Keterangan</Th>
+          <Th kanan>Jumlah</Th>
+          {bolehBatal && <Th>Aksi</Th>}
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((t) => (
+          <tr key={t.id}>
+            <Td lengket className="whitespace-nowrap">{tanggal(t.tanggal)}</Td>
+            <Td>{nama.get(t.kategori_id) ?? "—"}</Td>
+            <Td className="text-stone-600">{t.keterangan || "—"}</Td>
+            <Td kanan className={t.jenis === "masuk" ? "text-hijau" : ""}>
+              {t.jenis === "masuk" ? "+" : "−"}
+              {rp(t.jumlah)}
+            </Td>
             {bolehBatal && (
-              <button
-                className="mt-1 text-xs text-red-600"
-                onClick={() => {
-                  const alasan = window.prompt("Alasan membatalkan transaksi ini?");
-                  if (alasan && alasan.trim().length >= 3) batal.mutate({ id: t.id, alasan: alasan.trim() });
-                }}
-              >
-                Batalkan
-              </button>
+              <Td>
+                <button
+                  className="text-xs text-red-600 hover:underline"
+                  onClick={() => {
+                    const alasan = window.prompt("Alasan membatalkan transaksi ini?");
+                    if (alasan && alasan.trim().length >= 3) batal.mutate({ id: t.id, alasan: alasan.trim() });
+                  }}
+                >
+                  Batalkan
+                </button>
+              </Td>
             )}
-          </div>
-          <span className={`shrink-0 text-sm font-semibold tabular-nums ${t.jenis === "masuk" ? "text-hijau" : "text-stone-800"}`}>
-            {t.jenis === "masuk" ? "+" : "−"}
-            {rp(t.jumlah)}
-          </span>
-        </li>
-      ))}
-    </ul>
+          </tr>
+        ))}
+      </tbody>
+    </Tabel>
   );
 }

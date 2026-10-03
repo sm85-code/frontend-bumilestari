@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Baris, Card, ErrorBox, Field, Input, Memuat } from "../components/ui";
-import { isPemilik, useAuth } from "../auth/AuthContext";
 import { Link } from "react-router-dom";
+import { isPemilik, useAuth } from "../auth/AuthContext";
+import { Baris, Card, ErrorBox, Field, Input, Kosong, Memuat, Tabel, Td, TdTotal, Th } from "../components/ui";
 import { api, query } from "../lib/api";
 import { bersihkanAngka, bulanIni, num, rp, tanggal } from "../lib/format";
 import type { LaporanKasKecil } from "../lib/types";
@@ -17,6 +17,7 @@ export default function LaporanKasKecilPage() {
     queryFn: () => api<LaporanKasKecil>(`/laporan/kas-kecil${query({ periode, saldo_fisik: saldoFisik })}`),
     enabled: !!periode,
   });
+  const d = q.data;
 
   return (
     <>
@@ -29,7 +30,7 @@ export default function LaporanKasKecilPage() {
         )}
       </div>
       <Card>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid max-w-md grid-cols-2 gap-3">
           <Field label="Bulan">
             <Input type="month" value={periode} onChange={(e) => setPeriode(e.target.value)} />
           </Field>
@@ -41,66 +42,115 @@ export default function LaporanKasKecilPage() {
 
       {q.isLoading && <Memuat />}
       <ErrorBox error={q.error} />
-      {q.data && (
+      {d && (
         <>
-          {q.data.status_selisih && (
+          {d.status_selisih && (
             <p
               role="status"
-              className={`rounded-xl px-3 py-2 text-sm font-semibold ${q.data.status_selisih === "sesuai" ? "bg-hijau-muda text-hijau" : "bg-red-50 text-red-700"}`}
+              className={`rounded-xl px-3 py-2 text-sm font-semibold ${d.status_selisih === "sesuai" ? "bg-hijau-muda text-hijau" : "bg-red-50 text-red-700"}`}
             >
-              {q.data.status_selisih === "sesuai"
+              {d.status_selisih === "sesuai"
                 ? "Uang fisik sesuai catatan."
-                : `Uang fisik ${q.data.status_selisih} ${rp(Math.abs(num(q.data.selisih)))} dari catatan.`}
+                : `Uang fisik ${d.status_selisih} ${rp(Math.abs(num(d.selisih)))} dari catatan.`}
             </p>
           )}
-          <Card judul={`Ringkasan ${q.data.periode}`}>
-            <Baris kiri="Saldo awal bulan" kanan={rp(q.data.saldo_awal)} />
-            <Baris kiri="Total dipakai" kanan={rp(q.data.total_pemakaian)} />
-            <Baris kiri="Total pengisian" kanan={rp(q.data.total_pengisian)} />
-            <Baris kiri="Saldo akhir" kanan={rp(q.data.saldo_akhir)} tebal />
-            <p className={`mt-1 text-xs ${q.data.sesuai_plafon ? "text-hijau" : "text-oranye"}`}>
-              {q.data.sesuai_plafon ? `Sudah sesuai jatah ${rp(q.data.plafon)}` : `Belum kembali ke jatah ${rp(q.data.plafon)}`}
-            </p>
+
+          <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+            <Card judul={`Ringkasan ${d.periode}`}>
+              <Baris kiri="Saldo awal bulan" kanan={rp(d.saldo_awal)} />
+              <Baris kiri="Total dipakai" kanan={rp(d.total_pemakaian)} />
+              <Baris kiri="Total pengisian" kanan={rp(d.total_pengisian)} />
+              <Baris kiri="Saldo akhir" kanan={rp(d.saldo_akhir)} tebal />
+              <p className={`mt-1 text-xs ${d.sesuai_plafon ? "text-hijau" : "text-oranye"}`}>
+                {d.sesuai_plafon ? `Sudah sesuai jatah ${rp(d.plafon)}` : `Belum kembali ke jatah ${rp(d.plafon)}`}
+              </p>
+            </Card>
+
+            <Card judul="Dipakai per kategori" className="min-w-0">
+              {d.per_kategori.length === 0 ? (
+                <Kosong teks="Belum ada pengeluaran." />
+              ) : (
+                <Tabel minLebar={300}>
+                  <thead>
+                    <tr>
+                      <Th lengket>Kategori</Th>
+                      <Th kanan>Transaksi</Th>
+                      <Th kanan>Jumlah</Th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {d.per_kategori.map((b) => (
+                      <tr key={b.kategori}>
+                        <Td lengket>{b.kategori}</Td>
+                        <Td kanan className="text-stone-500">{b.jumlah_transaksi}</Td>
+                        <Td kanan>{rp(b.jumlah)}</Td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Tabel>
+              )}
+            </Card>
+
+          </div>
+
+          <Card judul="Per minggu" className="min-w-0">
+            <Tabel minLebar={520}>
+              <thead>
+                <tr>
+                  <Th lengket>Minggu</Th>
+                  <Th>Periode</Th>
+                  <Th kanan>Dipakai</Th>
+                  <Th kanan>Diisi</Th>
+                  <Th kanan>Saldo akhir</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.per_minggu.map((w) => (
+                  <tr key={w.minggu_ke}>
+                    <Td lengket>Ke-{w.minggu_ke}</Td>
+                    <Td className="whitespace-nowrap text-stone-600">
+                      {tanggal(w.dari)} – {tanggal(w.sampai)}
+                    </Td>
+                    <Td kanan>{rp(w.pemakaian)}</Td>
+                    <Td kanan>{rp(w.pengisian)}</Td>
+                    <Td kanan>{rp(w.saldo_akhir)}</Td>
+                  </tr>
+                ))}
+                <tr>
+                  <TdTotal lengket colSpan={2}>Total</TdTotal>
+                  <TdTotal kanan>{rp(d.total_pemakaian)}</TdTotal>
+                  <TdTotal kanan>{rp(d.total_pengisian)}</TdTotal>
+                  <TdTotal kanan>{rp(d.saldo_akhir)}</TdTotal>
+                </tr>
+              </tbody>
+            </Tabel>
           </Card>
 
-          <Card judul="Per minggu">
-            <div className="space-y-2">
-              {q.data.per_minggu.map((w) => (
-                <div key={w.minggu_ke} className="rounded-xl bg-stone-50 p-3">
-                  <p className="text-sm font-semibold">
-                    Minggu ke-{w.minggu_ke} <span className="font-normal text-stone-500">({tanggal(w.dari)} – {tanggal(w.sampai)})</span>
-                  </p>
-                  <Baris kiri="Dipakai" kanan={rp(w.pemakaian)} />
-                  <Baris kiri="Diisi" kanan={rp(w.pengisian)} />
-                  <Baris kiri="Saldo akhir minggu" kanan={rp(w.saldo_akhir)} />
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card judul="Dipakai per kategori">
-            {q.data.per_kategori.length === 0 && <p className="text-sm text-stone-500">Belum ada pengeluaran.</p>}
-            {q.data.per_kategori.map((b) => (
-              <Baris key={b.kategori} kiri={`${b.kategori} (${b.jumlah_transaksi}x)`} kanan={rp(b.jumlah)} />
-            ))}
-          </Card>
-
-          <Card judul="Rincian pengeluaran">
-            <ul className="divide-y divide-garis">
-              {q.data.transaksi.map((t, i) => (
-                <li key={i} className="flex justify-between gap-3 py-2 text-sm">
-                  <span className="min-w-0">
-                    <span className="block truncate">{t.kategori}</span>
-                    <span className="block truncate text-xs text-stone-500">
-                      {tanggal(t.tanggal)}
-                      {t.keterangan ? ` · ${t.keterangan}` : ""}
-                    </span>
-                  </span>
-                  <span className="shrink-0 tabular-nums">{rp(t.jumlah)}</span>
-                </li>
-              ))}
-              {q.data.transaksi.length === 0 && <li className="py-2 text-sm text-stone-500">Tidak ada.</li>}
-            </ul>
+          <Card judul="Rincian pengeluaran" className="min-w-0">
+            {d.transaksi.length === 0 ? (
+              <Kosong teks="Tidak ada." />
+            ) : (
+              <Tabel minLebar={460}>
+                <thead>
+                  <tr>
+                    <Th lengket>Tanggal</Th>
+                    <Th>Kategori</Th>
+                    <Th>Keterangan</Th>
+                    <Th kanan>Jumlah</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.transaksi.map((t, i) => (
+                    <tr key={i}>
+                      <Td lengket className="whitespace-nowrap">{tanggal(t.tanggal)}</Td>
+                      <Td>{t.kategori}</Td>
+                      <Td className="text-stone-600">{t.keterangan || "—"}</Td>
+                      <Td kanan>{rp(t.jumlah)}</Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Tabel>
+            )}
           </Card>
         </>
       )}

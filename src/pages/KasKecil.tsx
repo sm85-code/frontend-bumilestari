@@ -26,19 +26,20 @@ export default function KasKecil() {
   const saldo = num(kas.saldo);
   const plafon = num(kas.plafon);
   return (
-    <>
-      <Card judul="Kas kecil">
-        <p className="text-2xl font-bold">{rp(saldo)}</p>
-        <p className="mb-2 text-xs text-stone-500">dari jatah {rp(plafon)}</p>
-        <Progress nilai={saldo} maks={plafon} />
-        <p className="mt-2 text-xs text-stone-500">Diisi kembali ke jatah setiap hari Selasa.</p>
-      </Card>
-
-      <Card judul="Catat pengeluaran">
-        <FormTransaksi akun={[kas]} kategori={katQ.data ?? []} jenisTetap="keluar" akunAwal={kas.id} />
-      </Card>
-
+    <div className="grid gap-4 lg:grid-cols-[22rem_1fr] lg:items-start">
+      <div className="space-y-4">
+        <Card judul="Kas kecil">
+          <p className="text-2xl font-bold">{rp(saldo)}</p>
+          <p className="mb-2 text-xs text-stone-500">dari jatah {rp(plafon)}</p>
+          <Progress nilai={saldo} maks={plafon} />
+          <p className="mt-2 text-xs text-stone-500">Diisi kembali ke jatah setiap hari Selasa.</p>
+        </Card>
+        <Card judul="Catat pengeluaran">
+          <FormTransaksi akun={[kas]} kategori={katQ.data ?? []} jenisTetap="keluar" akunAwal={kas.id} />
+        </Card>
+      </div>
       <Card
+        className="min-w-0"
         judul="Riwayat"
         aksi={
           <Link to="/laporan/kas-kecil" className="text-xs font-semibold text-hijau">
@@ -48,6 +49,6 @@ export default function KasKecil() {
       >
         <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal={isPemilik(user?.role)} memuat={trxQ.isLoading} />
       </Card>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,9 @@
 const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 const PREFIX = `${BASE}/api/bumi-lestari`;
 
+/** URL lengkap endpoint (untuk tautan unduh PDF). */
+export const apiUrl = (path: string) => `${PREFIX}${path}`;
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {

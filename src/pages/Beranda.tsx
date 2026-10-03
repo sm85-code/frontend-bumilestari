@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Baris, Card, ErrorBox, Memuat, Progress, Stat } from "../components/ui";
+import { Baris, Card, ErrorBox, Memuat, Progress, Stat, Tabel, Td, TdTotal, Th } from "../components/ui";
 import { api } from "../lib/api";
 import { num, rp, tanggal } from "../lib/format";
 import type { Dashboard, Imprest } from "../lib/types";
@@ -48,13 +48,14 @@ export default function Beranda() {
         <span className="text-xs text-coklat">Selasa acuan {tanggal(data.selasa)}</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Total kas" nilai={rp(data.total_kas)} />
         <Stat label={`Laba ${data.periode}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} />
         <Stat label="Bayar tukang Selasa ini" nilai={rp(data.utang_pemasok_siap_bayar)} warna="oranye" />
         <Stat label="Tagihan penjual lain" nilai={rp(data.piutang_penjual_lain)} sub="belum dibayar" />
       </div>
 
+      <div className="grid gap-3 md:grid-cols-2 md:items-start">
       <Card judul="Order">
         <p className="mb-2 text-sm">
           <b>{data.order_bulan_ini}</b> order bulan ini · omzet <b>{rp(data.omzet_order_bulan_ini)}</b>
@@ -73,13 +74,32 @@ export default function Beranda() {
       {data.kas_iklan && <KartuImprest judul="Kas iklan (admin)" data={data.kas_iklan} />}
 
       <Card judul="Saldo akun">
-        {data.akun.map((a) => (
-          <Baris key={a.id} kiri={a.nama} kanan={rp(a.saldo)} />
-        ))}
-        <div className="mt-1 border-t border-garis pt-1">
-          <Baris kiri="Dana cadangan (gaji)" kanan={rp(data.dana_cadangan)} />
-        </div>
+        <Tabel minLebar={300}>
+          <thead>
+            <tr>
+              <Th lengket>Akun</Th>
+              <Th kanan>Saldo</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.akun.map((a) => (
+              <tr key={a.id}>
+                <Td lengket>{a.nama}</Td>
+                <Td kanan>{rp(a.saldo)}</Td>
+              </tr>
+            ))}
+            <tr>
+              <Td lengket className="text-stone-600">Dana cadangan (gaji)</Td>
+              <Td kanan>{rp(data.dana_cadangan)}</Td>
+            </tr>
+            <tr>
+              <TdTotal lengket>Total kas</TdTotal>
+              <TdTotal kanan>{rp(data.total_kas)}</TdTotal>
+            </tr>
+          </tbody>
+        </Tabel>
       </Card>
+      </div>
 
       {data.bagian_admin_pratinjau !== null && data.bagian_owner_pratinjau !== null && (
         <Card judul={`Pratinjau bagi hasil ${data.periode}`}>
