@@ -1,3 +1,4 @@
+import { WhatsAppOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { Button, ErrorBox } from "./ui";
 import { useAksi } from "../lib/data";
@@ -25,8 +26,8 @@ export default function BagikanWA({ jenis, id, tanggal, label = "Kirim ke WhatsA
 
   return (
     <span className="inline-flex flex-col items-start gap-1">
-      <Button variant="pinggir" className="!min-h-9 !px-3 !text-xs" disabled={aksi.isPending} onClick={kirim}>
-        {aksi.isPending ? "Menyiapkan…" : `💬 ${label}`}
+      <Button variant="pinggir" kecil disabled={aksi.isPending} onClick={kirim}>
+        {aksi.isPending ? "Menyiapkan…" : <><WhatsAppOutlined /> {label}</>}
       </Button>
       <ErrorBox error={aksi.error} />
       {hasil && !hasil.no_wa && <span className="text-xs text-oranye">Nomor WhatsApp belum diisi; pilih kontak sendiri di WhatsApp.</span>}

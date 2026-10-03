@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import FormOrder from "../components/FormOrder";
-import { Button, Card, Dialog, ErrorBox, Field, Kosong, Lencana, Memuat, Select, Tabel, Td, Th } from "../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Lencana, Memuat, PageHeader, Select, TombolLink } from "../components/ui";
 import { api, query } from "../lib/api";
 import { peta, useAksi, usePelanggan, usePemasok, useProduk, useSaluran } from "../lib/data";
 import { rp, tanggal } from "../lib/format";
@@ -38,12 +40,89 @@ export default function OrderPage() {
     aksi.mutate({ path: `/order/${o.id}/status`, body: { status: berikut } });
   }
 
+  const redup = (t: React.ReactNode) => <span className="block text-xs text-coklat">{t}</span>;
+  const kolom: TableColumnsType<Order> = [
+    {
+      title: "Tanggal / kode",
+      fixed: "left",
+      width: 135,
+      render: (_, o) => (
+        <>
+          <span className="whitespace-nowrap">{tanggal(o.tanggal_order)}</span>
+          {redup(o.no_order || "—")}
+        </>
+      ),
+    },
+    {
+      title: "Barang",
+      width: 190,
+      render: (_, o) => {
+        const p = produk.get(o.produk_id);
+        return (
+          <>
+            <b>{p?.nama ?? "—"}</b> <span className="text-coklat">{p?.ukuran}</span>
+            {o.warna && redup(`Warna: ${o.warna}`)}
+            {!o.butuh_cat && p?.jenis_produk === "kayu" && <Lencana>polos</Lencana>}
+          </>
+        );
+      },
+    },
+    {
+      title: "Saluran",
+      width: 135,
+      render: (_, o) => (
+        <>
+          {saluran.get(o.saluran_id)?.nama}
+          {redup(o.pelanggan_id ? pelanggan.get(o.pelanggan_id)?.nama : o.nama_pembeli)}
+        </>
+      ),
+    },
+    { title: "Pemasok", width: 120, render: (_, o) => (o.pemasok_id ? pemasok.get(o.pemasok_id)?.nama : <span className="text-oranye">belum dipilih</span>) },
+    {
+      title: "Total",
+      align: "right",
+      width: 165,
+      render: (_, o) => (
+        <>
+          <b className="tabular-nums whitespace-nowrap">{rp(o.total_penjualan)}</b>
+          {redup(`biaya ${rp(o.biaya_pokok)} · laba ${rp(o.laba_kotor)}`)}
+        </>
+      ),
+    },
+    {
+      title: "Status dan aksi",
+      width: 215,
+      render: (_, o) => {
+        const berikut = statusBerikut(o, produk.get(o.produk_id)?.jenis_produk ?? "kayu");
+        return (
+          <>
+            <Lencana warna={WARNA[o.status]}>{LABEL_STATUS[o.status]}</Lencana>
+            {berikut && (
+              <span className="mt-1 flex flex-wrap">
+                <TombolLink disabled={aksi.isPending} onClick={() => majukan(o, berikut)}>
+                  → {LABEL_STATUS[berikut]}
+                </TombolLink>
+                <TombolLink bahaya onClick={() => window.confirm("Batalkan order ini?") && aksi.mutate({ path: `/order/${o.id}/status`, body: { status: "batal" } })}>
+                  Batalkan
+                </TombolLink>
+              </span>
+            )}
+          </>
+        );
+      },
+    },
+  ];
+
   return (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-lg font-bold">Order</h1>
-        <Button onClick={() => setTambah(true)}>+ Order baru</Button>
-      </div>
+      <PageHeader
+        judul="Order"
+        aksi={
+          <Button onClick={() => setTambah(true)}>
+            <PlusOutlined /> Order baru
+          </Button>
+        }
+      />
       <Card>
         <div className="grid max-w-md grid-cols-2 gap-3">
           <Field label="Status">
@@ -66,66 +145,7 @@ export default function OrderPage() {
         </div>
       </Card>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? (
-        <Memuat />
-      ) : !q.data?.length ? (
-        <Kosong teks="Belum ada order." />
-      ) : (
-        <Tabel minLebar={880}>
-          <thead>
-            <tr>
-              <Th lengket>Tanggal</Th>
-              <Th>Kode pesanan</Th>
-              <Th>Barang</Th>
-              <Th>Saluran / pembeli</Th>
-              <Th>Pemasok</Th>
-              <Th kanan>Total</Th>
-              <Th kanan>Laba</Th>
-              <Th>Status dan aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.data.map((o) => {
-              const p = produk.get(o.produk_id);
-              const berikut = statusBerikut(o, p?.jenis_produk ?? "kayu");
-              return (
-                <tr key={o.id}>
-                  <Td lengket className="whitespace-nowrap">{tanggal(o.tanggal_order)}</Td>
-                  <Td className="whitespace-nowrap">{o.no_order || "—"}</Td>
-                  <Td>
-                    {p?.nama ?? "—"} <span className="text-stone-500">{p?.ukuran}</span>
-                    {o.warna && <span className="block text-xs text-stone-500">Warna: {o.warna}</span>}
-                    {!o.butuh_cat && p?.jenis_produk === "kayu" && <Lencana>polos</Lencana>}
-                  </Td>
-                  <Td>
-                    {saluran.get(o.saluran_id)?.nama}
-                    <span className="block text-xs text-stone-500">{o.pelanggan_id ? pelanggan.get(o.pelanggan_id)?.nama : o.nama_pembeli}</span>
-                  </Td>
-                  <Td>{o.pemasok_id ? pemasok.get(o.pemasok_id)?.nama : <span className="text-oranye">belum dipilih</span>}</Td>
-                  <Td kanan>
-                    {rp(o.total_penjualan)}
-                    <span className="block text-xs text-stone-500">biaya {rp(o.biaya_pokok)}</span>
-                  </Td>
-                  <Td kanan>{rp(o.laba_kotor)}</Td>
-                  <Td>
-                    <Lencana warna={WARNA[o.status]}>{LABEL_STATUS[o.status]}</Lencana>
-                    {berikut && (
-                      <span className="mt-1 flex flex-wrap gap-x-3">
-                        <button className="text-xs font-semibold text-hijau hover:underline" disabled={aksi.isPending} onClick={() => majukan(o, berikut)}>
-                          → {LABEL_STATUS[berikut]}
-                        </button>
-                        <button className="text-xs text-red-600 hover:underline" onClick={() => window.confirm("Batalkan order ini?") && aksi.mutate({ path: `/order/${o.id}/status`, body: { status: "batal" } })}>
-                          Batalkan
-                        </button>
-                      </span>
-                    )}
-                  </Td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Tabel>
-      )}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={940} kosong="Belum ada order." />}
       {tambah && (
         <Dialog judul="Order baru" onTutup={() => setTambah(false)}>
           <FormOrder onSelesai={() => setTambah(false)} />

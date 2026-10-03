@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, Select, Tabel, Td, Th } from "../../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Lencana, Memuat, Select, TombolLink } from "../../components/ui";
 import { useAksi, usePemasok } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import type { Pemasok } from "../../lib/types";
@@ -60,42 +62,29 @@ export default function MasterPemasok() {
   const q = usePemasok();
   const aksi = useAksi();
   const [form, setForm] = useState<Pemasok | "baru" | null>(null);
+  const kolom: TableColumnsType<Pemasok> = [
+    { title: "Nama", dataIndex: "nama", fixed: "left", width: 170 },
+    { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "tukang_kayu" ? <Lencana warna="hijau">tukang kayu</Lencana> : <Lencana>supplier</Lencana>) },
+    { title: "Kode PO", dataIndex: "kode", render: (v: string) => v || "—" },
+    { title: "WhatsApp", dataIndex: "no_wa", render: (v: string) => v || <span className="text-oranye">belum diisi</span> },
+    { title: "Rekening", render: (_, p) => (p.no_rekening ? `${p.nama_bank} ${p.no_rekening}` : "—") },
+    {
+      title: "Aksi",
+      width: 170,
+      render: (_, p) => (
+        <span className="whitespace-nowrap">
+          <TombolLink onClick={() => setForm(p)}>Ubah</TombolLink>
+          <TombolLink bahaya onClick={() => window.confirm(`Nonaktifkan ${p.nama}?`) && aksi.mutate({ path: `/pemasok/${p.id}`, method: "PATCH", body: { aktif: false } })}>
+            Nonaktifkan
+          </TombolLink>
+        </span>
+      ),
+    },
+  ];
   return (
-    <Card judul="Tukang kayu dan supplier" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setForm("baru")}>+ Tukang/supplier</Button>}>
+    <Card judul="Tukang kayu dan supplier" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Tukang/supplier</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? (
-        <Memuat />
-      ) : !q.data?.length ? (
-        <Kosong teks="Belum ada data." />
-      ) : (
-        <Tabel minLebar={780}>
-          <thead>
-            <tr>
-              <Th lengket>Nama</Th>
-              <Th>Jenis</Th>
-              <Th>Kode PO</Th>
-              <Th>WhatsApp</Th>
-              <Th>Rekening</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.data.map((p) => (
-              <tr key={p.id}>
-                <Td lengket>{p.nama}</Td>
-                <Td>{p.jenis === "tukang_kayu" ? <Lencana warna="hijau">tukang kayu</Lencana> : <Lencana>supplier</Lencana>}</Td>
-                <Td>{p.kode || "—"}</Td>
-                <Td>{p.no_wa || <span className="text-oranye">belum diisi</span>}</Td>
-                <Td>{p.no_rekening ? `${p.nama_bank} ${p.no_rekening}` : "—"}</Td>
-                <Td className="whitespace-nowrap">
-                  <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setForm(p)}>Ubah</button>
-                  <button className="text-xs text-red-600 hover:underline" onClick={() => window.confirm(`Nonaktifkan ${p.nama}?`) && aksi.mutate({ path: `/pemasok/${p.id}`, method: "PATCH", body: { aktif: false } })}>Nonaktifkan</button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
-      )}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={820} kosong="Belum ada data." />}
       {form && (
         <Dialog judul={form === "baru" ? "Tukang/supplier baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />

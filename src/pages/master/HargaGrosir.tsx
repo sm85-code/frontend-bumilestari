@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Select, Tabel, Td, Th } from "../../components/ui";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Kosong, Select, TombolLink } from "../../components/ui";
 import { api, query } from "../../lib/api";
 import { useAksi, usePelanggan, useProduk } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -66,6 +67,19 @@ export default function MasterHargaGrosir() {
     enabled: !!pelangganId,
   });
   const harga = new Map((hargaQ.data ?? []).map((h) => [h.produk_id, h]));
+  const sel = (ambil: (h: HargaGrosir) => string) => (_: unknown, p: Produk) => {
+    const h = harga.get(p.id);
+    return h ? <span className="tabular-nums whitespace-nowrap">{rp(ambil(h))}</span> : "—";
+  };
+  const kolom: TableColumnsType<Produk> = [
+    { title: "Produk", fixed: "left", width: 230, render: (_, p) => <>{p.sku} · {p.nama}</> },
+    { title: "Ukuran", dataIndex: "ukuran", render: (v: string) => v || "—" },
+    { title: "Barang", align: "right", render: sel((h) => h.harga) },
+    { title: "Cat + jasa", align: "right", render: sel((h) => h.harga_cat_jasa) },
+    { title: "Packing biasa", align: "right", render: sel((h) => h.harga_packing_biasa) },
+    { title: "Packing kayu", align: "right", render: sel((h) => h.harga_packing_kayu) },
+    { title: "Aksi", width: 110, render: (_, p) => <TombolLink onClick={() => setEdit(p)}>{harga.get(p.id) ? "Ubah" : "Isi harga"}</TombolLink> },
+  ];
 
   return (
     <Card judul="Harga grosir per penjual">
@@ -84,39 +98,7 @@ export default function MasterHargaGrosir() {
       {!pelangganId ? (
         <Kosong teks="Tambahkan penjual lain dulu." />
       ) : (
-        <Tabel minLebar={820}>
-          <thead>
-            <tr>
-              <Th lengket>Produk</Th>
-              <Th>Ukuran</Th>
-              <Th kanan>Barang</Th>
-              <Th kanan>Cat + jasa</Th>
-              <Th kanan>Packing biasa</Th>
-              <Th kanan>Packing kayu</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(produkQ.data ?? []).map((p) => {
-              const h = harga.get(p.id);
-              return (
-                <tr key={p.id}>
-                  <Td lengket>{p.sku} · {p.nama}</Td>
-                  <Td>{p.ukuran || "—"}</Td>
-                  <Td kanan>{h ? rp(h.harga) : "—"}</Td>
-                  <Td kanan>{h ? rp(h.harga_cat_jasa) : "—"}</Td>
-                  <Td kanan>{h ? rp(h.harga_packing_biasa) : "—"}</Td>
-                  <Td kanan>{h ? rp(h.harga_packing_kayu) : "—"}</Td>
-                  <Td>
-                    <button className="text-xs font-semibold text-hijau hover:underline" onClick={() => setEdit(p)}>
-                      {h ? "Ubah" : "Isi harga"}
-                    </button>
-                  </Td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Tabel>
+        <DataTabel kolom={kolom} data={produkQ.data ?? []} rowKey="id" minLebar={860} />
       )}
       {edit && (
         <Dialog judul="Harga grosir" onTutup={() => setEdit(null)}>

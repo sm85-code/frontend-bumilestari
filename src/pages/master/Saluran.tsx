@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, Select, Tabel, Td, Th } from "../../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Lencana, Memuat, Select, TombolLink } from "../../components/ui";
 import { peta, useAkun, useAksi, useSaluran } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import type { Saluran } from "../../lib/types";
@@ -54,38 +56,27 @@ export default function MasterSaluran() {
   const akun = peta(useAkun().data);
   const aksi = useAksi();
   const [form, setForm] = useState<Saluran | "baru" | null>(null);
+  const kolom: TableColumnsType<Saluran> = [
+    { title: "Nama", dataIndex: "nama", fixed: "left", width: 150 },
+    { title: "Jenis", dataIndex: "jenis", render: (v: keyof typeof JENIS) => <Lencana>{JENIS[v]}</Lencana> },
+    { title: "Akun tujuan", dataIndex: "akun_id", render: (v: string | null) => (v ? akun.get(v)?.nama : "—") },
+    {
+      title: "Aksi",
+      width: 170,
+      render: (_, sl) => (
+        <span className="whitespace-nowrap">
+          <TombolLink onClick={() => setForm(sl)}>Ubah</TombolLink>
+          <TombolLink bahaya onClick={() => window.confirm(`Nonaktifkan ${sl.nama}?`) && aksi.mutate({ path: `/saluran/${sl.id}`, method: "PATCH", body: { aktif: false } })}>
+            Nonaktifkan
+          </TombolLink>
+        </span>
+      ),
+    },
+  ];
   return (
-    <Card judul="Saluran penjualan" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setForm("baru")}>+ Saluran</Button>}>
+    <Card judul="Saluran penjualan" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Saluran</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? (
-        <Memuat />
-      ) : !q.data?.length ? (
-        <Kosong teks="Belum ada saluran." />
-      ) : (
-        <Tabel minLebar={520}>
-          <thead>
-            <tr>
-              <Th lengket>Nama</Th>
-              <Th>Jenis</Th>
-              <Th>Akun tujuan</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.data.map((s) => (
-              <tr key={s.id}>
-                <Td lengket>{s.nama}</Td>
-                <Td><Lencana>{JENIS[s.jenis]}</Lencana></Td>
-                <Td>{s.akun_id ? akun.get(s.akun_id)?.nama : "—"}</Td>
-                <Td className="whitespace-nowrap">
-                  <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setForm(s)}>Ubah</button>
-                  <button className="text-xs text-red-600 hover:underline" onClick={() => window.confirm(`Nonaktifkan ${s.nama}?`) && aksi.mutate({ path: `/saluran/${s.id}`, method: "PATCH", body: { aktif: false } })}>Nonaktifkan</button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
-      )}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={560} kosong="Belum ada saluran." />}
       {form && (
         <Dialog judul={form === "baru" ? "Saluran baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />

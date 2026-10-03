@@ -1,4 +1,45 @@
-@import "tailwindcss";
+@layer theme, base, antd, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* Tanpa preflight Tailwind (agar tidak bentrok dengan reset Ant Design); reset minimal di bawah. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  p {
+    margin: 0;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  ul,
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+  img {
+    max-width: 100%;
+    display: inline-block;
+  }
+}
 
 /* Tema mengikuti erp.ampelkuning.com: token gaya shadcn, font Plus Jakarta Sans, radius 1rem,
    wallpaper ripple. Warna utama hijau (nama kelas lama dipertahankan: hijau, garis, coklat). */

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Baris, Card, ErrorBox, Memuat, Progress, Stat, Tabel, Td, TdTotal, Th } from "../components/ui";
+import type { TableColumnsType } from "antd";
+import { Baris, BarisTotal, Card, DataTabel, ErrorBox, Memuat, PageHeader, Progress, Stat } from "../components/ui";
 import { api } from "../lib/api";
 import { num, rp, tanggal } from "../lib/format";
 import type { Dashboard, Imprest } from "../lib/types";
@@ -34,6 +35,16 @@ function KartuImprest({ judul, data, ke }: { judul: string; data: Imprest; ke?: 
   );
 }
 
+interface BarisSaldo {
+  id: string;
+  nama: string;
+  saldo: string | number;
+}
+const kolomSaldo: TableColumnsType<BarisSaldo> = [
+  { title: "Akun", dataIndex: "nama" },
+  { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+];
+
 export default function Beranda() {
   const { data, isLoading, error } = useQuery({ queryKey: ["dashboard"], queryFn: () => api<Dashboard>("/dashboard") });
 
@@ -43,10 +54,7 @@ export default function Beranda() {
   const laba = num(data.laba_bulan_ini);
   return (
     <>
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-lg font-bold">Beranda</h1>
-        <span className="text-xs text-coklat">Selasa acuan {tanggal(data.selasa)}</span>
-      </div>
+      <PageHeader judul="Beranda" sub={`Selasa acuan ${tanggal(data.selasa)}`} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Total kas" nilai={rp(data.total_kas)} />
@@ -74,30 +82,13 @@ export default function Beranda() {
       {data.kas_iklan && <KartuImprest judul="Kas iklan (admin)" data={data.kas_iklan} />}
 
       <Card judul="Saldo akun">
-        <Tabel minLebar={300}>
-          <thead>
-            <tr>
-              <Th lengket>Akun</Th>
-              <Th kanan>Saldo</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.akun.map((a) => (
-              <tr key={a.id}>
-                <Td lengket>{a.nama}</Td>
-                <Td kanan>{rp(a.saldo)}</Td>
-              </tr>
-            ))}
-            <tr>
-              <Td lengket className="text-stone-600">Dana cadangan (gaji)</Td>
-              <Td kanan>{rp(data.dana_cadangan)}</Td>
-            </tr>
-            <tr>
-              <TdTotal lengket>Total kas</TdTotal>
-              <TdTotal kanan>{rp(data.total_kas)}</TdTotal>
-            </tr>
-          </tbody>
-        </Tabel>
+        <DataTabel
+          kolom={kolomSaldo}
+          data={[...data.akun.map((a) => ({ id: a.id, nama: a.nama, saldo: a.saldo })), { id: "cadangan", nama: "Dana cadangan (gaji)", saldo: data.dana_cadangan }]}
+          rowKey="id"
+          minLebar={300}
+          ringkasan={() => <BarisTotal sel={[{ isi: "Total kas" }, { isi: rp(data.total_kas), kanan: true }]} />}
+        />
       </Card>
       </div>
 

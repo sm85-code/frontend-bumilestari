@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Lencana, Memuat, Select, Tabel, Td, Th } from "../../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Lencana, Memuat, Select, TombolLink } from "../../components/ui";
 import { api } from "../../lib/api";
 import { useAksi } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -59,43 +61,40 @@ export default function MasterPengguna() {
     else if (baru) window.alert("Password minimal 8 karakter.");
   }
 
+  const kolom: TableColumnsType<User> = [
+    { title: "Nama", dataIndex: "nama", fixed: "left", width: 150 },
+    { title: "Email", dataIndex: "email", render: (v: string) => <span className="text-coklat">{v}</span> },
+    { title: "Peran", dataIndex: "role", render: (v: string) => <Lencana warna={v === "admin" ? "oranye" : v === "owner" ? "hijau" : "abu"}>{v}</Lencana> },
+    {
+      title: "Status",
+      render: (_, u) => (
+        <span className="inline-flex flex-wrap gap-1">
+          {u.aktif ? "aktif" : <Lencana warna="merah">nonaktif</Lencana>}
+          {u.must_change_password && <Lencana warna="oranye">password sementara</Lencana>}
+        </span>
+      ),
+    },
+    {
+      title: "Aksi",
+      width: 230,
+      render: (_, u) => (
+        <span className="flex flex-wrap">
+          <TombolLink onClick={() => setForm(u)}>Ubah</TombolLink>
+          <TombolLink onClick={() => resetPassword(u)}>Reset password</TombolLink>
+          {u.id !== user?.id && (
+            <TombolLink bahaya onClick={() => aksi.mutate({ path: `/users/${u.id}`, method: "PATCH", body: { aktif: !u.aktif } })}>
+              {u.aktif ? "Nonaktifkan" : "Aktifkan"}
+            </TombolLink>
+          )}
+        </span>
+      ),
+    },
+  ];
+
   return (
-    <Card judul="Pengguna (admin)" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setForm("baru")}>+ Pengguna</Button>}>
+    <Card judul="Pengguna (admin)" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Pengguna</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? (
-        <Memuat />
-      ) : (
-        <Tabel minLebar={640}>
-          <thead>
-            <tr>
-              <Th lengket>Nama</Th>
-              <Th>Email</Th>
-              <Th>Peran</Th>
-              <Th>Status</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(q.data ?? []).map((u) => (
-              <tr key={u.id}>
-                <Td lengket>{u.nama}</Td>
-                <Td className="text-stone-600">{u.email}</Td>
-                <Td><Lencana warna={u.role === "admin" ? "oranye" : u.role === "owner" ? "hijau" : "abu"}>{u.role}</Lencana></Td>
-                <Td>{u.aktif ? "aktif" : <Lencana warna="merah">nonaktif</Lencana>}{u.must_change_password && <Lencana warna="oranye">password sementara</Lencana>}</Td>
-                <Td className="whitespace-nowrap">
-                  <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setForm(u)}>Ubah</button>
-                  <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => resetPassword(u)}>Reset password</button>
-                  {u.id !== user?.id && (
-                    <button className="text-xs text-red-600 hover:underline" onClick={() => aksi.mutate({ path: `/users/${u.id}`, method: "PATCH", body: { aktif: !u.aktif } })}>
-                      {u.aktif ? "Nonaktifkan" : "Aktifkan"}
-                    </button>
-                  )}
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
-      )}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={760} kosong="Belum ada pengguna." />}
       {form && (
         <Dialog judul={form === "baru" ? "Pengguna baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />

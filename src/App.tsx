@@ -1,22 +1,23 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { isPemilik, useAuth } from "./auth/AuthContext";
 import Layout from "./components/Layout";
 import { Memuat } from "./components/ui";
-import Akun from "./pages/Akun";
-import Beranda from "./pages/Beranda";
-import KasKecil from "./pages/KasKecil";
-import Keuangan from "./pages/Keuangan";
-import LaporanKasKecilPage from "./pages/LaporanKasKecil";
-import LaporanUmumPage from "./pages/LaporanUmum";
+const Akun = lazy(() => import("./pages/Akun"));
+const Beranda = lazy(() => import("./pages/Beranda"));
+const KasKecil = lazy(() => import("./pages/KasKecil"));
+const Keuangan = lazy(() => import("./pages/Keuangan"));
+const LaporanKasKecilPage = lazy(() => import("./pages/LaporanKasKecil"));
+const LaporanUmumPage = lazy(() => import("./pages/LaporanUmum"));
 import Masuk from "./pages/Masuk";
-import BagiHasilPage from "./pages/BagiHasil";
-import GajiPage from "./pages/Gaji";
-import Lainnya from "./pages/Lainnya";
-import Master from "./pages/Master";
-import OrderPage from "./pages/Order";
-import PenjualLain from "./pages/PenjualLain";
-import PesananTukang from "./pages/PesananTukang";
-import Selasa from "./pages/Selasa";
+const BagiHasilPage = lazy(() => import("./pages/BagiHasil"));
+const GajiPage = lazy(() => import("./pages/Gaji"));
+const Lainnya = lazy(() => import("./pages/Lainnya"));
+const Master = lazy(() => import("./pages/Master"));
+const OrderPage = lazy(() => import("./pages/Order"));
+const PenjualLain = lazy(() => import("./pages/PenjualLain"));
+const PesananTukang = lazy(() => import("./pages/PesananTukang"));
+const Selasa = lazy(() => import("./pages/Selasa"));
 
 
 /** Harus login; kalau password masih bawaan, paksa ke halaman Akun. */
@@ -39,6 +40,7 @@ function WajibGantiPassword({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
+    <Suspense fallback={<Memuat />}>
     <Routes>
       <Route path="/masuk" element={<Masuk />} />
       <Route element={<Terproteksi />}>
@@ -172,5 +174,6 @@ export default function App() {
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 }

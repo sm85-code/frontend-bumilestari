@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import FormTransaksi from "../components/FormTransaksi";
-import { Card, ErrorBox, Memuat, Progress } from "../components/ui";
+import { Card, ErrorBox, Memuat, PageHeader, Progress } from "../components/ui";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { api, query } from "../lib/api";
 import { num, rp } from "../lib/format";
@@ -26,10 +26,12 @@ export default function KasKecil() {
   const saldo = num(kas.saldo);
   const plafon = num(kas.plafon);
   return (
+    <>
+    <PageHeader judul="Kas kecil" sub="Pegangan staf, diisi kembali ke jatah tiap Selasa" />
     <div className="grid gap-4 lg:grid-cols-[22rem_1fr] lg:items-start">
       <div className="space-y-4">
         <Card judul="Kas kecil">
-          <p className="text-2xl font-bold">{rp(saldo)}</p>
+          <p className="text-3xl font-extrabold tracking-tight">{rp(saldo)}</p>
           <p className="mb-2 text-xs text-stone-500">dari jatah {rp(plafon)}</p>
           <Progress nilai={saldo} maks={plafon} />
           <p className="mt-2 text-xs text-stone-500">Diisi kembali ke jatah setiap hari Selasa.</p>
@@ -42,7 +44,7 @@ export default function KasKecil() {
         className="min-w-0"
         judul="Riwayat"
         aksi={
-          <Link to="/laporan/kas-kecil" className="text-xs font-semibold text-hijau">
+          <Link to="/laporan/kas-kecil" className="text-sm font-semibold text-hijau">
             Laporan bulanan
           </Link>
         }
@@ -50,5 +52,6 @@ export default function KasKecil() {
         <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal={isPemilik(user?.role)} memuat={trxQ.isLoading} />
       </Card>
     </div>
+    </>
   );
 }

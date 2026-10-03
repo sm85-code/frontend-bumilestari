@@ -1,42 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, ErrorBox, Field, Input, Kosong, Memuat, Tabel, Td, TdTotal, Th } from "../components/ui";
+import type { TableColumnsType } from "antd";
+import { BarisTotal, Card, DataTabel, ErrorBox, Field, Input, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
 import type { BarisKategori, LaporanUmum } from "../lib/types";
 
+const kolomKategori: TableColumnsType<BarisKategori> = [
+  { title: "Kategori", dataIndex: "kategori" },
+  { title: "Transaksi", dataIndex: "jumlah_transaksi", align: "right", width: 100, render: (v: number) => <span className="text-coklat">{v || "—"}</span> },
+  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+];
+
 function TabelKategori({ judul, baris, total, labelTotal }: { judul: string; baris: BarisKategori[]; total?: string; labelTotal?: string }) {
   return (
     <Card judul={judul} className="min-w-0">
-      {baris.length === 0 ? (
-        <Kosong teks="Tidak ada." />
-      ) : (
-        <Tabel minLebar={320}>
-          <thead>
-            <tr>
-              <Th lengket>Kategori</Th>
-              <Th kanan>Transaksi</Th>
-              <Th kanan>Jumlah</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {baris.map((b) => (
-              <tr key={b.kategori}>
-                <Td lengket>{b.kategori}</Td>
-                <Td kanan className="text-stone-500">{b.jumlah_transaksi || "—"}</Td>
-                <Td kanan>{rp(b.jumlah)}</Td>
-              </tr>
-            ))}
-            {total !== undefined && (
-              <tr>
-                <TdTotal lengket colSpan={2}>{labelTotal ?? "Total"}</TdTotal>
-                <TdTotal kanan>{rp(total)}</TdTotal>
-              </tr>
-            )}
-          </tbody>
-        </Tabel>
-      )}
+      <DataTabel
+        kolom={kolomKategori}
+        data={baris}
+        rowKey="kategori"
+        minLebar={320}
+        kosong="Tidak ada."
+        ringkasan={total !== undefined && baris.length > 0 ? () => <BarisTotal sel={[{ isi: labelTotal ?? "Total", span: 2 }, { isi: rp(total), kanan: true }]} /> : undefined}
+      />
     </Card>
   );
 }
@@ -51,15 +38,27 @@ export default function LaporanUmumPage() {
     enabled: !!dari && !!sampai,
   });
   const d = q.data;
+  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolomArus: TableColumnsType<LaporanUmum["arus_kas"][number]> = [
+    { title: "Akun", dataIndex: "nama", fixed: "left", width: 150 },
+    { title: "Saldo awal", dataIndex: "saldo_awal", align: "right", render: angka },
+    { title: "Masuk", dataIndex: "masuk", align: "right", render: angka },
+    { title: "Keluar", dataIndex: "keluar", align: "right", render: angka },
+    { title: "Transfer masuk", dataIndex: "transfer_masuk", align: "right", render: angka },
+    { title: "Transfer keluar", dataIndex: "transfer_keluar", align: "right", render: angka },
+    { title: "Saldo akhir", dataIndex: "saldo_akhir", align: "right", render: (v: string) => <b className="tabular-nums whitespace-nowrap">{rp(v)}</b> },
+  ];
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Laporan umum</h1>
-        <Link to="/laporan/kas-kecil" className="text-xs font-semibold text-hijau">
-          Laporan kas kecil →
-        </Link>
-      </div>
+      <PageHeader
+        judul="Laporan umum"
+        aksi={
+          <Link to="/laporan/kas-kecil" className="text-sm font-semibold text-hijau">
+            Laporan kas kecil →
+          </Link>
+        }
+      />
       <Card>
         <div className="grid max-w-md grid-cols-2 gap-3">
           <Field label="Dari">
@@ -88,38 +87,13 @@ export default function LaporanUmumPage() {
           {d.di_luar_laba.length > 0 && <TabelKategori judul="Di luar laba (prive, bagi hasil)" baris={d.di_luar_laba} />}
 
           <Card judul={`Arus kas ${tanggal(d.dari)} – ${tanggal(d.sampai)}`}>
-            <Tabel minLebar={760}>
-              <thead>
-                <tr>
-                  <Th lengket>Akun</Th>
-                  <Th kanan>Saldo awal</Th>
-                  <Th kanan>Masuk</Th>
-                  <Th kanan>Keluar</Th>
-                  <Th kanan>Transfer masuk</Th>
-                  <Th kanan>Transfer keluar</Th>
-                  <Th kanan>Saldo akhir</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.arus_kas.map((a) => (
-                  <tr key={a.akun_id}>
-                    <Td lengket>{a.nama}</Td>
-                    <Td kanan>{rp(a.saldo_awal)}</Td>
-                    <Td kanan>{rp(a.masuk)}</Td>
-                    <Td kanan>{rp(a.keluar)}</Td>
-                    <Td kanan>{rp(a.transfer_masuk)}</Td>
-                    <Td kanan>{rp(a.transfer_keluar)}</Td>
-                    <Td kanan tebal>{rp(a.saldo_akhir)}</Td>
-                  </tr>
-                ))}
-                <tr>
-                  <TdTotal lengket>Total kas</TdTotal>
-                  <TdTotal kanan>{rp(d.total_kas_awal)}</TdTotal>
-                  <TdTotal colSpan={4} />
-                  <TdTotal kanan>{rp(d.total_kas_akhir)}</TdTotal>
-                </tr>
-              </tbody>
-            </Tabel>
+            <DataTabel
+              kolom={kolomArus}
+              data={d.arus_kas}
+              rowKey="akun_id"
+              minLebar={820}
+              ringkasan={() => <BarisTotal sel={[{ isi: "Total kas" }, { isi: rp(d.total_kas_awal), kanan: true }, { isi: "", span: 4 }, { isi: rp(d.total_kas_akhir), kanan: true }]} />}
+            />
           </Card>
         </>
       )}
