@@ -1,19 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
-import { pasangApiTiruan, type Panggilan } from "./mock-api";
-
-const hp = (nama: string) => nama === "hp";
-const urlAkhir = (path: string) => new RegExp(path === "/" ? "/$" : `${path}$`);
-
-async function tulisanTerkirim(panggilan: Panggilan[], metode: string, path: string) {
-  await expect.poll(() => panggilan.find((p) => p.metode === metode && p.path === path)?.body).toBeTruthy();
-  return panggilan.find((p) => p.metode === metode && p.path === path)!.body;
-}
-
-async function dialogKonfirmasi(page: Page) {
-  const dlg = page.locator(".ant-modal-confirm");
-  await expect(dlg).toBeVisible();
-  return dlg;
-}
+import { expect, test } from "@playwright/test";
+import { dialogKonfirmasi, hp, tulisanTerkirim, urlAkhir } from "./bantu";
+import { pasangApiTiruan } from "./mock-api";
 
 test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", async ({ page }, info) => {
   await pasangApiTiruan(page);
@@ -31,7 +18,7 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
       ["Laba rugi", "/laporan"], ["Data master", "/master"], ["Profil saya", "/akun"], ["Beranda", "/"],
     ];
     for (const [label, path] of menu) {
-      await samping.locator(".ant-menu-item", { hasText: new RegExp(`^${label.replace(/[&]/g, "\\$&")}$`) }).click();
+      await samping.locator(".ant-menu-item", { hasText: new RegExp(`^${label}$`) }).click();
       await expect(page).toHaveURL(urlAkhir(path));
     }
     // Dua menu "Kas kecil": di grup Uang (/kas-kecil) dan Laporan (/laporan/kas-kecil).
@@ -42,7 +29,7 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
   } else {
     const nav = page.getByRole("navigation", { name: "Navigasi utama" });
     for (const [label, path] of [["Order", "/order"], ["Selasa", "/selasa"], ["Kas", "/keuangan"], ["Lainnya", "/lainnya"], ["Beranda", "/"]]) {
-      await nav.getByRole("button", { name: label, exact: true }).click();
+      await nav.getByRole("button", { name: new RegExp(`${label}$`) }).click();
       await expect(page).toHaveURL(urlAkhir(path));
     }
     await nav.getByRole("button", { name: "Lainnya" }).click();
@@ -106,6 +93,7 @@ test("riwayat transfer: batalkan dengan alasan", async ({ page }) => {
 test("selasa: batalkan penyisihan dana gaji", async ({ page }) => {
   const panggilan = await pasangApiTiruan(page);
   await page.goto("/selasa");
+  await page.getByText("6. Sisihkan dana gaji").click();
   await page.getByRole("button", { name: "Batalkan penyisihan" }).click();
   const dlg = await dialogKonfirmasi(page);
   await dlg.locator("textarea").fill("nominal keliru");
