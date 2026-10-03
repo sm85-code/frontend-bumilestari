@@ -2,7 +2,7 @@ import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type Re
 
 export function Card({ judul, aksi, children, className = "" }: { judul?: string; aksi?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-garis bg-white p-4 shadow-sm ${className}`}>
+    <section className={`rounded-2xl border border-garis bg-white p-4 shadow-soft ${className}`}>
       {(judul || aksi) && (
         <div className="mb-3 flex items-center justify-between gap-2">
           {judul && <h2 className="text-sm font-semibold text-coklat">{judul}</h2>}
@@ -17,7 +17,7 @@ export function Card({ judul, aksi, children, className = "" }: { judul?: string
 export function Stat({ label, nilai, sub, warna }: { label: string; nilai: string; sub?: string; warna?: "hijau" | "merah" | "oranye" }) {
   const w = warna === "merah" ? "text-red-600" : warna === "oranye" ? "text-oranye" : warna === "hijau" ? "text-hijau" : "text-stone-900";
   return (
-    <div className="rounded-2xl border border-garis bg-white p-3 shadow-sm">
+    <div className="rounded-2xl border border-garis bg-white p-3 shadow-soft">
       <p className="text-xs text-coklat">{label}</p>
       <p className={`mt-1 text-lg font-bold leading-tight ${w}`}>{nilai}</p>
       {sub && <p className="mt-0.5 text-xs text-stone-500">{sub}</p>}
@@ -28,7 +28,7 @@ export function Stat({ label, nilai, sub, warna }: { label: string; nilai: strin
 export function Button({ variant = "utama", className = "", ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "utama" | "pinggir" | "bahaya" }) {
   const v =
     variant === "utama"
-      ? "bg-hijau text-white active:bg-hijau-tua"
+      ? "bg-hijau text-white hover:bg-hijau-tua active:bg-hijau-tua"
       : variant === "bahaya"
         ? "bg-red-600 text-white"
         : "border border-garis bg-white text-stone-800 active:bg-stone-100";
@@ -173,7 +173,7 @@ export function Tabs<T extends string>({ daftar, aktif, onPilih }: { daftar: { i
           role="tab"
           aria-selected={aktif === t.id}
           onClick={() => onPilih(t.id)}
-          className={`min-h-10 whitespace-nowrap rounded-lg px-4 text-sm font-semibold ${aktif === t.id ? "bg-white text-hijau shadow-sm" : "text-stone-600"}`}
+          className={`min-h-10 whitespace-nowrap rounded-lg px-4 text-sm font-semibold ${aktif === t.id ? "bg-white text-hijau shadow-soft" : "text-stone-600"}`}
         >
           {t.label}
         </button>

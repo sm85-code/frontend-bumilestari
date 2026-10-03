@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
+import Wallpaper from "./Wallpaper";
 
 interface Menu {
   ke: string;
@@ -52,13 +53,14 @@ export default function Layout() {
   const menu = pemilik ? MENU_PEMILIK : MENU_STAF; // menu samping (laptop)
   const menuBawah = pemilik ? MENU_UTAMA : MENU_STAF; // navigasi bawah (HP)
   return (
-    <div className="min-h-full md:flex">
-      <aside className="hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col" aria-label="Menu samping">
-        <div className="flex items-center gap-3 bg-hijau px-4 py-4 text-white">
-          <img src="/logo.png" alt="" className="h-10 w-10" />
+    <div className="relative min-h-full md:flex">
+      <Wallpaper />
+      <aside className="z-10 hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-60 md:flex-col" aria-label="Menu samping">
+        <div className="flex items-center gap-3 border-b border-garis px-4 py-4">
+          <img src="/logo.png" alt="" className="h-11 w-11" />
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold leading-tight">Bumi Lestari</p>
-            <p className="truncate text-xs text-white/80">
+            <p className="truncate text-sm font-extrabold leading-tight text-hijau">Bumi Lestari</p>
+            <p className="truncate text-xs text-coklat">
               {user?.nama} · {user?.role}
             </p>
           </div>
@@ -83,12 +85,12 @@ export default function Layout() {
         </button>
       </aside>
 
-      <div className="flex min-h-full flex-1 flex-col md:pl-60">
-        <header className="sticky top-0 z-10 flex items-center gap-3 bg-hijau px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white md:hidden">
-          <img src="/logo.png" alt="" className="h-9 w-9 rounded-lg bg-white p-0.5" />
+      <div className="relative z-10 flex min-h-full flex-1 flex-col md:pl-60">
+        <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-garis bg-white/90 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur md:hidden">
+          <img src="/logo.png" alt="" className="h-10 w-10" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold leading-tight">Bumi Lestari</p>
-            <p className="truncate text-xs text-white/80">
+            <p className="truncate text-sm font-extrabold leading-tight text-hijau">Bumi Lestari</p>
+            <p className="truncate text-xs text-coklat">
               {user?.nama} · {user?.role}
             </p>
           </div>
