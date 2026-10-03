@@ -1,15 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Col, Divider, Row, Space, Typography } from "antd";
+import { Alert, Col, Divider, Row, Space, Typography } from "antd";
+import { Link } from "react-router-dom";
 import type { TableColumnsType } from "antd";
 import { Angka, Baris, Button, Card, DataTabel, ErrorBox, Field, InputTanggal, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
 import { api, query } from "../lib/api";
 import { useAksi } from "../lib/data";
-import { bulanIni, bulanTahun, hariIni, num, rp, tanggal } from "../lib/format";
+import { bulanTahun, hariIni, num, rp, tanggal } from "../lib/format";
+import { periodeSebelum } from "../lib/tugas";
 import type { BagiHasil, BagiHasilHitung } from "../lib/types";
 
 export default function BagiHasilPage() {
-  const [periode, setPeriode] = useState(bulanIni());
+  // Bagi hasil hanya untuk bulan yang sudah tutup buku: bawaan bulan lalu.
+  const [periode, setPeriode] = useState(() => periodeSebelum(hariIni()));
   const hitungQ = useQuery({ queryKey: ["bagi-hasil-hitung", periode], queryFn: () => api<BagiHasilHitung>(`/bagi-hasil/hitung${query({ periode })}`) });
   const daftarQ = useQuery({ queryKey: ["bagi-hasil"], queryFn: () => api<BagiHasil[]>("/bagi-hasil") });
   const aksi = useAksi();
@@ -65,7 +68,7 @@ export default function BagiHasilPage() {
 
   return (
     <>
-      <PageHeader judul="Bagi hasil bulanan" sub="Admin dan owner, dihitung dari laba bersih tiap bulan" />
+      <PageHeader judul="Bagi hasil bulanan" sub="Admin dan owner, dihitung dari laba bersih bulan yang sudah tutup buku" />
       <Card>
         <Row>
           <Col xs={24} md={8}>
@@ -78,7 +81,16 @@ export default function BagiHasilPage() {
       <ErrorBox error={hitungQ.error ?? daftarQ.error ?? aksi.error} />
       {hitungQ.isLoading && <Memuat />}
       {h && (
-        <Card judul={`Pratinjau ${h.periode}`}>
+        <Card judul={h.final ? `Laba terkunci ${bulanTahun(h.periode)}` : `Pratinjau ${bulanTahun(h.periode)}`}>
+          {!h.final && (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 12 }}
+              title={`${bulanTahun(h.periode)} belum tutup buku: angka ini masih bisa berubah dan belum bisa disimpan.`}
+              action={<Link to="/laporan/tutup-buku">Tutup buku</Link>}
+            />
+          )}
           <Baris kiri="Pemasukan" kanan={rp(h.pemasukan)} />
           <Baris kiri="Biaya" kanan={rp(h.pengeluaran)} />
           <Baris kiri="Laba bersih" kanan={<Typography.Text type={num(h.laba_bersih) < 0 ? "danger" : "success"}>{rp(h.laba_bersih)}</Typography.Text>} tebal />
@@ -87,7 +99,7 @@ export default function BagiHasilPage() {
           <Baris kiri={`Owner (${num(h.persen_owner)}%)`} kanan={rp(h.bagian_owner)} />
           {num(h.laba_bersih) <= 0 && <Typography.Paragraph type="secondary">Laba nol atau rugi: tidak ada bagi hasil (kerugian tidak dibawa ke bulan berikutnya).</Typography.Paragraph>}
           <div style={{ marginTop: 16 }}>
-            <Button disabled={aksi.isPending || adaAktif} onClick={() => aksi.mutate({ path: "/bagi-hasil", body: { periode } })}>
+            <Button disabled={aksi.isPending || adaAktif || !h.final} onClick={() => aksi.mutate({ path: "/bagi-hasil", body: { periode } })}>
               {adaAktif ? "Sudah disimpan" : "Simpan perhitungan"}
             </Button>
           </div>

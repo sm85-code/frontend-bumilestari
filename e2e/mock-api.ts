@@ -130,7 +130,24 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
     "/gaji": [],
     "/langganan": [{ id: "l1", nama: "Listrik", jumlah_bulanan: "400000", aktif: true }],
     "/tagihan": [],
-    "/bagi-hasil/hitung": { periode: "2026-09", pemasukan: "10000000", pengeluaran: "1900000", laba_bersih: "8100000", persen_admin: "40", persen_owner: "60", bagian_admin: "3240000", bagian_owner: "4860000" },
+    "/bagi-hasil/hitung": { periode: "2026-09", pemasukan: "10000000", pengeluaran: "1900000", laba_bersih: "8100000", persen_admin: "40", persen_owner: "60", bagian_admin: "3240000", bagian_owner: "4860000", final: false },
+    "/tutup-buku": [
+      { id: "tb8", periode: "2026-08", status: "ditutup", ditutup_oleh: "u1", ditutup_pada: "2026-09-08T03:00:00Z", dibuka_oleh: null, dibuka_pada: null, alasan_buka: null, laba_bersih: "7500000" },
+    ],
+    "/tutup-buku/2026-09/kesiapan": {
+      periode: "2026-09", status: "terbuka", boleh_tutup: false, belum_cair: "350000",
+      butir: [
+        { kode: "bulan_berakhir", label: "Bulan sudah berakhir", siap: true, penghalang: true, keterangan: "" },
+        { kode: "gaji", label: "Gaji bulan ini sudah dibayar", siap: false, penghalang: true, keterangan: "Belum dibayar: Sari" },
+        { kode: "cek_fisik", label: "Cek fisik kas kecil", siap: false, penghalang: false, keterangan: "Belum ada catatan cek fisik" },
+        { kode: "draf", label: "Semua catatan sudah dikirim ke laporan keuangan", siap: true, penghalang: true, keterangan: "" },
+      ],
+      pratinjau: {
+        pemasukan: [{ kategori: "Penjualan marketplace", jumlah: "10000000", jumlah_transaksi: 12 }],
+        biaya: [{ kategori: "Gaji karyawan", jumlah: "1900000", jumlah_transaksi: 1 }],
+        di_luar_laba: [], total_pemasukan: "10000000", total_biaya: "1900000", laba_bersih: "8100000",
+      },
+    },
     "/bagi-hasil": [],
     "/harga-grosir": [],
     "/users": [PENGGUNA.admin],

@@ -61,6 +61,8 @@ export interface Transaksi {
   /** draf = belum dikirim ke laporan keuangan; terkirim = sudah masuk buku besar. */
   status_kirim?: StatusKirim;
   kiriman_id?: string | null;
+  /** Koreksi atas bulan yang sudah tutup buku (YYYY-MM). */
+  koreksi_periode?: string | null;
   created_at?: string;
 }
 
@@ -73,6 +75,8 @@ export interface TransaksiIn {
   keterangan: string;
   /** Setoran modal kedua dst. wajib dikonfirmasi admin. */
   konfirmasi_setoran_modal_kedua?: boolean;
+  /** Koreksi atas bulan yang sudah tutup buku (YYYY-MM). */
+  koreksi_periode?: string | null;
 }
 
 /* ---------- Kirim ke laporan keuangan (posting berkelompok) ---------- */
@@ -178,6 +182,9 @@ export interface LaporanUmum {
   total_kas_akhir: string;
   /** Draf yang belum dikirim (tidak dihitung di laporan ini). */
   draf_belum_dikirim?: DrafSumber[];
+  /** Bulan tutup buku: angka dari snapshot saat ditutup. */
+  dari_snapshot?: boolean;
+  ditutup_pada?: string | null;
 }
 
 export interface LaporanKasKecil {
@@ -412,6 +419,8 @@ export interface BagiHasilHitung {
   persen_owner: string;
   bagian_admin: string;
   bagian_owner: string;
+  /** true = laba terkunci dari snapshot tutup buku; false = pratinjau (bulan belum ditutup). */
+  final?: boolean;
 }
 
 export interface BagiHasil {
@@ -424,6 +433,45 @@ export interface BagiHasil {
   bagian_owner: string;
   tanggal_bayar: string | null;
   dibatalkan: boolean;
+}
+
+/* ---------- Tutup buku (Fase 2.3) ---------- */
+export type StatusTutupBuku = "terbuka" | "ditutup" | "dibuka";
+
+export interface ButirKesiapan {
+  kode: string;
+  label: string;
+  siap: boolean;
+  /** true = wajib beres sebelum tutup buku; false = hanya catatan. */
+  penghalang: boolean;
+  keterangan: string;
+}
+
+export interface BarisKategori {
+  kategori: string;
+  jumlah: string;
+  jumlah_transaksi: number;
+}
+
+export interface KesiapanTutupBuku {
+  periode: string;
+  status: StatusTutupBuku;
+  boleh_tutup: boolean;
+  butir: ButirKesiapan[];
+  pratinjau: { pemasukan: BarisKategori[]; biaya: BarisKategori[]; di_luar_laba: BarisKategori[]; total_pemasukan: string; total_biaya: string; laba_bersih: string };
+  belum_cair: string;
+}
+
+export interface TutupBuku {
+  id: string;
+  periode: string;
+  status: Exclude<StatusTutupBuku, "terbuka">;
+  ditutup_oleh: string;
+  ditutup_pada: string;
+  dibuka_oleh: string | null;
+  dibuka_pada: string | null;
+  alasan_buka: string | null;
+  laba_bersih: string | null;
 }
 
 /* ---------- Pengguna & profil ---------- */

@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, useDialog } from "./ui";
 import { useAuth } from "../auth/AuthContext";
 import { api, isSetoranKedua } from "../lib/api";
-import { bersihkanAngka, hariIni, rp } from "../lib/format";
+import { bersihkanAngka, bulanTahun, hariIni, rp } from "../lib/format";
 import { labelKategori, pilihanKategori } from "../lib/kategori";
+import { bulanTertutup, useDaftarTutupBuku } from "../lib/tutupBuku";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
 
 interface Props {
@@ -37,6 +38,9 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const [jumlah, setJumlah] = useState("");
   const [keterangan, setKeterangan] = useState("");
   const [tgl, setTgl] = useState(hariIni());
+  const [koreksi, setKoreksi] = useState("");
+  // Koreksi atas bulan yang sudah tutup buku (dicatat di bulan berjalan); staf tidak mengurus tutup buku.
+  const tertutup = bulanTertutup(useDaftarTutupBuku(!staf).data);
   const akunPilih = akun.find((a) => a.id === akunId);
 
   const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, admin, akun: akunPilih }), [kategori, jenis, staf, admin, akunPilih]);
@@ -62,6 +66,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       setJumlah("");
       setKeterangan("");
       setKategoriId("");
+      setKoreksi("");
       void qc.invalidateQueries();
       onSukses?.();
     },
@@ -76,6 +81,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       jenis,
       jumlah: bersihkanAngka(jumlah),
       keterangan: keterangan.trim(),
+      koreksi_periode: koreksi || null,
     });
   }
 
@@ -148,6 +154,18 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       <Field label="Tanggal" hint="Lupa mencatat kemarin? Pilih tanggal kemarin.">
         <InputTanggal value={tgl} onChange={setTgl} />
       </Field>
+      {!staf && tertutup.length > 0 && (
+        <Field label="Koreksi bulan lalu (opsional)" hint="Untuk membetulkan bulan yang sudah tutup buku. Tetap dicatat & dihitung di bulan ini.">
+          <Select aria-label="Koreksi bulan lalu" value={koreksi} onChange={(e) => setKoreksi(e.target.value)}>
+            <option value="">Bukan koreksi</option>
+            {tertutup.map((p) => (
+              <option key={p} value={p}>
+                Koreksi {bulanTahun(p)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
       <AksiForm error={simpan.error}>
         {!kategoriAktif && <Typography.Text type="secondary">Pilih kategori dulu.</Typography.Text>}
         <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah)} penuh>
