@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
+/* Tema mengikuti erp.ampelkuning.com: token gaya shadcn, font Plus Jakarta Sans, radius 1rem,
+   wallpaper ripple. Warna utama hijau (nama kelas lama dipertahankan: hijau, garis, coklat). */
 @theme {
-  --color-hijau: #386c20;
-  --color-hijau-tua: #2a5218;
-  --color-hijau-muda: #e8f1e3;
-  --color-oranye: #fda800;
-  --color-oranye-muda: #fff4d9;
-  --color-coklat: #655e54;
-  --color-garis: #e5e2dc;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-hijau: oklch(48% 0.12 150);
+  --color-hijau-tua: oklch(38% 0.1 150);
+  --color-hijau-muda: oklch(95.5% 0.045 156.743);
+  --color-oranye: oklch(76% 0.16 70);
+  --color-oranye-muda: oklch(96% 0.05 85);
+  --color-coklat: oklch(50% 0.02 240); /* teks sekunder (muted-foreground) */
+  --color-garis: oklch(91% 0.008 247.858);
+  --color-latar: oklch(97.8% 0.006 247.858);
+  --color-tinta: oklch(16% 0.014 240);
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --shadow-soft: 0 1px 2px 0 oklch(16% 0.014 240 / 0.04), 0 2px 8px -2px oklch(16% 0.014 240 / 0.06);
+
+  /* Abu-abu netral kebiruan, selaras dengan latar (menggantikan stone bawaan yang hangat). */
+  --color-stone-50: oklch(98% 0.004 247.858);
+  --color-stone-100: oklch(96% 0.006 247.858);
+  --color-stone-200: oklch(92% 0.008 247.858);
+  --color-stone-300: oklch(87% 0.01 247.858);
+  --color-stone-400: oklch(72% 0.014 245);
+  --color-stone-500: oklch(55% 0.02 240);
+  --color-stone-600: oklch(46% 0.02 240);
+  --color-stone-700: oklch(36% 0.02 240);
+  --color-stone-800: oklch(26% 0.018 240);
+  --color-stone-900: oklch(16% 0.014 240);
 }
 
 html,
@@ -17,7 +34,44 @@ body,
   height: 100%;
 }
 body {
-  background: #f7f6f2;
-  color: #2b2924;
+  background: var(--color-latar);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Wallpaper ripple: lingkaran konsentris berdenyut di belakang konten (sama dengan erp.ampelkuning.com). */
+.wallpaper-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+@keyframes wallpaper-ripple {
+  0% {
+    opacity: var(--ripple-opacity, 0.3);
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    opacity: calc(var(--ripple-opacity, 0.3) * 0.5);
+  }
+  100% {
+    opacity: var(--ripple-opacity, 0.3);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.wallpaper-ripple-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 9999px;
+  border: 1px solid color-mix(in oklch, var(--color-hijau) 35%, transparent);
+  background: color-mix(in oklch, var(--color-hijau) 6%, transparent);
+  animation: wallpaper-ripple 3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wallpaper-ripple-circle {
+    animation: none;
+  }
 }

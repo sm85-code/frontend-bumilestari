@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { Button, ErrorBox, Field, Input } from "../components/ui";
+import Wallpaper from "../components/Wallpaper";
 
 export default function Masuk() {
   const { user, masuk } = useAuth();
@@ -26,13 +27,15 @@ export default function Masuk() {
   }
 
   return (
-    <div className="mx-auto flex min-h-full max-w-sm flex-col justify-center gap-6 p-6">
+    <div className="relative min-h-full">
+      <Wallpaper />
+      <div className="relative z-10 mx-auto flex min-h-full max-w-sm flex-col justify-center gap-6 p-6">
       <div className="text-center">
-        <img src="/logo.png" alt="Bumi Lestari" className="mx-auto h-28 w-28" />
-        <h1 className="mt-2 text-xl font-bold text-hijau">Masuk</h1>
+        <img src="/logo.png" alt="Bumi Lestari" className="mx-auto h-32 w-32" />
+        <h1 className="mt-2 text-xl font-extrabold text-hijau">Masuk</h1>
         <p className="text-sm text-coklat">Keuangan dan order Bumi Lestari</p>
       </div>
-      <form onSubmit={kirim} className="space-y-4">
+      <form onSubmit={kirim} className="space-y-4 rounded-2xl border border-garis bg-white p-5 shadow-soft">
         <Field label="Email">
           <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </Field>
@@ -44,6 +47,7 @@ export default function Masuk() {
           {proses ? "Masuk…" : "Masuk"}
         </Button>
       </form>
+      </div>
     </div>
   );
 }

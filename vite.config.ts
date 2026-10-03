@@ -28,6 +28,14 @@ export default defineConfig(({ mode }) => {
         workbox: {
           // Data keuangan selalu dari server: jangan simpan respons API di cache.
           navigateFallbackDenylist: [/^\/api\//],
+          // Font Plus Jakarta Sans (Google Fonts): simpan agar tampilan sama saat offline.
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+              handler: "StaleWhileRevalidate",
+              options: { cacheName: "google-fonts", expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 } },
+            },
+          ],
         },
       }),
     ],
