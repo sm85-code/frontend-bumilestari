@@ -1,102 +1,163 @@
-import { Alert, Button as AButton, Card as ACard, Empty, Input as AInput, Modal, Progress as AProgress, Select as ASelect, Spin, Statistic, Tabs as ATabs, Tag, Typography } from "antd";
+import {
+  Alert,
+  App,
+  Button as AButton,
+  Card as ACard,
+  DatePicker,
+  Empty,
+  Flex,
+  Form,
+  Input as AInput,
+  Modal,
+  Progress as AProgress,
+  Select as ASelect,
+  Space,
+  Spin,
+  Statistic,
+  Table,
+  Tabs as ATabs,
+  Tag,
+  Typography,
+  theme,
+} from "antd";
 import type { TableColumnsType } from "antd";
-import { Table } from "antd";
+import dayjs from "dayjs";
 import {
   Children,
   Fragment,
   isValidElement,
-  type ChangeEvent,
   type ButtonHTMLAttributes,
+  type ChangeEvent,
   type InputHTMLAttributes,
   type ReactElement,
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
-import { WARNA } from "../theme";
 
-/** Komponen dasar aplikasi, dibangun di atas Ant Design. Nama dan prop dipertahankan agar halaman tidak perlu diubah. */
+/** Komponen dasar aplikasi: pembungkus tipis di atas Ant Design (tampilan default antd). */
 
 export function PageHeader({ judul, sub, aksi }: { judul: string; sub?: ReactNode; aksi?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div className="min-w-0">
-        <Typography.Title level={3} style={{ margin: 0, fontWeight: 800, letterSpacing: "-0.01em" }}>
+    <Flex justify="space-between" align="flex-start" wrap gap="small">
+      <div>
+        <Typography.Title level={3} style={{ margin: 0 }}>
           {judul}
         </Typography.Title>
         {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
       </div>
-      {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
-    </div>
+      {aksi && <Space wrap>{aksi}</Space>}
+    </Flex>
   );
 }
 
-export function Card({ judul, aksi, children, className = "" }: { judul?: string; aksi?: ReactNode; children: ReactNode; className?: string }) {
+export function Card({ judul, aksi, children }: { judul?: string; aksi?: ReactNode; children: ReactNode }) {
   return (
-    <ACard className={className} variant="borderless" style={{ boxShadow: "var(--ant-box-shadow-tertiary)" }} styles={{ body: { padding: 0 } }}>
-      {(judul || aksi) && (
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-garis px-4 py-3">
-          {judul && <h2 className="min-w-0 text-sm font-extrabold">{judul}</h2>}
-          {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
-        </div>
-      )}
-      <div className="p-4">{children}</div>
+    <ACard title={judul} extra={aksi}>
+      {children}
     </ACard>
   );
 }
 
 export function Stat({ label, nilai, sub, warna }: { label: string; nilai: string; sub?: string; warna?: "hijau" | "merah" | "oranye" }) {
-  const w = warna === "merah" ? "#d03a3a" : warna === "oranye" ? WARNA.oranye : warna === "hijau" ? WARNA.hijau : WARNA.tinta;
+  const { token } = theme.useToken();
+  const w = warna === "merah" ? token.colorError : warna === "oranye" ? token.colorWarning : warna === "hijau" ? token.colorSuccess : undefined;
   return (
-    <ACard variant="borderless" style={{ boxShadow: "var(--ant-box-shadow-tertiary)", height: "100%" }} styles={{ body: { padding: 16 } }}>
-      <Statistic title={label} value={nilai} styles={{ content: { color: w, fontWeight: 800, fontSize: 22 } }} />
-      {sub && <Typography.Text type="secondary" style={{ fontSize: 12 }}>{sub}</Typography.Text>}
+    <ACard style={{ height: "100%" }}>
+      <Statistic title={label} value={nilai} styles={{ content: { color: w } }} />
+      {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
     </ACard>
   );
 }
 
-export function Button({ variant = "utama", kecil, className = "", type, children, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "utama" | "pinggir" | "bahaya"; kecil?: boolean }) {
-  const { onClick, disabled, style, title, form } = p;
+export function Button({
+  variant = "utama",
+  kecil,
+  penuh,
+  type,
+  children,
+  ...p
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "utama" | "pinggir" | "bahaya"; kecil?: boolean; penuh?: boolean }) {
   return (
     <AButton
       htmlType={type ?? "button"}
       type={variant === "pinggir" ? "default" : "primary"}
       danger={variant === "bahaya"}
       size={kecil ? "small" : "middle"}
-      onClick={onClick as never}
-      disabled={disabled}
-      style={style}
-      title={title}
-      form={form}
-      className={className}
+      onClick={p.onClick as never}
+      disabled={p.disabled}
+      block={penuh}
     >
       {children}
     </AButton>
   );
 }
 
+/** Label di atas isian. Tanda wajib (*) muncul bila isian bertanda `required`. */
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+  const wajib = isValidElement(children) && Boolean((children.props as { required?: boolean }).required);
   return (
-    <label className="block">
-      <span className="mb-1 block text-xs font-semibold" style={{ color: WARNA.redup }}>
-        {label}
-      </span>
+    <Form.Item label={label} extra={hint} required={wajib} labelCol={{ span: 24 }} wrapperCol={{ span: 24 }}>
       {children}
-      {hint && <span className="mt-1 block text-xs" style={{ color: WARNA.redup }}>{hint}</span>}
-    </label>
+    </Form.Item>
   );
 }
 
-export const Input = ({ className, ...p }: InputHTMLAttributes<HTMLInputElement>) =>
-  p.type === "password" ? (
-    <AInput.Password {...(p as object)} size="large" className={className} onChange={p.onChange as never} />
-  ) : (
-    <AInput {...(p as object)} size="large" className={className} onChange={p.onChange as never} />
+/** Formulir antd (label di atas). `onKirim` dipanggil saat tombol submit ditekan dan isian wajib terisi. */
+export function Formulir({ onKirim, children, disabled }: { onKirim: () => void; children: ReactNode; disabled?: boolean }) {
+  return (
+    <Form layout="vertical" disabled={disabled} onFinish={() => onKirim()}>
+      {children}
+    </Form>
   );
+}
 
-export const Teks = ({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <AInput.TextArea {...(p as object)} autoSize={{ minRows: 3 }} className={className} onChange={p.onChange as never} />
+/** Baris tombol simpan (dan pesan galat) di dasar formulir. */
+export function AksiForm({ error, children }: { error?: unknown; children: ReactNode }) {
+  return (
+    <Form.Item>
+      <Flex vertical gap="small">
+        <ErrorBox error={error} />
+        {children}
+      </Flex>
+    </Form.Item>
+  );
+}
+
+export const Input = (p: InputHTMLAttributes<HTMLInputElement>) =>
+  p.type === "password" ? <AInput.Password {...(p as object)} onChange={p.onChange as never} /> : <AInput {...(p as object)} onChange={p.onChange as never} />;
+
+export const Teks = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <AInput.TextArea {...(p as object)} autoSize={{ minRows: 3 }} onChange={p.onChange as never} />
 );
+
+/** Tanggal (atau bulan) dengan DatePicker. Nilai berupa teks "YYYY-MM-DD" ("YYYY-MM" untuk bulan). */
+export function InputTanggal({
+  value,
+  onChange,
+  bulan,
+  disabled,
+  kosongBoleh,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  bulan?: boolean;
+  disabled?: boolean;
+  kosongBoleh?: boolean;
+}) {
+  const fmt = bulan ? "YYYY-MM" : "YYYY-MM-DD";
+  return (
+    <DatePicker
+      style={{ width: "100%" }}
+      picker={bulan ? "month" : "date"}
+      format={bulan ? "MMMM YYYY" : "DD/MM/YYYY"}
+      value={value ? dayjs(value) : null}
+      allowClear={Boolean(kosongBoleh)}
+      disabled={disabled}
+      onChange={(d) => onChange(d ? d.format(fmt) : "")}
+    />
+  );
+}
 
 interface OpsiSelect {
   value: string;
@@ -118,22 +179,16 @@ function ambilOpsi(anak: ReactNode, hasil: OpsiSelect[] = []): OpsiSelect[] {
   return hasil;
 }
 
-export const Select = ({ className, children, value, onChange, disabled }: SelectHTMLAttributes<HTMLSelectElement>) => {
-  const opsi = ambilOpsi(children);
-  return (
-    <ASelect
-      size="large"
-      className={`w-full ${className ?? ""}`}
-      value={value === undefined || value === null ? undefined : String(value)}
-      options={opsi}
-      disabled={disabled}
-      showSearch={{ optionFilterProp: "label" }}
-      onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
-      popupMatchSelectWidth={false}
-      getPopupContainer={(el) => el.parentElement ?? document.body}
-    />
-  );
-};
+export const Select = ({ children, value, onChange, disabled }: SelectHTMLAttributes<HTMLSelectElement>) => (
+  <ASelect
+    style={{ width: "100%" }}
+    value={value === undefined || value === null ? undefined : String(value)}
+    options={ambilOpsi(children)}
+    disabled={disabled}
+    showSearch={{ optionFilterProp: "label" }}
+    onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
+  />
+);
 
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null;
@@ -143,33 +198,40 @@ export function ErrorBox({ error }: { error: unknown }) {
 
 export function Memuat({ teks = "Memuat…" }: { teks?: string }) {
   return (
-    <div className="py-10 text-center">
+    <Flex vertical align="center" gap="small" style={{ padding: 48 }}>
       <Spin />
-      <p className="mt-2 text-sm" style={{ color: WARNA.redup }}>{teks}</p>
-    </div>
+      <Typography.Text type="secondary">{teks}</Typography.Text>
+    </Flex>
   );
+}
+
+/** Angka rata digit dan tidak terpotong baris. */
+export function Angka({ children, tebal }: { children: ReactNode; tebal?: boolean }) {
+  return <span style={{ fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", fontWeight: tebal ? 600 : undefined }}>{children}</span>;
 }
 
 export function Baris({ kiri, kanan, tebal }: { kiri: ReactNode; kanan: ReactNode; tebal?: boolean }) {
   return (
-    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-sm ${tebal ? "font-bold" : ""}`}>
-      <span>{kiri}</span>
-      <span className="shrink-0 tabular-nums">{kanan}</span>
-    </div>
+    <Flex justify="space-between" align="baseline" gap="small" style={{ padding: "6px 0" }}>
+      <Typography.Text strong={tebal}>{kiri}</Typography.Text>
+      <Typography.Text strong={tebal}>
+        <Angka>{kanan}</Angka>
+      </Typography.Text>
+    </Flex>
   );
 }
 
 export function Progress({ nilai, maks }: { nilai: number; maks: number }) {
   const persen = maks > 0 ? Math.max(0, Math.min(100, (nilai / maks) * 100)) : 0;
-  return <AProgress percent={Math.round(persen)} showInfo={false} strokeColor={WARNA.hijau} size="small" />;
+  return <AProgress percent={Math.round(persen)} showInfo={false} />;
 }
 
-export const Kosong = ({ teks }: { teks: string }) => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={teks} className="!my-4" />;
+export const Kosong = ({ teks }: { teks: string }) => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={teks} />;
 
 /** Jendela formulir (antd Modal). Esc menutup. */
 export function Dialog({ judul, onTutup, children }: { judul: string; onTutup: () => void; children: ReactNode }) {
   return (
-    <Modal open title={<span style={{ fontWeight: 800 }}>{judul}</span>} onCancel={onTutup} footer={null} destroyOnHidden centered width={560} maskClosable={false}>
+    <Modal open title={judul} onCancel={onTutup} footer={null} destroyOnHidden centered width={560}>
       {children}
     </Modal>
   );
@@ -181,10 +243,15 @@ export function Tabs<T extends string>({ daftar, aktif, onPilih }: { daftar: { i
 
 const WARNA_TAG = { hijau: "success", oranye: "warning", merah: "error", abu: "default" } as const;
 export function Lencana({ children, warna = "abu" }: { children: ReactNode; warna?: "hijau" | "oranye" | "merah" | "abu" }) {
+  return <Tag color={WARNA_TAG[warna]}>{children}</Tag>;
+}
+
+/** Tombol aksi kecil bergaya tautan di dalam sel tabel. */
+export function TombolLink({ bahaya, disabled, onClick, children }: { bahaya?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
   return (
-    <Tag color={WARNA_TAG[warna]} variant="filled" style={{ marginInlineEnd: 0, fontWeight: 600 }}>
+    <AButton type="link" size="small" danger={bahaya} disabled={disabled} onClick={onClick}>
       {children}
-    </Tag>
+    </AButton>
   );
 }
 
@@ -199,19 +266,16 @@ export function DataTabel<T extends object>({
   minLebar = 640,
   ringkasan,
   kosong = "Belum ada data",
-  onKlikBaris,
 }: {
   kolom: TableColumnsType<T>;
   data: readonly T[];
-  rowKey: keyof T & string | ((r: T) => string);
+  rowKey: (keyof T & string) | ((r: T) => string);
   minLebar?: number;
   ringkasan?: () => ReactNode;
   kosong?: string;
-  onKlikBaris?: (r: T) => void;
 }) {
   return (
     <Table<T>
-      size="middle"
       columns={kolom}
       dataSource={data as T[]}
       rowKey={rowKey as never}
@@ -220,18 +284,7 @@ export function DataTabel<T extends object>({
       scroll={{ x: minLebar }}
       locale={{ emptyText: <Kosong teks={kosong} /> }}
       summary={ringkasan ? () => <Table.Summary>{ringkasan()}</Table.Summary> : undefined}
-      onRow={onKlikBaris ? (r) => ({ onClick: () => onKlikBaris(r), style: { cursor: "pointer" } }) : undefined}
     />
-  );
-}
-
-
-/** Tombol aksi kecil bergaya tautan di dalam sel tabel. */
-export function TombolLink({ bahaya, disabled, onClick, children }: { bahaya?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <AButton type="link" size="small" danger={bahaya} disabled={disabled} onClick={onClick} style={{ paddingInline: 6, fontWeight: 600 }}>
-      {children}
-    </AButton>
   );
 }
 
@@ -245,10 +298,67 @@ export function BarisTotal({ sel }: { sel: { isi: ReactNode; kanan?: boolean; sp
         idx += c.span ?? 1;
         return (
           <Table.Summary.Cell key={i} index={index} colSpan={c.span ?? 1} align={c.kanan ? "right" : "left"}>
-            <b className={c.kanan ? "tabular-nums" : ""}>{c.isi}</b>
+            <Typography.Text strong>{c.kanan ? <Angka>{c.isi}</Angka> : c.isi}</Typography.Text>
           </Table.Summary.Cell>
         );
       })}
     </Table.Summary.Row>
   );
+}
+
+/** Dialog konfirmasi dan isian (Modal antd) sebagai pengganti window.confirm / prompt / alert. */
+export function useDialog() {
+  const { modal, message } = App.useApp();
+
+  const konfirmasi = (judul: string, opsi?: { teks?: ReactNode; ok?: string; bahaya?: boolean }) =>
+    new Promise<boolean>((resolve) => {
+      modal.confirm({
+        title: judul,
+        content: opsi?.teks,
+        okText: opsi?.ok ?? "Ya",
+        cancelText: "Batal",
+        okButtonProps: { danger: opsi?.bahaya },
+        centered: true,
+        onOk: () => resolve(true),
+        onCancel: () => resolve(false),
+      });
+    });
+
+  /** Minta isian teks. Hasil null bila dibatalkan. `min`: panjang minimal; `sandi`: sembunyikan huruf; `panjang`: kolom beberapa baris. */
+  const tanya = (judul: string, opsi: { label?: ReactNode; awal?: string; min?: number; sandi?: boolean; panjang?: boolean; ok?: string }) =>
+    new Promise<string | null>((resolve) => {
+      let nilai = opsi.awal ?? "";
+      const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        nilai = e.target.value;
+      };
+      modal.confirm({
+        title: judul,
+        icon: null,
+        centered: true,
+        content: (
+          <Flex vertical gap="small">
+            {opsi.label && <Typography.Text type="secondary">{opsi.label}</Typography.Text>}
+            {opsi.sandi ? (
+              <AInput.Password autoFocus onChange={onChange} />
+            ) : opsi.panjang ? (
+              <AInput.TextArea autoFocus rows={3} defaultValue={opsi.awal} onChange={onChange} />
+            ) : (
+              <AInput autoFocus defaultValue={opsi.awal} onChange={onChange} />
+            )}
+          </Flex>
+        ),
+        okText: opsi.ok ?? "Simpan",
+        cancelText: "Batal",
+        onOk: () => {
+          if (nilai.trim().length < (opsi.min ?? 0)) {
+            message.warning(`Isi minimal ${opsi.min} karakter.`);
+            return Promise.reject(new Error("terlalu pendek"));
+          }
+          resolve(nilai.trim());
+        },
+        onCancel: () => resolve(null),
+      });
+    });
+
+  return { konfirmasi, tanya, message };
 }

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Col, Flex, Row, Tag, Typography } from "antd";
 import type { TableColumnsType } from "antd";
-import { Baris, BarisTotal, Card, DataTabel, ErrorBox, Memuat, PageHeader, Progress, Stat } from "../components/ui";
+import { Link } from "react-router-dom";
+import { Angka, Baris, BarisTotal, Card, DataTabel, ErrorBox, Memuat, PageHeader, Progress, Stat } from "../components/ui";
 import { api } from "../lib/api";
 import { num, rp, tanggal } from "../lib/format";
 import type { Dashboard, Imprest } from "../lib/types";
@@ -20,17 +21,17 @@ const STATUS_LABEL: Record<string, string> = {
 function KartuImprest({ judul, data, ke }: { judul: string; data: Imprest; ke?: string }) {
   const perlu = num(data.perlu_diisi);
   return (
-    <Card judul={judul} aksi={ke ? <Link to={ke} className="text-xs font-semibold text-hijau">Lihat</Link> : undefined}>
-      <div className="flex items-baseline justify-between">
-        <span className="text-lg font-bold">{rp(data.saldo)}</span>
-        <span className="text-xs text-stone-500">jatah {rp(data.plafon)}</span>
-      </div>
-      <div className="my-2">
-        <Progress nilai={num(data.saldo)} maks={num(data.plafon)} />
-      </div>
-      <p className={`text-xs ${perlu > 0 ? "font-semibold text-oranye" : "text-stone-500"}`}>
+    <Card judul={judul} aksi={ke ? <Link to={ke}>Lihat</Link> : undefined}>
+      <Flex justify="space-between" align="baseline">
+        <Typography.Title level={4} style={{ margin: 0 }}>
+          <Angka>{rp(data.saldo)}</Angka>
+        </Typography.Title>
+        <Typography.Text type="secondary">jatah {rp(data.plafon)}</Typography.Text>
+      </Flex>
+      <Progress nilai={num(data.saldo)} maks={num(data.plafon)} />
+      <Typography.Text type={perlu > 0 ? "warning" : "secondary"} strong={perlu > 0}>
         {perlu > 0 ? `Perlu diisi ${rp(perlu)} hari Selasa` : "Sudah penuh"}
-      </p>
+      </Typography.Text>
     </Card>
   );
 }
@@ -42,7 +43,7 @@ interface BarisSaldo {
 }
 const kolomSaldo: TableColumnsType<BarisSaldo> = [
   { title: "Akun", dataIndex: "nama" },
-  { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+  { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
 ];
 
 export default function Beranda() {
@@ -52,51 +53,67 @@ export default function Beranda() {
   if (error || !data) return <ErrorBox error={error ?? new Error("Data tidak tersedia")} />;
 
   const laba = num(data.laba_bulan_ini);
+  const status = Object.entries(data.order_per_status);
   return (
     <>
       <PageHeader judul="Beranda" sub={`Selasa acuan ${tanggal(data.selasa)}`} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Total kas" nilai={rp(data.total_kas)} />
-        <Stat label={`Laba ${data.periode}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} />
-        <Stat label="Bayar tukang Selasa ini" nilai={rp(data.utang_pemasok_siap_bayar)} warna="oranye" />
-        <Stat label="Tagihan penjual lain" nilai={rp(data.piutang_penjual_lain)} sub="belum dibayar" />
-      </div>
+      <Row gutter={[16, 16]}>
+        <Col xs={12} md={6}>
+          <Stat label="Total kas" nilai={rp(data.total_kas)} />
+        </Col>
+        <Col xs={12} md={6}>
+          <Stat label={`Laba ${data.periode}`} nilai={rp(data.laba_bulan_ini)} warna={laba < 0 ? "merah" : "hijau"} sub={`Masuk ${rp(data.pemasukan_bulan_ini)}`} />
+        </Col>
+        <Col xs={12} md={6}>
+          <Stat label="Bayar tukang Selasa ini" nilai={rp(data.utang_pemasok_siap_bayar)} warna="oranye" />
+        </Col>
+        <Col xs={12} md={6}>
+          <Stat label="Tagihan penjual lain" nilai={rp(data.piutang_penjual_lain)} sub="belum dibayar" />
+        </Col>
+      </Row>
 
-      <div className="grid gap-3 md:grid-cols-2 md:items-start">
-      <Card judul="Order">
-        <p className="mb-2 text-sm">
-          <b>{data.order_bulan_ini}</b> order bulan ini · omzet <b>{rp(data.omzet_order_bulan_ini)}</b>
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(data.order_per_status).map(([s, n]) => (
-            <span key={s} className="rounded-full bg-hijau-muda px-3 py-1 text-xs text-hijau">
-              {STATUS_LABEL[s] ?? s}: <b>{n}</b>
-            </span>
-          ))}
-          {Object.keys(data.order_per_status).length === 0 && <span className="text-xs text-stone-500">Belum ada order</span>}
-        </div>
-      </Card>
-
-      {data.kas_kecil && <KartuImprest judul="Kas kecil" data={data.kas_kecil} ke="/kas-kecil" />}
-      {data.kas_iklan && <KartuImprest judul="Kas iklan (admin)" data={data.kas_iklan} />}
-
-      <Card judul="Saldo akun">
-        <DataTabel
-          kolom={kolomSaldo}
-          data={[...data.akun.map((a) => ({ id: a.id, nama: a.nama, saldo: a.saldo })), { id: "cadangan", nama: "Dana cadangan (gaji)", saldo: data.dana_cadangan }]}
-          rowKey="id"
-          minLebar={300}
-          ringkasan={() => <BarisTotal sel={[{ isi: "Total kas" }, { isi: rp(data.total_kas), kanan: true }]} />}
-        />
-      </Card>
-      </div>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={12}>
+          <Flex vertical gap="middle">
+            <Card judul="Order">
+              <Typography.Paragraph>
+                <b>{data.order_bulan_ini}</b> order bulan ini · omzet <b>{rp(data.omzet_order_bulan_ini)}</b>
+              </Typography.Paragraph>
+              {status.length === 0 ? (
+                <Typography.Text type="secondary">Belum ada order</Typography.Text>
+              ) : (
+                <Flex wrap gap={4}>
+                  {status.map(([s, n]) => (
+                    <Tag key={s} color="success">
+                      {STATUS_LABEL[s] ?? s}: <b>{n}</b>
+                    </Tag>
+                  ))}
+                </Flex>
+              )}
+            </Card>
+            {data.kas_kecil && <KartuImprest judul="Kas kecil" data={data.kas_kecil} ke="/kas-kecil" />}
+            {data.kas_iklan && <KartuImprest judul="Kas iklan (admin)" data={data.kas_iklan} />}
+          </Flex>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card judul="Saldo akun">
+            <DataTabel
+              kolom={kolomSaldo}
+              data={[...data.akun.map((a) => ({ id: a.id, nama: a.nama, saldo: a.saldo })), { id: "cadangan", nama: "Dana cadangan (gaji)", saldo: data.dana_cadangan }]}
+              rowKey="id"
+              minLebar={300}
+              ringkasan={() => <BarisTotal sel={[{ isi: "Total kas" }, { isi: rp(data.total_kas), kanan: true }]} />}
+            />
+          </Card>
+        </Col>
+      </Row>
 
       {data.bagian_admin_pratinjau !== null && data.bagian_owner_pratinjau !== null && (
         <Card judul={`Pratinjau bagi hasil ${data.periode}`}>
           <Baris kiri="Admin" kanan={rp(data.bagian_admin_pratinjau)} />
           <Baris kiri="Owner" kanan={rp(data.bagian_owner_pratinjau)} />
-          <p className="mt-1 text-xs text-stone-500">Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan.</p>
+          <Typography.Text type="secondary">Dihitung dari laba bulan berjalan; angka final saat bagi hasil disimpan.</Typography.Text>
         </Card>
       )}
     </>

@@ -1,7 +1,8 @@
+import { Typography } from "antd";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
-import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Select } from "../../components/ui";
+import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Select } from "../../components/ui";
 import type { AkunKas, Kategori } from "../../lib/types";
 import { useAkun, useAksi, useKategori } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -18,9 +19,9 @@ export default function MasterAkunKategori() {
   const k = useFields({ nama: "", jenis: "pengeluaran" });
   const kolomAkun: TableColumnsType<AkunKas> = [
     { title: "Akun", dataIndex: "nama", fixed: "left", width: 170 },
-    { title: "Kode", dataIndex: "kode", render: (v: string) => <span className="text-coklat">{v}</span> },
+    { title: "Kode", dataIndex: "kode", render: (v: string) => <Typography.Text type="secondary">{v}</Typography.Text> },
     { title: "Jenis", dataIndex: "jenis", render: (v: string) => JENIS_AKUN[v] ?? v },
-    { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+    { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
   ];
   const kolomKategori: TableColumnsType<Kategori> = [
     { title: "Kategori", dataIndex: "nama" },
@@ -40,10 +41,8 @@ export default function MasterAkunKategori() {
 
       {dialog === "akun" && (
         <Dialog judul="Akun kas baru" onTutup={() => setDialog(null)}>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
+          <Formulir
+      onKirim={() => {
               aksi.mutate({ path: "/akun-kas", body: { kode: a.f.kode.trim().toUpperCase(), nama: a.f.nama.trim(), jenis: a.f.jenis, saldo_awal: bersihkanAngka(a.f.saldo_awal) || "0" } }, { onSuccess: () => { a.reset(); setDialog(null); } });
             }}
           >
@@ -63,17 +62,16 @@ export default function MasterAkunKategori() {
             <Field label="Saldo awal (Rp)">
               <Input inputMode="numeric" {...a.bind("saldo_awal")} />
             </Field>
-            <ErrorBox error={aksi.error} />
-            <Button type="submit" disabled={aksi.isPending} className="w-full">Simpan</Button>
-          </form>
+            <AksiForm error={aksi.error}>
+              <Button type="submit" disabled={aksi.isPending} penuh>Simpan</Button>
+            </AksiForm>
+          </Formulir>
         </Dialog>
       )}
       {dialog === "kategori" && (
         <Dialog judul="Kategori baru" onTutup={() => setDialog(null)}>
-          <form
-            className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
+          <Formulir
+      onKirim={() => {
               aksi.mutate({ path: "/kategori", body: { nama: k.f.nama.trim(), jenis: k.f.jenis } }, { onSuccess: () => { k.reset(); setDialog(null); } });
             }}
           >
@@ -86,9 +84,10 @@ export default function MasterAkunKategori() {
                 <option value="pemasukan">Pemasukan</option>
               </Select>
             </Field>
-            <ErrorBox error={aksi.error} />
-            <Button type="submit" disabled={aksi.isPending} className="w-full">Simpan</Button>
-          </form>
+            <AksiForm error={aksi.error}>
+              <Button type="submit" disabled={aksi.isPending} penuh>Simpan</Button>
+            </AksiForm>
+          </Formulir>
         </Dialog>
       )}
     </>

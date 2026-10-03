@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Segmented } from "antd";
-import { useMemo, useState, type FormEvent } from "react";
-import { Button, ErrorBox, Field, Input, Select } from "./ui";
+import { Form, Segmented } from "antd";
+import { useMemo, useState } from "react";
+import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select } from "./ui";
 import { api } from "../lib/api";
 import { bersihkanAngka, hariIni, rp } from "../lib/format";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
@@ -40,8 +40,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
     },
   });
 
-  function kirim(e: FormEvent) {
-    e.preventDefault();
+  function kirim() {
     simpan.mutate({
       tanggal: tgl,
       akun_id: akunId,
@@ -53,7 +52,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
   }
 
   return (
-    <form onSubmit={kirim} className="space-y-3">
+    <Formulir onKirim={kirim}>
       {akun.length > 1 && (
         <Field label="Akun">
           <Select value={akunId} onChange={(e) => setAkunId(e.target.value)}>
@@ -66,9 +65,9 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
         </Field>
       )}
       {!jenisTetap && (
+        <Form.Item>
         <Segmented
           block
-          size="large"
           value={jenis}
           onChange={(v) => setJenis(v as "keluar" | "masuk")}
           options={[
@@ -77,6 +76,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
           ]}
           aria-label="Jenis transaksi"
         />
+        </Form.Item>
       )}
       <Field label="Kategori">
         <Select value={kategoriAktif} onChange={(e) => setKategoriId(e.target.value)} required>
@@ -94,12 +94,13 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
         <Input value={keterangan} onChange={(e) => setKeterangan(e.target.value)} placeholder="mis. beli lakban" />
       </Field>
       <Field label="Tanggal">
-        <Input type="date" required value={tgl} onChange={(e) => setTgl(e.target.value)} />
+        <InputTanggal value={tgl} onChange={setTgl} />
       </Field>
-      <ErrorBox error={simpan.error} />
-      <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !jumlah} className="w-full">
-        {simpan.isPending ? "Menyimpan…" : "Simpan"}
-      </Button>
-    </form>
+      <AksiForm error={simpan.error}>
+        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !jumlah} penuh>
+          {simpan.isPending ? "Menyimpan…" : "Simpan"}
+        </Button>
+      </AksiForm>
+    </Formulir>
   );
 }

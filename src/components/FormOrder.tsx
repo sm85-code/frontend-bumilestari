@@ -1,6 +1,6 @@
-import { Checkbox } from "antd";
-import { useMemo, type FormEvent } from "react";
-import { Button, ErrorBox, Field, Input, Select, Teks } from "./ui";
+import { Checkbox, Col, Form, Row } from "antd";
+import { useMemo } from "react";
+import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, Teks } from "./ui";
 import { useAksi, usePelanggan, usePemasok, useProduk, useSaluran } from "../lib/data";
 import { useFields } from "../lib/form";
 import { bersihkanAngka, hariIni } from "../lib/format";
@@ -13,7 +13,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
   const saluranQ = useSaluran();
   const pelangganQ = usePelanggan();
   const aksi = useAksi<Order>();
-  const { f, bind } = useFields({
+  const { f, bind, bindNilai } = useFields({
     saluran_id: "", pelanggan_id: "", produk_id: "", pemasok_id: "", no_order: "", nama_pembeli: "", tanggal_order: hariIni(),
     qty: "1", warna: "", jenis_packing: "biasa", polos: "", biaya_pokok: "", harga_satuan: "", potongan_marketplace: "", catatan: "",
   });
@@ -28,8 +28,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
     [pemasokQ.data, produkPilih],
   );
 
-  function kirim(e: FormEvent) {
-    e.preventDefault();
+  function kirim() {
     if (!saluranPilih || !produkPilih) return;
     const opsi = (v: string) => (v === "" ? undefined : bersihkanAngka(v));
     aksi.mutate(
@@ -58,8 +57,9 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
   }
 
   return (
-    <form onSubmit={kirim} className="space-y-3">
-      <div className="grid gap-3 md:grid-cols-2">
+    <Formulir onKirim={kirim}>
+      <Row gutter={16}>
+<Col xs={24} md={12}>
         <Field label="Saluran">
           <Select value={saluranPilih?.id ?? ""} onChange={bind("saluran_id").onChange}>
             {saluran.map((s) => (
@@ -69,7 +69,9 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
             ))}
           </Select>
         </Field>
+</Col>
         {reseller ? (
+<Col xs={24} md={12}>
           <Field label="Penjual lain">
             <Select required {...bind("pelanggan_id")}>
               <option value="">Pilih…</option>
@@ -80,11 +82,15 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
               ))}
             </Select>
           </Field>
+</Col>
         ) : (
+<Col xs={24} md={12}>
           <Field label="Nama pembeli">
             <Input {...bind("nama_pembeli")} />
           </Field>
+</Col>
         )}
+<Col xs={24} md={12}>
         <Field label="Produk">
           <Select value={produkPilih?.id ?? ""} onChange={bind("produk_id").onChange}>
             {produk.map((p) => (
@@ -94,6 +100,8 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
             ))}
           </Select>
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label={produkPilih?.jenis_produk === "non_kayu" ? "Supplier" : "Tukang kayu"}>
           <Select {...bind("pemasok_id")}>
             <option value="">Belum dipilih</option>
@@ -104,51 +112,72 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
             ))}
           </Select>
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Kode pesanan (no. order marketplace)">
           <Input {...bind("no_order")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Tanggal order">
-          <Input type="date" required {...bind("tanggal_order")} />
+          <InputTanggal {...bindNilai("tanggal_order")} />
         </Field>
+</Col>
         {produkPilih?.jenis_produk === "kayu" && (
           <>
+<Col xs={24} md={12}>
             <Field label="Warna cat" hint="Warna tidak memengaruhi harga">
               <Input {...bind("warna")} placeholder="mis. hijau sage (custom)" />
             </Field>
+</Col>
+<Col xs={24} md={12}>
             <Field label="Packing">
               <Select {...bind("jenis_packing")}>
                 <option value="biasa">Biasa</option>
                 <option value="kayu">Packing kayu</option>
               </Select>
             </Field>
-            <label className="flex min-h-11 items-center gap-2 text-sm">
-              <Checkbox checked={f.polos === "ya"} onChange={(e) => bind("polos").onChange({ target: { value: e.target.checked ? "ya" : "" } } as never)} />
-              Polos (tanpa cat)
-            </label>
+</Col>
+<Col xs={24} md={12}>
+            <Form.Item labelCol={{ span: 24 }} wrapperCol={{ span: 24 }} label=" " colon={false}>
+              <Checkbox checked={f.polos === "ya"} onChange={(e) => bind("polos").onChange({ target: { value: e.target.checked ? "ya" : "" } } as never)}>
+                Polos (tanpa cat)
+              </Checkbox>
+            </Form.Item>
+</Col>
           </>
         )}
+<Col xs={24} md={12}>
         <Field label="Jumlah" hint="Biasanya 1 order = 1 baris">
           <Input inputMode="numeric" {...bind("qty")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Biaya ke pemasok (Rp)" hint="Kosong = biaya katalog">
           <Input inputMode="numeric" {...bind("biaya_pokok")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Harga barang per unit (Rp)" hint="Kosong = otomatis">
           <Input inputMode="numeric" {...bind("harga_satuan")} />
         </Field>
+</Col>
         {!reseller && (
+<Col xs={24} md={12}>
           <Field label="Potongan marketplace (Rp)">
             <Input inputMode="numeric" {...bind("potongan_marketplace")} />
           </Field>
+</Col>
         )}
-      </div>
+      </Row>
       <Field label="Catatan">
         <Teks {...bind("catatan")} />
       </Field>
-      <ErrorBox error={aksi.error} />
-      <Button type="submit" disabled={aksi.isPending || !saluranPilih || !produkPilih} className="w-full md:w-auto">
-        {aksi.isPending ? "Menyimpan…" : "Simpan order"}
-      </Button>
-    </form>
+      <AksiForm error={aksi.error}>
+        <Button type="submit" disabled={aksi.isPending || !saluranPilih || !produkPilih}>
+          {aksi.isPending ? "Menyimpan…" : "Simpan order"}
+        </Button>
+      </AksiForm>
+    </Formulir>
   );
 }

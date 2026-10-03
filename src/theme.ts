@@ -1,47 +1,30 @@
 import type { ThemeConfig } from "antd";
 
-/** Warna dasar (hex, karena antd memakai hex). Hijau mengikuti logo; abu kebiruan mengikuti erp.ampelkuning.com. */
+/** Warna diambil dari logo Bumi Lestari: hijau daun, oranye matahari, coklat gunung. Selebihnya default Ant Design. */
 export const WARNA = {
-  hijau: "#197037",
-  hijauTua: "#085023",
-  hijauMuda: "#d9fae4",
-  latar: "#f5f8fc",
-  garis: "#dde2e6",
-  tinta: "#101820",
-  redup: "#59656e",
-  kepala: "#eff2f6",
-  oranye: "#f09c17",
+  hijau: "#386c20",
+  oranye: "#fda800",
+  coklat: "#655e54",
 };
 
-export const FONT = '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+/** Hijau logo cukup gelap; turunan otomatis antd untuk latar jadi abu-abu kehijauan. Tentukan versi mudanya agar jelas terbaca. */
+const HIJAU_MUDA = { bg: "#eaf2e5", bgHover: "#dbe8d3", border: "#b7cfa9" };
 
 export const tema: ThemeConfig = {
   token: {
     colorPrimary: WARNA.hijau,
     colorLink: WARNA.hijau,
-    colorLinkHover: WARNA.hijauTua,
-    colorSuccess: "#2e8b4e",
+    colorSuccess: WARNA.hijau,
     colorWarning: WARNA.oranye,
-    colorError: "#d03a3a",
-    colorInfo: "#2f7bb7",
-    colorTextBase: WARNA.tinta,
-    colorTextSecondary: WARNA.redup,
-    colorBgLayout: WARNA.latar,
-    colorBorder: WARNA.garis,
-    colorBorderSecondary: WARNA.garis,
-    fontFamily: FONT,
-    fontSize: 14,
-    borderRadius: 10,
-    borderRadiusLG: 16,
-    controlHeight: 40,
-    boxShadowTertiary: "0 1px 2px 0 rgba(16,24,32,0.04), 0 2px 8px -2px rgba(16,24,32,0.06)",
-  },
-  components: {
-    Card: { bodyPadding: 16, headerPadding: 16, headerFontSize: 14 },
-    Table: { headerBg: WARNA.kepala, headerColor: WARNA.redup, headerSplitColor: "transparent", rowHoverBg: "#f7faf8", cellPaddingBlock: 10, cellPaddingInline: 12, borderColor: WARNA.garis },
-    Menu: { itemBorderRadius: 10, itemSelectedBg: WARNA.hijauMuda, itemSelectedColor: WARNA.hijau, itemHeight: 42 },
-    Button: { fontWeight: 600 },
-    Tabs: { titleFontSize: 14 },
-    Typography: { titleMarginBottom: 0 },
+    colorInfo: WARNA.hijau,
+    colorPrimaryBg: HIJAU_MUDA.bg,
+    colorPrimaryBgHover: HIJAU_MUDA.bgHover,
+    colorPrimaryBorder: HIJAU_MUDA.border,
+    colorSuccessBg: HIJAU_MUDA.bg,
+    colorSuccessBgHover: HIJAU_MUDA.bgHover,
+    colorSuccessBorder: HIJAU_MUDA.border,
+    colorInfoBg: HIJAU_MUDA.bg,
+    colorInfoBgHover: HIJAU_MUDA.bgHover,
+    colorInfoBorder: HIJAU_MUDA.border,
   },
 };

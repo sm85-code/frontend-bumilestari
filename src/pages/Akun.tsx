@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { Alert } from "antd";
-import { Button, Card, ErrorBox, Field, Input, PageHeader } from "../components/ui";
+import { Alert, Descriptions } from "antd";
+import { AksiForm, Button, Card, Field, Formulir, Input, PageHeader } from "../components/ui";
 import { api } from "../lib/api";
 import type { User } from "../lib/types";
 
@@ -14,8 +14,7 @@ export default function Akun() {
   const [sukses, setSukses] = useState(false);
   const [proses, setProses] = useState(false);
 
-  async function ganti(e: FormEvent) {
-    e.preventDefault();
+  async function ganti() {
     setError(null);
     setSukses(false);
     if (baru !== ulang) {
@@ -41,12 +40,14 @@ export default function Akun() {
       <PageHeader judul="Akun" />
       {user?.must_change_password && <Alert type="warning" showIcon title="Demi keamanan, ganti password bawaan Anda dulu sebelum memakai aplikasi." />}
       <Card judul="Akun saya">
-        <p className="font-semibold">{user?.nama}</p>
-        <p className="text-sm text-coklat">{user?.email}</p>
-        <p className="text-sm text-coklat">Peran: {user?.role}</p>
+        <Descriptions column={1} size="small">
+          <Descriptions.Item label="Nama">{user?.nama}</Descriptions.Item>
+          <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
+          <Descriptions.Item label="Peran">{user?.role}</Descriptions.Item>
+        </Descriptions>
       </Card>
       <Card judul="Ganti password">
-        <form onSubmit={ganti} className="space-y-3">
+        <Formulir onKirim={ganti}>
           <Field label="Password saat ini">
             <Input type="password" autoComplete="current-password" required value={lama} onChange={(e) => setLama(e.target.value)} />
           </Field>
@@ -56,14 +57,15 @@ export default function Akun() {
           <Field label="Ulangi password baru">
             <Input type="password" autoComplete="new-password" required value={ulang} onChange={(e) => setUlang(e.target.value)} />
           </Field>
-          <ErrorBox error={error} />
-          {sukses && <Alert type="success" showIcon title="Password berhasil diganti." />}
-          <Button type="submit" disabled={proses} className="w-full">
-            Simpan password
-          </Button>
-        </form>
+          <AksiForm error={error}>
+            {sukses && <Alert type="success" showIcon title="Password berhasil diganti." />}
+            <Button type="submit" disabled={proses} penuh>
+              Simpan password
+            </Button>
+          </AksiForm>
+        </Formulir>
       </Card>
-      <Button variant="pinggir" className="w-full" onClick={() => void keluar()}>
+      <Button variant="pinggir" penuh onClick={() => void keluar()}>
         Keluar
       </Button>
     </>

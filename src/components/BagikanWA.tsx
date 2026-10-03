@@ -1,5 +1,6 @@
 import { WhatsAppOutlined } from "@ant-design/icons";
 import { useState } from "react";
+import { Space, Typography } from "antd";
 import { Button, ErrorBox } from "./ui";
 import { useAksi } from "../lib/data";
 import type { Bagikan } from "../lib/types";
@@ -25,12 +26,12 @@ export default function BagikanWA({ jenis, id, tanggal, label = "Kirim ke WhatsA
   }
 
   return (
-    <span className="inline-flex flex-col items-start gap-1">
+    <Space direction="vertical" size={4}>
       <Button variant="pinggir" kecil disabled={aksi.isPending} onClick={kirim}>
         {aksi.isPending ? "Menyiapkan…" : <><WhatsAppOutlined /> {label}</>}
       </Button>
       <ErrorBox error={aksi.error} />
-      {hasil && !hasil.no_wa && <span className="text-xs text-oranye">Nomor WhatsApp belum diisi; pilih kontak sendiri di WhatsApp.</span>}
-    </span>
+      {hasil && !hasil.no_wa && <Typography.Text type="warning">Nomor WhatsApp belum diisi; pilih kontak sendiri di WhatsApp.</Typography.Text>}
+    </Space>
   );
 }

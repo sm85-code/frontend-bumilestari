@@ -1,7 +1,8 @@
+import { Col, Row, Space, Typography } from "antd";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
-import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Memuat, Teks, TombolLink } from "../../components/ui";
+import { AksiForm, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Memuat, Teks, TombolLink, useDialog } from "../../components/ui";
 import { useAksi, usePelanggan } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import type { Pelanggan } from "../../lib/types";
@@ -10,61 +11,69 @@ function Form({ awal, onSelesai }: { awal?: Pelanggan; onSelesai: () => void }) 
   const aksi = useAksi();
   const { f, bind } = useFields({ nama: awal?.nama ?? "", kode: awal?.kode ?? "", no_wa: awal?.no_wa ?? "", kontak: awal?.kontak ?? "", alamat: awal?.alamat ?? "", catatan: awal?.catatan ?? "" });
   return (
-    <form
-      className="space-y-3"
-      onSubmit={(e) => {
-        e.preventDefault();
+    <Formulir
+      onKirim={() => {
         const body = { ...f, nama: f.nama.trim() };
         aksi.mutate(awal ? { path: `/pelanggan/${awal.id}`, method: "PATCH", body } : { path: "/pelanggan", body }, { onSuccess: onSelesai });
       }}
     >
-      <div className="grid gap-3 md:grid-cols-2">
+      <Row gutter={16}>
+<Col xs={24} md={12}>
         <Field label="Nama penjual">
           <Input required {...bind("nama")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Kode invoice" hint="Kosong = otomatis berurutan. Tampil di nomor invoice, mis. 002">
           <Input {...bind("kode")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Nomor WhatsApp" hint="Untuk tombol Kirim invoice">
           <Input inputMode="tel" {...bind("no_wa")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Kontak lain">
           <Input {...bind("kontak")} />
         </Field>
-      </div>
+</Col>
+      </Row>
       <Field label="Alamat" hint="Tercetak di invoice">
         <Teks {...bind("alamat")} />
       </Field>
       <Field label="Catatan">
         <Input {...bind("catatan")} />
       </Field>
-      <ErrorBox error={aksi.error} />
-      <Button type="submit" disabled={aksi.isPending} className="w-full">
+      <AksiForm error={aksi.error}>
+        <Button type="submit" disabled={aksi.isPending} penuh>
         Simpan
       </Button>
-    </form>
+      </AksiForm>
+    </Formulir>
   );
 }
 
 export default function MasterPelanggan() {
   const q = usePelanggan();
   const aksi = useAksi();
+  const { konfirmasi } = useDialog();
   const [form, setForm] = useState<Pelanggan | "baru" | null>(null);
   const kolom: TableColumnsType<Pelanggan> = [
     { title: "Nama", dataIndex: "nama", fixed: "left", width: 170 },
     { title: "Kode invoice", dataIndex: "kode", render: (v: string) => v || "—" },
-    { title: "WhatsApp", dataIndex: "no_wa", render: (v: string) => v || <span className="text-oranye">belum diisi</span> },
-    { title: "Alamat", dataIndex: "alamat", render: (v: string) => <span className="text-coklat">{v || "—"}</span> },
+    { title: "WhatsApp", dataIndex: "no_wa", render: (v: string) => v || <Typography.Text type="warning">belum diisi</Typography.Text> },
+    { title: "Alamat", dataIndex: "alamat", render: (v: string) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
     {
       title: "Aksi",
       width: 170,
       render: (_, p) => (
-        <span className="whitespace-nowrap">
+        <Space size={0}>
           <TombolLink onClick={() => setForm(p)}>Ubah</TombolLink>
-          <TombolLink bahaya onClick={() => window.confirm(`Nonaktifkan ${p.nama}?`) && aksi.mutate({ path: `/pelanggan/${p.id}`, method: "PATCH", body: { aktif: false } })}>
+          <TombolLink bahaya onClick={() => void konfirmasi(`Nonaktifkan ${p.nama}?`, { ok: "Nonaktifkan", bahaya: true }).then((ya) => ya && aksi.mutate({ path: `/pelanggan/${p.id}`, method: "PATCH", body: { aktif: false } }))}>
             Nonaktifkan
           </TombolLink>
-        </span>
+        </Space>
       ),
     },
   ];
