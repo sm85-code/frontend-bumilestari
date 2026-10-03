@@ -31,6 +31,8 @@ export interface InputTugas {
   cekFisikSelesai: boolean;
   /** Catatan draf yang belum dikirim ke laporan keuangan (semua sumber). */
   draf?: { jumlah: number; total: number; tertua: string | null };
+  /** Talangan (utang ke perorangan) yang belum dilunasi. */
+  talangan?: number;
 }
 
 /** Awal bulan = tanggal 1–10: waktunya bayar gaji, tagihan rutin, dan cek fisik kas kecil bulan lalu. */
@@ -52,6 +54,7 @@ export function daftarTugas(i: InputTugas): Tugas[] {
     const lama = i.draf.tertua ? `, paling lama ${tanggal(i.draf.tertua)}` : "";
     t.push({ id: "kirim", teks: `Kirim ${i.draf.jumlah} catatan draf (${rp(i.draf.total)}${lama}) ke laporan keuangan`, ke: "/kiriman" });
   }
+  if (i.talangan && i.talangan > 0) t.push({ id: "talangan", teks: `Lunasi talangan ${rp(i.talangan)} dari Kas utama`, ke: "/selasa" });
   if (i.tagihanPenjualLain > 0) t.push({ id: "penjual-lain", teks: `Terima bayar ${i.jumlahInvoice} penjual lain: ${rp(i.tagihanPenjualLain)} jatuh tempo Selasa ini`, ke: "/selasa" });
   for (const [id, label, d, ke] of [
     ["kas-kecil", "Kas kecil", i.kasKecil, "/kas-kecil"],

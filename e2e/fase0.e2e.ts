@@ -121,9 +121,9 @@ test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ p
   const panggilan = await pasangApiTiruan(page);
   await page.goto("/selasa");
   await expect(page.getByRole("heading", { name: "Tutup Kas Mingguan" })).toBeVisible();
-  await expect(page.getByText(/dari 7 langkah selesai/)).toBeVisible();
-  // Langkah tanpa backend: tampil "Segera hadir", tidak bisa dikerjakan.
-  await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(1);
+  await expect(page.getByText(/dari 8 langkah selesai/)).toBeVisible();
+  // Semua langkah sudah punya backend (pencairan & talangan Fase 2).
+  await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(0);
 
   // Langkah 1 terbuka otomatis (ada tagihan): catat pembayaran di dalam wizard.
   await page.getByRole("button", { name: "Catat diterima" }).click();

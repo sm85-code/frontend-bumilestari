@@ -10,6 +10,7 @@ import { bersihkanAngka, hariIni, num, rp, tanggal, tanggalHari } from "../lib/f
 import { LABEL_SUMBER, ringkasDraf, teksDraf } from "../lib/kiriman";
 import { LANGKAH, LANGKAH_AKTIF, akunSaldoToko, selasaAcuan, type IdLangkah, type StatusLangkah } from "../lib/selasa";
 import { useSelasa } from "../lib/useSelasa";
+import DaftarTalangan from "../components/DaftarTalangan";
 import type { DrafSumber, Invoice, Kiriman, PengisianImprest, SiapBayar, SumberKiriman, Sisihan } from "../lib/types";
 
 type DataSelasa = ReturnType<typeof useSelasa>;
@@ -365,6 +366,12 @@ export default function Selasa() {
   const isi: Record<string, ReactNode> = {
     terima: <LangkahTerima d={d} tgl={tgl} />,
     pencairan: <LangkahPencairan d={d} />,
+    talangan: (
+      <Flex vertical gap="small" style={{ width: "100%" }}>
+        <Typography.Text type="secondary">Ganti uang pribadi yang dipakai saat kas kecil/kas iklan kurang. Dibayar dari Kas utama, tidak menambah biaya.</Typography.Text>
+        <DaftarTalangan tanggalBayar={tgl} />
+      </Flex>
+    ),
     tarik: <LangkahTarik d={d} tgl={tgl} />,
     bayar_tukang: <LangkahBayarTukang d={d} tgl={tgl} />,
     sisihan: <LangkahSisihan d={d} tgl={tgl} />,

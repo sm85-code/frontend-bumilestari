@@ -3,13 +3,15 @@ import { QuestionCircleOutlined } from "@ant-design/icons";
 import { Alert, Col, Flex, Row, Typography } from "antd";
 import { Link } from "react-router-dom";
 import DaftarTransaksi from "../components/DaftarTransaksi";
+import DaftarTalangan from "../components/DaftarTalangan";
 import FormTransaksi from "../components/FormTransaksi";
 import KirimKeLaporan from "../components/KirimKeLaporan";
 import { PanduanStaf, usePanduanStaf } from "../components/PanduanStaf";
-import { Angka, Button, Card, ErrorBox, Kosong, Memuat, PageHeader, Progress } from "../components/ui";
+import { Angka, Button, Card, ErrorBox, Kosong, Memuat, PageHeader, Progress, TombolLink, useDialog } from "../components/ui";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { api, query } from "../lib/api";
-import { num, rp } from "../lib/format";
+import { useAksi } from "../lib/data";
+import { hariIni, num, rp } from "../lib/format";
 import { saldoRendah } from "../lib/kas";
 import type { AkunKas, Kategori, Transaksi } from "../lib/types";
 
@@ -21,6 +23,8 @@ export default function KasKecil() {
   const { user } = useAuth();
   const pemilik = isPemilik(user?.role);
   const panduan = usePanduanStaf(user?.id, !pemilik);
+  const aksi = useAksi();
+  const { tanya } = useDialog();
   const akunQ = useQuery({ queryKey: ["akun"], queryFn: () => api<AkunKas[]>("/akun-kas") });
   const katQ = useQuery({ queryKey: ["kategori"], queryFn: () => api<Kategori[]>("/kategori") });
   const kas = akunQ.data?.find((a) => a.jenis === "kas_kecil");
@@ -54,6 +58,17 @@ export default function KasKecil() {
   const rendah = saldoRendah(saldo, plafon);
   const terbaru = (trxQ.data ?? []).slice(0, 10);
 
+  // AB-TL-3: isi ulang di luar jadwal Selasa, wajib alasan; transfer bertanda "di luar jadwal".
+  async function isiLuarJadwal() {
+    const alasan = await tanya(`Isi kas kecil ${rp(plafon - saldo)} di luar jadwal?`, {
+      label: "Dari Kas utama sampai plafon. Tulis alasan kenapa tidak menunggu Tutup Kas Mingguan.",
+      min: 3,
+      panjang: true,
+      ok: "Isi sekarang",
+    });
+    if (alasan) aksi.mutate({ path: `/kas-kecil/pengisian${query({ tanggal: hariIni(), di_luar_jadwal: "true", alasan })}` });
+  }
+
   const kartuSaldo = (
     <Card>
       <Typography.Text type="secondary">Sisa uang kas kecil</Typography.Text>
@@ -76,6 +91,14 @@ export default function KasKecil() {
           showIcon
           title={pemilik ? "Saldo kas kecil di bawah 20% plafon. Isi ulang di Tutup Kas Mingguan." : "Uang kas kecil tinggal sedikit. Kabari admin."}
         />
+      )}
+      {pemilik && saldo < plafon && (
+        <div style={{ marginTop: 8 }}>
+          <TombolLink disabled={aksi.isPending} onClick={() => void isiLuarJadwal()}>
+            Isi ulang di luar jadwal
+          </TombolLink>
+          <ErrorBox error={aksi.error} />
+        </div>
       )}
     </Card>
   );
@@ -134,6 +157,10 @@ export default function KasKecil() {
           </Flex>
         </Col>
         <Col xs={24} lg={16}>
+          <Card judul="Talangan" sub="Uang pribadi yang dipakai saat kas kecil/kas iklan kurang; dilunasi dari Kas utama.">
+            <DaftarTalangan riwayat />
+          </Card>
+          <div style={{ height: 16 }} />
           <Card judul="Riwayat" aksi={<Link to="/laporan/kas-kecil">Laporan bulanan</Link>}>
             <div style={{ marginBottom: 12 }}>
               <KirimKeLaporan sumber="kas_kecil" />

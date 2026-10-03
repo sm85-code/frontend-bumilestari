@@ -137,6 +137,7 @@ function YangPerluDikerjakan({ data, admin }: { data: Dashboard; admin: boolean 
     tagihanRutinBelum: tagihanBelum,
     cekFisikSelesai: cekFisik,
     draf: data.draf_belum_dikirim ? ringkasDraf(data.draf_belum_dikirim) : undefined,
+    talangan: num(data.talangan_belum_lunas),
   });
 
   const tandaiCekFisik = () => {

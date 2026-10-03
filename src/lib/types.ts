@@ -44,6 +44,8 @@ export interface Transfer {
   keterangan: string;
   dibatalkan: boolean;
   alasan_batal: string | null;
+  di_luar_jadwal?: boolean;
+  alasan_luar_jadwal?: string | null;
 }
 
 export interface Transaksi {
@@ -77,6 +79,8 @@ export interface TransaksiIn {
   konfirmasi_setoran_modal_kedua?: boolean;
   /** Koreksi atas bulan yang sudah tutup buku (YYYY-MM). */
   koreksi_periode?: string | null;
+  /** Kas kecil/kas iklan kurang: kekurangannya dicatat sebagai talangan oleh orang ini. */
+  talangan_oleh?: string | null;
 }
 
 /* ---------- Kirim ke laporan keuangan (posting berkelompok) ---------- */
@@ -148,6 +152,7 @@ export interface Dashboard {
   tagihan_penjual_lain_minggu_ini?: string;
   belum_cair_sementara?: string;
   belum_cair?: string;
+  talangan_belum_lunas?: string;
   draf_belum_dikirim?: DrafSumber[];
 }
 
@@ -712,4 +717,33 @@ export interface PencairanUnggahan {
   alasan_batal: string | null;
   created_at: string;
   baris?: PencairanBaris[];
+}
+
+/* ---------- Talangan (Fase 2, item 1.10) ---------- */
+
+export interface TalanganBayar {
+  id: string;
+  transfer_id: string;
+  tanggal: string;
+  jumlah: string;
+  dibatalkan: boolean;
+}
+
+export interface Talangan {
+  id: string;
+  tanggal: string;
+  nama: string;
+  akun_asal_id: string;
+  akun_asal_nama: string;
+  kategori_id: string;
+  keterangan: string;
+  total_pengeluaran: string;
+  jumlah: string;
+  terbayar: string;
+  sisa: string;
+  status_kirim: StatusKirim;
+  dibatalkan: boolean;
+  alasan_batal: string | null;
+  created_at: string;
+  bayar: TalanganBayar[];
 }

@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { api, isSetoranKedua } from "../lib/api";
 import { bersihkanAngka, bulanTahun, hariIni, rp } from "../lib/format";
 import { labelKategori, pilihanKategori } from "../lib/kategori";
+import { kekuranganSaldo, useNamaTalangan } from "../lib/talangan";
 import { bulanTertutup, useDaftarTutupBuku } from "../lib/tutupBuku";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
 
@@ -39,6 +40,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const [keterangan, setKeterangan] = useState("");
   const [tgl, setTgl] = useState(hariIni());
   const [koreksi, setKoreksi] = useState("");
+  const [talangan, setTalangan] = useState(user?.nama ?? "");
   // Koreksi atas bulan yang sudah tutup buku (dicatat di bulan berjalan); staf tidak mengurus tutup buku.
   const tertutup = bulanTertutup(useDaftarTutupBuku(!staf).data);
   const akunPilih = akun.find((a) => a.id === akunId);
@@ -46,6 +48,9 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, admin, akun: akunPilih }), [kategori, jenis, staf, admin, akunPilih]);
   // Ganti akun/jenis: kategori yang tidak ada lagi di daftar dianggap belum dipilih.
   const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : "";
+  // Saldo kas kecil/kas iklan kurang: kekurangannya dicatat sebagai talangan oleh seseorang (spesifikasi 8.8).
+  const kurang = kekuranganSaldo(akunPilih, jenis, Number(bersihkanAngka(jumlah) || 0));
+  const namaQ = useNamaTalangan(kurang > 0);
 
   const simpan = useMutation({
     mutationFn: async (body: TransaksiIn) => {
@@ -82,6 +87,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       jumlah: bersihkanAngka(jumlah),
       keterangan: keterangan.trim(),
       koreksi_periode: koreksi || null,
+      talangan_oleh: kurang > 0 ? talangan.trim() : null,
     });
   }
 
@@ -154,6 +160,22 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       <Field label="Tanggal" hint="Lupa mencatat kemarin? Pilih tanggal kemarin.">
         <InputTanggal value={tgl} onChange={setTgl} />
       </Field>
+      {kurang > 0 && (
+        <div data-talangan>
+          <Typography.Paragraph type="warning" style={{ marginBottom: 8 }}>
+            Saldo {akunPilih?.nama.toLowerCase()} kurang {rp(kurang)}. Kekurangan ini dicatat sebagai talangan (uang pribadi yang nanti diganti dari Kas utama saat Tutup Kas
+            Mingguan).
+          </Typography.Paragraph>
+          <Field label="Talangan oleh">
+            <Input aria-label="Talangan oleh" list="daftar-nama-talangan" required value={talangan} onChange={(e) => setTalangan(e.target.value)} placeholder="Nama yang memakai uang pribadi" />
+          </Field>
+          <datalist id="daftar-nama-talangan">
+            {(namaQ.data ?? []).map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+        </div>
+      )}
       {!staf && tertutup.length > 0 && (
         <Field label="Koreksi bulan lalu (opsional)" hint="Untuk membetulkan bulan yang sudah tutup buku. Tetap dicatat & dihitung di bulan ini.">
           <Select aria-label="Koreksi bulan lalu" value={koreksi} onChange={(e) => setKoreksi(e.target.value)}>
@@ -168,7 +190,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       )}
       <AksiForm error={simpan.error}>
         {!kategoriAktif && <Typography.Text type="secondary">Pilih kategori dulu.</Typography.Text>}
-        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah)} penuh>
+        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah) || (kurang > 0 && talangan.trim().length < 2)} penuh>
           {simpan.isPending ? "Menyimpan…" : "Simpan"}
         </Button>
       </AksiForm>

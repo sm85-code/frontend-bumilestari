@@ -28,13 +28,13 @@ export interface Langkah {
   segera?: string;
 }
 
-/** Urutan langkah sesuai spesifikasi 7.4 + langkah akhir "Kirim semua ke laporan keuangan" (1.13). Langkah 5 (talangan) menunggu Fase 2. */
+/** Urutan langkah sesuai spesifikasi 7.4 + langkah akhir "Kirim semua ke laporan keuangan" (1.13).  */
 export const LANGKAH: Langkah[] = [
   { id: "terima", judul: "Terima bayar penjual lain", bagian: "Uang masuk" },
   { id: "pencairan", judul: "Catat pencairan marketplace & iPaymu", bagian: "Uang masuk" },
   { id: "tarik", judul: "Tarik saldo ke Kas utama", bagian: "Uang masuk" },
   { id: "bayar_tukang", judul: "Bayar tukang & supplier", bagian: "Uang keluar" },
-  { id: "talangan", judul: "Lunasi talangan", bagian: "Uang keluar", segera: "Pencatatan talangan belum tersedia." },
+  { id: "talangan", judul: "Lunasi talangan", bagian: "Uang keluar" },
   { id: "sisihan", judul: "Sisihkan dana gaji", bagian: "Uang keluar" },
   { id: "isi_kas", judul: "Isi kas kecil & kas iklan sampai plafon", bagian: "Uang keluar" },
   { id: "kirim", judul: "Kirim semua ke laporan keuangan", bagian: "Penutup" },
@@ -54,6 +54,8 @@ export interface DataSelasa {
   isiKasIklan?: PengisianImprest;
   /** Draf yang belum dikirim ke laporan keuangan (semua sumber yang boleh). */
   draf?: DrafSumber[];
+  /** Talangan yang belum lunas. */
+  talangan?: { sisa: string }[];
 }
 
 const dalamMinggu = (tgl: string, selasa: string) => tgl >= selasa && tgl <= tambahHari(selasa, 6);
@@ -91,6 +93,7 @@ export function selesaiOtomatis(d: DataSelasa): Partial<Record<IdLangkah, boolea
   const kecil = imprestBeres(d.isiKasKecil, transfer, "pengisian_kas_kecil", d.selasa);
   const iklan = d.isiKasIklan ? imprestBeres(d.isiKasIklan, transfer, "pengisian_kas_iklan", d.selasa) : true;
   if (kecil !== undefined && iklan !== undefined) hasil.isi_kas = kecil && iklan;
+  if (d.talangan) hasil.talangan = d.talangan.length === 0;
   if (d.draf) hasil.kirim = d.draf.every((x) => x.jumlah_entri === 0);
   return hasil;
 }
