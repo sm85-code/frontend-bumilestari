@@ -6,6 +6,7 @@ import { useAuth } from "../auth/AuthContext";
 import { api, isSetoranKedua } from "../lib/api";
 import { bersihkanAngka, bulanTahun, hariIni, rp } from "../lib/format";
 import { labelKategori, pilihanKategori } from "../lib/kategori";
+import { LABEL_GRUP, useBudgetIklan, usePlatformIklan } from "../lib/iklan";
 import { kekuranganSaldo, useNamaTalangan } from "../lib/talangan";
 import { bulanTertutup, useDaftarTutupBuku } from "../lib/tutupBuku";
 import type { AkunKas, Kategori, Transaksi, TransaksiIn } from "../lib/types";
@@ -41,16 +42,25 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
   const [tgl, setTgl] = useState(hariIni());
   const [koreksi, setKoreksi] = useState("");
   const [talangan, setTalangan] = useState(user?.nama ?? "");
+  const [platformId, setPlatformId] = useState("");
   // Koreksi atas bulan yang sudah tutup buku (dicatat di bulan berjalan); staf tidak mengurus tutup buku.
   const tertutup = bulanTertutup(useDaftarTutupBuku(!staf).data);
   const akunPilih = akun.find((a) => a.id === akunId);
 
   const pilihan = useMemo(() => pilihanKategori(kategori, { jenis, staf, admin, akun: akunPilih }), [kategori, jenis, staf, admin, akunPilih]);
   // Ganti akun/jenis: kategori yang tidak ada lagi di daftar dianggap belum dipilih.
-  const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : "";
+  // Kas iklan hanya punya satu kategori (Biaya iklan): langsung terpilih.
+  const tunggal = akunPilih?.jenis === "kas_iklan" && pilihan.length === 1 ? pilihan[0].id : "";
+  const kategoriAktif = pilihan.some((k) => k.id === kategoriId) ? kategoriId : tunggal;
   // Saldo kas kecil/kas iklan kurang: kekurangannya dicatat sebagai talangan oleh seseorang (spesifikasi 8.8).
   const kurang = kekuranganSaldo(akunPilih, jenis, Number(bersihkanAngka(jumlah) || 0));
   const namaQ = useNamaTalangan(kurang > 0);
+  // Top up kas iklan: wajib platform; tampil sisa budget grupnya bulan ini (spesifikasi 8.7).
+  const iklan = akunPilih?.jenis === "kas_iklan" && jenis === "keluar";
+  const platformQ = usePlatformIklan(iklan);
+  const budgetQ = useBudgetIklan(tgl, iklan);
+  const platform = platformQ.data?.find((p) => p.id === platformId);
+  const sisaGrup = platform ? budgetQ.data?.grup.find((g) => g.grup === platform.grup) : undefined;
 
   const simpan = useMutation({
     mutationFn: async (body: TransaksiIn) => {
@@ -88,6 +98,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       keterangan: keterangan.trim(),
       koreksi_periode: koreksi || null,
       talangan_oleh: kurang > 0 ? talangan.trim() : null,
+      platform_iklan_id: iklan ? platformId : null,
     });
   }
 
@@ -151,6 +162,25 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
           </Select>
         </Field>
       )}
+      {iklan && (
+        <Field label="Platform iklan">
+          <Select aria-label="Platform iklan" placeholder="Pilih platform" value={platformId} onChange={(e) => setPlatformId(e.target.value)} required>
+            {(platformQ.data ?? [])
+              .filter((p) => p.aktif)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nama} ({p.grup})
+                </option>
+              ))}
+          </Select>
+        </Field>
+      )}
+      {iklan && sisaGrup && (
+        <Typography.Paragraph type={Number(bersihkanAngka(jumlah) || 0) > Number(sisaGrup.sisa) ? "warning" : "secondary"} data-sisa-budget>
+          Sisa budget {LABEL_GRUP[sisaGrup.grup].toLowerCase()} bulan ini {rp(sisaGrup.sisa)} dari {rp(sisaGrup.budget)}.
+          {Number(bersihkanAngka(jumlah) || 0) > Number(sisaGrup.sisa) && " Melebihi porsi: tetap boleh disimpan, diberi tanda."}
+        </Typography.Paragraph>
+      )}
       <Field label="Jumlah (Rp)" hint={jumlah ? rp(bersihkanAngka(jumlah)) : undefined}>
         <Input inputMode="numeric" required placeholder="0" aria-label="Jumlah" value={jumlah} onChange={(e) => setJumlah(e.target.value)} />
       </Field>
@@ -190,7 +220,7 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, st
       )}
       <AksiForm error={simpan.error}>
         {!kategoriAktif && <Typography.Text type="secondary">Pilih kategori dulu.</Typography.Text>}
-        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah) || (kurang > 0 && talangan.trim().length < 2)} penuh>
+        <Button type="submit" disabled={simpan.isPending || !akunId || !kategoriAktif || !bersihkanAngka(jumlah) || (kurang > 0 && talangan.trim().length < 2) || (iklan && !platformId)} penuh>
           {simpan.isPending ? "Menyimpan…" : "Simpan"}
         </Button>
       </AksiForm>

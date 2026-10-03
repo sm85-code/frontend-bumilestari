@@ -17,6 +17,7 @@ const KirimanPage = lazy(() => import("./pages/Kiriman"));
 const TutupBukuPage = lazy(() => import("./pages/TutupBuku"));
 const BelumCairPage = lazy(() => import("./pages/BelumCair"));
 const PencairanPage = lazy(() => import("./pages/Pencairan"));
+const KasIklanPage = lazy(() => import("./pages/KasIklan"));
 const Master = lazy(() => import("./pages/Master"));
 const OrderPage = lazy(() => import("./pages/Order"));
 const PenjualLain = lazy(() => import("./pages/PenjualLain"));
@@ -35,6 +36,11 @@ function Terproteksi() {
 function HanyaPemilik({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   return isPemilik(user?.role) ? <>{children}</> : <Navigate to="/kas-kecil" replace />;
+}
+
+function HanyaAdmin({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  return user?.role === "admin" ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function WajibGantiPassword({ children }: { children: React.ReactNode }) {
@@ -126,6 +132,16 @@ export default function App() {
               <HanyaPemilik>
                 <BagiHasilPage />
               </HanyaPemilik>
+            </WajibGantiPassword>
+          }
+        />
+        <Route
+          path="/kas-iklan"
+          element={
+            <WajibGantiPassword>
+              <HanyaAdmin>
+                <KasIklanPage />
+              </HanyaAdmin>
             </WajibGantiPassword>
           }
         />

@@ -32,6 +32,7 @@ export const LABEL_JENIS_TRANSFER: Record<string, string> = {
   pengisian_kas_iklan: "Isi ulang kas iklan",
   sisihan_dana: "Sisihan gaji",
   pelunasan_talangan: "Pelunasan talangan",
+  pengembalian_kas_iklan: "Pengembalian kas iklan",
 };
 
 /** Transfer sisihan gaji hanya boleh dibatalkan dari Tutup Kas Mingguan (bersama provisi biaya gajinya). */

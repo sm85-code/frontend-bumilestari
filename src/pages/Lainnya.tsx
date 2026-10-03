@@ -3,16 +3,16 @@ import { Button, List, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { Card, PageHeader } from "../components/ui";
-import { MENU_LAINNYA } from "../components/menu";
+import { menuLainnya } from "../components/menu";
 
 /** Daftar menu lengkap untuk HP (navigasi bawah hanya memuat menu utama), dikelompokkan seperti menu samping. */
 export default function Lainnya() {
-  const { keluar } = useAuth();
+  const { user, keluar } = useAuth();
   const navigate = useNavigate();
   return (
     <>
       <PageHeader judul="Menu lainnya" />
-      {MENU_LAINNYA.map((g) => (
+      {menuLainnya(user?.role === "admin").map((g) => (
         <Card key={g.grup}>
           <Typography.Text type="secondary" strong style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em" }}>
             {g.grup}

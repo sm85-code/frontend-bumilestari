@@ -5,7 +5,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { labelPeran } from "../lib/format";
 import { WARNA } from "../theme";
-import { kunciAktif, MENU_BAWAH_PEMILIK, MENU_PEMILIK, MENU_STAF, semuaItem } from "./menu";
+import { kunciAktif, MENU_BAWAH_PEMILIK, MENU_STAF, menuPemilik, semuaItem } from "./menu";
 
 /** true bila lebar layar >= 768px (laptop/tablet). Nilai awal langsung benar agar tidak berkedip. */
 function useLaptop(): boolean {
@@ -47,12 +47,13 @@ export default function Layout() {
   const laptop = useLaptop();
   const pemilik = isPemilik(user?.role);
   const menuBawah = pemilik ? MENU_BAWAH_PEMILIK : MENU_STAF; // navigasi bawah (HP)
-  const aktif = kunciAktif(pemilik ? semuaItem(MENU_PEMILIK) : MENU_STAF, pathname);
+  const menu = menuPemilik(user?.role === "admin");
+  const aktif = kunciAktif(pemilik ? semuaItem(menu) : MENU_STAF, pathname);
   // Halaman yang tidak ada di navigasi bawah (mis. /gaji) menyorot "Lainnya".
   const aktifBawah = kunciAktif(menuBawah, pathname).length ? kunciAktif(menuBawah, pathname) : pemilik ? ["/lainnya"] : [];
   // Menu samping: admin/owner dikelompokkan (Mingguan, Penjualan, Pembelian, Uang, Laporan, Pengaturan); staf 3 menu.
   const itemSamping = pemilik
-    ? MENU_PEMILIK.map((g) => ({
+    ? menu.map((g) => ({
         type: "group" as const,
         key: `grup-${g.grup}`,
         label: g.grup,

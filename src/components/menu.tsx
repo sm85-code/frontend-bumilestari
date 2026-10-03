@@ -14,6 +14,7 @@ import {
   PieChartOutlined,
   SendOutlined,
   ShopOutlined,
+  SoundOutlined,
   TeamOutlined,
   ToolOutlined,
   UserOutlined,
@@ -25,6 +26,8 @@ export interface ItemMenu {
   ke: string;
   label: string;
   ikon: ReactNode;
+  /** Hanya untuk admin (mis. Kas iklan). */
+  admin?: boolean;
 }
 
 export interface GrupMenu {
@@ -58,6 +61,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
     item: [
       { ke: "/keuangan", label: "Kas & transaksi", ikon: <WalletOutlined /> },
       { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
+      { ke: "/kas-iklan", label: "Kas iklan", ikon: <SoundOutlined />, admin: true },
       { ke: "/pencairan", label: "Pencairan", ikon: <CloudDownloadOutlined /> },
       { ke: "/gaji", label: "Gaji & tagihan rutin", ikon: <TeamOutlined /> },
       { ke: "/bagi-hasil", label: "Bagi hasil", ikon: <PieChartOutlined /> },
@@ -98,11 +102,14 @@ export const MENU_STAF: ItemMenu[] = [
   { ke: "/akun", label: "Profil saya", ikon: <UserOutlined /> },
 ];
 
+/** Menu admin/owner sesuai peran: item `admin` hanya untuk admin. */
+export const menuPemilik = (admin: boolean): GrupMenu[] => MENU_PEMILIK.map((g) => ({ grup: g.grup, item: g.item.filter((m) => admin || !m.admin) }));
+
 /** Grup menu untuk halaman "Lainnya" di HP: tanpa item yang sudah ada di navigasi bawah. */
-export const MENU_LAINNYA: GrupMenu[] = MENU_PEMILIK.map((g) => ({
-  grup: g.grup,
-  item: g.item.filter((m) => !MENU_BAWAH_PEMILIK.some((b) => b.ke === m.ke)),
-})).filter((g) => g.item.length > 0);
+export const menuLainnya = (admin: boolean): GrupMenu[] =>
+  menuPemilik(admin)
+    .map((g) => ({ grup: g.grup, item: g.item.filter((m) => !MENU_BAWAH_PEMILIK.some((b) => b.ke === m.ke)) }))
+    .filter((g) => g.item.length > 0);
 
 export const semuaItem = (grup: GrupMenu[]): ItemMenu[] => grup.flatMap((g) => g.item);
 

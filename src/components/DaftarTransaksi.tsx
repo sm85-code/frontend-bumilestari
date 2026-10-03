@@ -55,6 +55,7 @@ export default function DaftarTransaksi({
         <>
           <Typography.Text type="secondary">{v || "—"}</Typography.Text>
           {t.koreksi_periode && <Lencana>koreksi {bulanTahun(t.koreksi_periode)}</Lencana>}
+          {t.melebihi_porsi && <Lencana warna="oranye">melebihi porsi</Lencana>}
         </>
       ),
     },
