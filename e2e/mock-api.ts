@@ -113,7 +113,7 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
     "/saluran": saluran,
     "/pelanggan": pelanggan,
     "/order": [
-      order("o1", "diambil"), order("o2", "dipesan", { no_order: "X2", pemasok_id: null, butuh_cat: false, warna: "" }),
+      order("o1", "diambil"), order("o2", "dipesan", { no_order: "X2", pemasok_id: null, butuh_cat: false, warna: "", kolom_tambahan: { no_resi: "JX-1" } }),
       order("o3", "dikirim", { no_order: "SHP-777", saluran_id: "s1", pelanggan_id: null, nama_pembeli: "Bu Ani", tgl_dikirim: "2026-09-24", status_cair: "belum" }),
       order("o4", "selesai", { no_order: "SHP-888", saluran_id: "s1", pelanggan_id: null, nama_pembeli: "Pak Joko", tgl_dikirim: "2026-09-20", status_cair: "cair", tgl_cair: "2026-09-27" }),
     ],
@@ -177,6 +177,12 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
     },
     "/kiriman/draf": draf,
     "/talangan": [],
+    "/definisi-kolom": [
+      { id: null, entitas: "order", kunci: "no_order", lapisan: "inti", label: "Kode pesanan", label_bawaan: "Kode pesanan", tipe: null, wajib: false, pilihan: [], nilai_bawaan: null, min: null, maks: null, tampil_form: true, tampil_tabel: true, bisa_filter: false, ikut_ekspor: true, untuk_laporan: false, tampil_staf: false, urutan: 0, aktif: true, terisi: null },
+      { id: "dk1", entitas: "order", kunci: "no_resi", lapisan: "tambahan", label: "No. resi", label_bawaan: null, tipe: "teks", wajib: false, pilihan: [], nilai_bawaan: null, min: null, maks: null, tampil_form: true, tampil_tabel: true, bisa_filter: false, ikut_ekspor: true, untuk_laporan: false, tampil_staf: false, urutan: 101, aktif: true, terisi: 1 },
+      { id: "dk2", entitas: "order", kunci: "kurir", lapisan: "tambahan", label: "Kurir", label_bawaan: null, tipe: "pilihan", wajib: false, pilihan: [{ nilai: "JNE", arsip: false }, { nilai: "J&T", arsip: true }], nilai_bawaan: null, min: null, maks: null, tampil_form: true, tampil_tabel: false, bisa_filter: true, ikut_ekspor: true, untuk_laporan: false, tampil_staf: false, urutan: 102, aktif: true, terisi: 0 },
+      { id: "dk3", entitas: "transaksi", kunci: "no_nota_struk", lapisan: "tambahan", label: "No. nota / struk", label_bawaan: null, tipe: "teks", wajib: false, pilihan: [], nilai_bawaan: null, min: null, maks: null, tampil_form: true, tampil_tabel: false, bisa_filter: false, ikut_ekspor: true, untuk_laporan: false, tampil_staf: true, urutan: 101, aktif: true, terisi: 0 },
+    ],
     "/laporan/laba-rugi": {
       periode: "2026-09", sementara: true,
       penjualan: [{ label: "Shopee", jumlah: "1000000", rincian: [] }, { label: "Penjual lain", jumlah: "600000", rincian: [] }], total_penjualan: "1600000",

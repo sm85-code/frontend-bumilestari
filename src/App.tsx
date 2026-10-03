@@ -10,6 +10,7 @@ const Keuangan = lazy(() => import("./pages/Keuangan"));
 const LaporanKasKecilPage = lazy(() => import("./pages/LaporanKasKecil"));
 const LaporanKeuanganPage = lazy(() => import("./pages/LaporanKeuangan"));
 const RingkasanOwnerPage = lazy(() => import("./pages/RingkasanOwner"));
+const KolomTambahanPage = lazy(() => import("./pages/KolomTambahan"));
 import Masuk from "./pages/Masuk";
 const BagiHasilPage = lazy(() => import("./pages/BagiHasil"));
 const GajiPage = lazy(() => import("./pages/Gaji"));
@@ -142,6 +143,16 @@ export default function App() {
             <WajibGantiPassword>
               <HanyaAdmin>
                 <KasIklanPage />
+              </HanyaAdmin>
+            </WajibGantiPassword>
+          }
+        />
+        <Route
+          path="/master/kolom"
+          element={
+            <WajibGantiPassword>
+              <HanyaAdmin>
+                <KolomTambahanPage />
               </HanyaAdmin>
             </WajibGantiPassword>
           }

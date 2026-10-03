@@ -1,4 +1,6 @@
 import { Col, Row, Space } from "antd";
+import { kolomTabelTambahan, useDefinisiKolom } from "../../lib/kolom";
+import IsianKolomTambahan from "../../components/IsianKolomTambahan";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
@@ -6,9 +8,10 @@ import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Form
 import { useAksi, useProduk } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import { bersihkanAngka, num, rp } from "../../lib/format";
-import type { Produk } from "../../lib/types";
+import type { Produk, NilaiKolom } from "../../lib/types";
 
 function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>(awal?.kolom_tambahan ?? {});
   const aksi = useAksi();
   const { f, bind } = useFields({
     sku: awal?.sku ?? "", nama: awal?.nama ?? "", jenis_produk: awal?.jenis_produk ?? "kayu", ukuran: awal?.ukuran ?? "",
@@ -17,7 +20,7 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
   return (
     <Formulir
       onKirim={() => {
-        const umum = { nama: f.nama.trim(), ukuran: f.ukuran.trim(), harga_jual: bersihkanAngka(f.harga_jual) || "0", biaya_pokok_default: bersihkanAngka(f.biaya) || "0" };
+        const umum = { kolom_tambahan: kt, nama: f.nama.trim(), ukuran: f.ukuran.trim(), harga_jual: bersihkanAngka(f.harga_jual) || "0", biaya_pokok_default: bersihkanAngka(f.biaya) || "0" };
         aksi.mutate(
           awal ? { path: `/produk/${awal.id}`, method: "PATCH", body: umum } : { path: "/produk", body: { ...umum, sku: f.sku.trim(), jenis_produk: f.jenis_produk } },
           { onSuccess: onSelesai },
@@ -59,6 +62,7 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
         </Field>
 </Col>
       </Row>
+      <IsianKolomTambahan entitas="produk" nilai={kt} onUbah={setKt} />
       <AksiForm error={aksi.error}>
         <Button type="submit" disabled={aksi.isPending} penuh>
         Simpan
@@ -74,6 +78,7 @@ export default function MasterProduk() {
   const { konfirmasi } = useDialog();
   const [form, setForm] = useState<Produk | "baru" | null>(null);
   const angka = (v: string) => <Angka>{rp(v)}</Angka>;
+  const ktKolom = kolomTabelTambahan<Produk>(useDefinisiKolom("produk").data);
   const kolom: TableColumnsType<Produk> = [
     { title: "SKU", dataIndex: "sku", fixed: "left", width: 110 },
     { title: "Nama", dataIndex: "nama" },
@@ -97,7 +102,7 @@ export default function MasterProduk() {
   return (
     <Card judul="Katalog produk" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Produk</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={800} kosong="Belum ada produk." />}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={[...kolom.slice(0, -1), ...ktKolom, ...kolom.slice(-1)]} data={q.data ?? []} rowKey="id" minLebar={800 + ktKolom.length * 120} kosong="Belum ada produk." />}
       {form && (
         <Dialog judul={form === "baru" ? "Produk baru" : `Ubah ${form.sku}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />

@@ -1,10 +1,11 @@
 import { Alert, Checkbox, Col, Form, Row } from "antd";
-import { useMemo } from "react";
+import IsianKolomTambahan from "./IsianKolomTambahan";
+import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, Select, Teks } from "./ui";
 import { useAksi, usePemasok } from "../lib/data";
 import { useFields } from "../lib/form";
 import { bersihkanAngka, num } from "../lib/format";
-import type { Order, Produk } from "../lib/types";
+import type { Order, Produk, NilaiKolom } from "../lib/types";
 
 const angka = (v: string) => String(Math.round(num(v)));
 
@@ -13,6 +14,7 @@ const angka = (v: string) => String(Math.round(num(v)));
  * Hanya kolom yang berubah yang dikirim (harga otomatis tidak tertimpa bila tidak disentuh).
  */
 export default function FormUbahOrder({ order, produk, onSelesai }: { order: Order; produk?: Produk; onSelesai: () => void }) {
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>(order.kolom_tambahan ?? {});
   const pemasokQ = usePemasok();
   const aksi = useAksi<Order>();
   const kayu = produk?.jenis_produk !== "non_kayu";
@@ -49,6 +51,7 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
     uang("harga_satuan");
     uang("potongan_marketplace");
     if (f.catatan.trim() !== awal.catatan) body.catatan = f.catatan.trim();
+    if (JSON.stringify(kt) !== JSON.stringify(order.kolom_tambahan ?? {})) body.kolom_tambahan = kt;
     if (Object.keys(body).length === 0) return onSelesai();
     aksi.mutate({ path: `/order/${order.id}`, method: "PATCH", body }, { onSuccess: onSelesai });
   }
@@ -128,6 +131,7 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
       <Field label="Catatan">
         <Teks {...bind("catatan")} />
       </Field>
+      <IsianKolomTambahan entitas="order" nilai={kt} onUbah={setKt} />
       <AksiForm error={aksi.error}>
         <Button type="submit" disabled={aksi.isPending}>
           {aksi.isPending ? "Menyimpan…" : "Simpan perubahan"}

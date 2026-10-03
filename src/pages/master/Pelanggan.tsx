@@ -1,19 +1,21 @@
 import { Col, Row, Space, Typography } from "antd";
+import IsianKolomTambahan from "../../components/IsianKolomTambahan";
 import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { AksiForm, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Memuat, Teks, TombolLink, useDialog } from "../../components/ui";
 import { useAksi, usePelanggan } from "../../lib/data";
 import { useFields } from "../../lib/form";
-import type { Pelanggan } from "../../lib/types";
+import type { Pelanggan, NilaiKolom } from "../../lib/types";
 
 function Form({ awal, onSelesai }: { awal?: Pelanggan; onSelesai: () => void }) {
+  const [kt, setKt] = useState<Record<string, NilaiKolom>>(awal?.kolom_tambahan ?? {});
   const aksi = useAksi();
   const { f, bind } = useFields({ nama: awal?.nama ?? "", kode: awal?.kode ?? "", no_wa: awal?.no_wa ?? "", kontak: awal?.kontak ?? "", alamat: awal?.alamat ?? "", catatan: awal?.catatan ?? "" });
   return (
     <Formulir
       onKirim={() => {
-        const body = { ...f, nama: f.nama.trim() };
+        const body = { ...f, nama: f.nama.trim(), kolom_tambahan: kt };
         aksi.mutate(awal ? { path: `/pelanggan/${awal.id}`, method: "PATCH", body } : { path: "/pelanggan", body }, { onSuccess: onSelesai });
       }}
     >
@@ -45,6 +47,7 @@ function Form({ awal, onSelesai }: { awal?: Pelanggan; onSelesai: () => void }) 
       <Field label="Catatan">
         <Input {...bind("catatan")} />
       </Field>
+      <IsianKolomTambahan entitas="pelanggan" nilai={kt} onUbah={setKt} />
       <AksiForm error={aksi.error}>
         <Button type="submit" disabled={aksi.isPending} penuh>
         Simpan

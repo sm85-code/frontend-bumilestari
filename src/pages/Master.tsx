@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { PageHeader, Tabs } from "../components/ui";
 import MasterAkunKategori from "./master/AkunKategori";
@@ -29,7 +30,11 @@ export default function Master() {
   ];
   return (
     <>
-      <PageHeader judul="Data master" sub="Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna, dan profil usaha" />
+      <PageHeader
+        judul="Data master"
+        sub="Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna, dan profil usaha"
+        aksi={admin ? <Link to="/master/kolom">Kolom & label →</Link> : undefined}
+      />
       <Tabs daftar={daftar} aktif={tab} onPilih={setTab} />
       {tab === "produk" && <MasterProduk />}
       {tab === "pemasok" && <MasterPemasok />}
