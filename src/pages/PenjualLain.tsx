@@ -15,13 +15,19 @@ export default function PenjualLain() {
   const terimaQ = useQuery({ queryKey: ["penerimaan"], queryFn: () => api<PenerimaanReseller[]>("/penerimaan-reseller") });
   const pelanggan = peta(usePelanggan().data);
   const aksi = useAksi();
-  const { konfirmasi, tanya } = useDialog();
+  const { konfirmasiTanggal, tanya } = useDialog();
 
   async function catatBayar(inv: Invoice) {
-    if (!(await konfirmasi(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama} (${inv.items.length} order)?`, { ok: "Catat pembayaran" }))) return;
+    const tglBayar = await konfirmasiTanggal(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama}?`, {
+      awal: hariIni(),
+      teks: `${inv.items.length} order. Uang masuk ke Kas utama.`,
+      label: "Tanggal uang diterima",
+      ok: "Catat pembayaran",
+    });
+    if (!tglBayar) return;
     aksi.mutate({
       path: "/penerimaan-reseller",
-      body: { pelanggan_id: inv.kepada.pelanggan_id, tanggal: hariIni(), order_ids: inv.items.map((i) => i.order_id) },
+      body: { pelanggan_id: inv.kepada.pelanggan_id, tanggal: tglBayar, order_ids: inv.items.map((i) => i.order_id) },
     });
   }
 

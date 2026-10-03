@@ -13,7 +13,7 @@ export default function BagiHasilPage() {
   const hitungQ = useQuery({ queryKey: ["bagi-hasil-hitung", periode], queryFn: () => api<BagiHasilHitung>(`/bagi-hasil/hitung${query({ periode })}`) });
   const daftarQ = useQuery({ queryKey: ["bagi-hasil"], queryFn: () => api<BagiHasil[]>("/bagi-hasil") });
   const aksi = useAksi();
-  const { konfirmasi, tanya } = useDialog();
+  const { konfirmasiTanggal, tanya } = useDialog();
   const h = hitungQ.data;
   const adaAktif = (daftarQ.data ?? []).some((b) => b.periode === periode && !b.dibatalkan);
 
@@ -35,9 +35,12 @@ export default function BagiHasilPage() {
           {!b.dibatalkan && !b.tanggal_bayar && num(b.bagian_admin) + num(b.bagian_owner) > 0 && (
             <TombolLink
               onClick={() =>
-                void konfirmasi(`Bayar bagi hasil ${bulanTahun(b.periode)}?`, { teks: `${rp(num(b.bagian_admin) + num(b.bagian_owner))} dibayar tunai dari kas utama.`, ok: "Bayar" }).then(
-                  (ya) => ya && aksi.mutate({ path: `/bagi-hasil/${b.id}/bayar?tanggal=${hariIni()}` }),
-                )
+                void konfirmasiTanggal(`Bayar bagi hasil ${bulanTahun(b.periode)}?`, {
+                  awal: hariIni(),
+                  teks: `${rp(num(b.bagian_admin) + num(b.bagian_owner))} dibayar dari Kas utama.`,
+                  label: "Tanggal bayar",
+                  ok: "Bayar",
+                }).then((tgl) => tgl && aksi.mutate({ path: `/bagi-hasil/${b.id}/bayar${query({ tanggal: tgl })}` }))
               }
             >
               Bayar

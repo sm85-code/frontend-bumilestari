@@ -442,5 +442,38 @@ export function useDialog() {
       });
     });
 
-  return { konfirmasi, tanya, message };
+  /**
+   * Konfirmasi aksi uang dengan pilihan tanggal (bawaan `awal`, biasanya hari ini). Hasil "YYYY-MM-DD", atau null bila dibatalkan.
+   * Dipakai agar transaksi yang terlambat dicatat tetap bertanggal benar.
+   */
+  const konfirmasiTanggal = (judul: string, opsi: { awal: string; teks?: ReactNode; ok?: string; label?: string }) =>
+    new Promise<string | null>((resolve) => {
+      let nilai = opsi.awal;
+      modal.confirm({
+        title: judul,
+        centered: true,
+        content: (
+          <Flex vertical gap="small" style={{ marginTop: 8 }}>
+            {opsi.teks && <div>{opsi.teks}</div>}
+            <Typography.Text type="secondary">{opsi.label ?? "Tanggal"}</Typography.Text>
+            <DatePicker
+              aria-label={opsi.label ?? "Tanggal"}
+              style={{ width: "100%" }}
+              format="DD/MM/YYYY"
+              allowClear={false}
+              defaultValue={dayjs(opsi.awal)}
+              onChange={(d) => {
+                if (d) nilai = d.format("YYYY-MM-DD");
+              }}
+            />
+          </Flex>
+        ),
+        okText: opsi.ok ?? "Simpan",
+        cancelText: "Batal",
+        onOk: () => resolve(nilai),
+        onCancel: () => resolve(null),
+      });
+    });
+
+  return { konfirmasi, konfirmasiTanggal, tanya, message };
 }
