@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, query } from "./api";
 import { useAkun } from "./data";
 import { useDraf } from "./kiriman";
+import { useTalangan } from "./talangan";
 import { num } from "./format";
 import { LANGKAH_AKTIF, bacaTanda, selasaAcuan, selesaiOtomatis, simpanTanda, statusLangkah, tambahHari, type IdLangkah, type StatusLangkah, type TandaManual } from "./selasa";
 import type { Invoice, PengisianImprest, PiutangPelanggan, SiapBayar, Sisihan, Transfer } from "./types";
@@ -23,6 +24,7 @@ export function useSelasa(tgl: string, admin: boolean, aktif = true) {
   const kasKecilQ = useQuery({ queryKey: ["pengisian", "kas-kecil"], enabled: aktif, queryFn: () => api<PengisianImprest>("/kas-kecil/pengisian") });
   const kasIklanQ = useQuery({ queryKey: ["pengisian", "kas-iklan"], enabled: aktif && admin, queryFn: () => api<PengisianImprest>("/kas-iklan/pengisian") });
   const drafQ = useDraf(undefined, aktif);
+  const talanganQ = useTalangan(aktif);
 
   const [tanda, setTanda] = useState<TandaManual>(() => bacaTanda(selasa));
   useEffect(() => setTanda(bacaTanda(selasa)), [selasa]);
@@ -40,8 +42,9 @@ export function useSelasa(tgl: string, admin: boolean, aktif = true) {
         // Kas iklan khusus admin; bila gagal dimuat (mis. akun belum ada) jangan menahan langkah.
         isiKasIklan: admin && !kasIklanQ.isError ? kasIklanQ.data : undefined,
         draf: drafQ.data,
+        talangan: talanganQ.data,
       }),
-    [selasa, akunQ.data, invoiceQ.data, transferQ.data, siapQ.data, sisihanQ.data, kasKecilQ.data, kasIklanQ.data, kasIklanQ.isError, admin, drafQ.data],
+    [selasa, akunQ.data, invoiceQ.data, transferQ.data, siapQ.data, sisihanQ.data, kasKecilQ.data, kasIklanQ.data, kasIklanQ.isError, admin, drafQ.data, talanganQ.data],
   );
   const status = Object.fromEntries(LANGKAH_AKTIF.map((l) => [l.id, statusLangkah(l.id, otomatis, tanda)])) as Record<IdLangkah, StatusLangkah>;
   const selesai = LANGKAH_AKTIF.filter((l) => status[l.id] === "selesai").length;
@@ -58,6 +61,7 @@ export function useSelasa(tgl: string, admin: boolean, aktif = true) {
     kasKecilQ,
     kasIklanQ,
     drafQ,
+    talanganQ,
     otomatis,
     status,
     selesai,

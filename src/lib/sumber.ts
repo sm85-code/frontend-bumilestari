@@ -16,6 +16,7 @@ const SUMBER: Record<string, Sumber> = {
   bagi_hasil: { label: "Bagi hasil", ke: "/bagi-hasil" },
   sisihan: { label: "Tutup Kas Mingguan", ke: "/selasa" },
   pencairan: { label: "Pencairan", ke: "/pencairan" },
+  talangan: { label: "daftar talangan (Kas kecil)", ke: "/kas-kecil" },
 };
 
 /** Halaman asal transaksi otomatis, atau null bila transaksi manual. ref_jenis yang belum dikenal tetap dianggap otomatis. */
@@ -30,9 +31,11 @@ export const LABEL_JENIS_TRANSFER: Record<string, string> = {
   pengisian_kas_kecil: "Isi ulang kas kecil",
   pengisian_kas_iklan: "Isi ulang kas iklan",
   sisihan_dana: "Sisihan gaji",
+  pelunasan_talangan: "Pelunasan talangan",
 };
 
 /** Transfer sisihan gaji hanya boleh dibatalkan dari Tutup Kas Mingguan (bersama provisi biaya gajinya). */
 export function sumberTransfer(t: { jenis: string }): Sumber | null {
+  if (t.jenis === "pelunasan_talangan") return SUMBER.talangan;
   return t.jenis === "sisihan_dana" ? SUMBER.sisihan : null;
 }

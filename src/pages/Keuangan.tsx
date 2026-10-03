@@ -56,8 +56,25 @@ export default function Keuangan() {
   const namaAkun = new Map(akun.map((a) => [a.id, a.nama]));
   const kolomTransfer: TableColumnsType<Transfer> = [
     { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
-    { title: "Dari → ke", render: (_, t) => `${namaAkun.get(t.dari_akun_id) ?? "—"} → ${namaAkun.get(t.ke_akun_id) ?? "—"}` },
-    { title: "Jenis", dataIndex: "jenis", render: (v: string) => LABEL_JENIS_TRANSFER[v] ?? v },
+    {
+      title: "Dari → ke",
+      // Akun TALANGAN (kewajiban) tidak ada di daftar akun kas.
+      render: (_, t) => `${namaAkun.get(t.dari_akun_id) ?? "—"} → ${namaAkun.get(t.ke_akun_id) ?? (t.jenis === "pelunasan_talangan" ? "Talangan" : "—")}`,
+    },
+    {
+      title: "Jenis",
+      dataIndex: "jenis",
+      render: (v: string, t) => (
+        <span>
+          {LABEL_JENIS_TRANSFER[v] ?? v}
+          {t.di_luar_jadwal && (
+            <Typography.Text type="secondary" style={{ display: "block", fontSize: 12 }} title={t.alasan_luar_jadwal ?? undefined}>
+              di luar jadwal: {t.alasan_luar_jadwal}
+            </Typography.Text>
+          )}
+        </span>
+      ),
+    },
     { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
     { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
     { title: "Status", render: (_, t) => (t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>) },

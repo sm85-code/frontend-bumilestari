@@ -176,6 +176,8 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
       bagian_admin_pratinjau: null, bagian_owner_pratinjau: null, draf_belum_dikirim: draf,
     },
     "/kiriman/draf": draf,
+    "/talangan": [],
+    "/talangan/nama": ["Sari", "Bu Admin"],
     "/kiriman": [
       kiriman("kr1"),
       kiriman("kr0", { nomor: "KRM-20260915-001", status: "dibatalkan", dibatalkan_oleh: "u1", dibatalkan_pada: "2026-09-16T02:00:00Z", alasan_batal: "salah jumlah" }),
