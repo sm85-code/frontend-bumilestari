@@ -4,7 +4,7 @@ import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ringkasDraf, teksDraf, waktu } from "../lib/kiriman";
-import { Angka, BarisTotal, Card, DataTabel, ErrorBox, Field, InputTanggal, Memuat, PageHeader } from "../components/ui";
+import { Angka, Baris, BarisTotal, Card, DataTabel, ErrorBox, Field, InputTanggal, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
 import type { BarisKategori, LaporanUmum } from "../lib/types";
@@ -102,6 +102,12 @@ export default function LaporanUmumPage() {
                 <Angka>{rp(d.laba_bersih)}</Angka>
               </Typography.Title>
             </Row>
+            {d.belum_cair !== undefined && num(d.belum_cair) !== 0 && (
+              <div data-belum-cair>
+                <Baris kiri={<Link to="/laporan/belum-cair">Penjualan belum cair per {tanggal(d.sampai)} (tidak masuk laba)</Link>} kanan={rp(d.belum_cair)} />
+                {d.perkiraan_laba_jika_cair && <Baris kiri="Perkiraan laba jika semua cair (informasi saja)" kanan={rp(d.perkiraan_laba_jika_cair)} />}
+              </div>
+            )}
           </Card>
           {d.di_luar_laba.length > 0 && <TabelKategori judul="Di luar laba (prive, bagi hasil)" baris={d.di_luar_laba} />}
 

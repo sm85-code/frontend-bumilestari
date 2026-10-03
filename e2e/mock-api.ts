@@ -49,6 +49,7 @@ const akun = [
   { id: "a3", kode: "KAS_KECIL", nama: "Kas kecil", jenis: "kas_kecil", plafon: "3000000.00", saldo: "2850000.00", saldo_setelah_draf: "2825000.00" },
   { id: "a4", kode: "DANA_CADANGAN", nama: "Dana cadangan (gaji)", jenis: "kas", plafon: null, saldo: "1000000.00" },
   { id: "a5", kode: "KAS_IKLAN", nama: "Kas iklan", jenis: "kas_iklan", plafon: "2000000.00", saldo: "1600000.00" },
+  { id: "a6", kode: "SALDO_TIKTOK", nama: "Saldo TikTok Shop", jenis: "ewallet", plafon: null, saldo: "0.00" },
 ];
 const produk = [
   { id: "p1", sku: "PRT-01", nama: "Partisi Rak Tengah [2 rak]", jenis_produk: "kayu", ukuran: "150x20x200", harga_jual: "850000", biaya_pokok_default: "500000", aktif: true },
@@ -111,7 +112,18 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
     "/pemasok": pemasok,
     "/saluran": saluran,
     "/pelanggan": pelanggan,
-    "/order": [order("o1", "diambil"), order("o2", "dipesan", { no_order: "X2", pemasok_id: null, butuh_cat: false, warna: "" })],
+    "/order": [
+      order("o1", "diambil"), order("o2", "dipesan", { no_order: "X2", pemasok_id: null, butuh_cat: false, warna: "" }),
+      order("o3", "dikirim", { no_order: "SHP-777", saluran_id: "s1", pelanggan_id: null, nama_pembeli: "Bu Ani", tgl_dikirim: "2026-09-24", status_cair: "belum" }),
+      order("o4", "selesai", { no_order: "SHP-888", saluran_id: "s1", pelanggan_id: null, nama_pembeli: "Pak Joko", tgl_dikirim: "2026-09-20", status_cair: "cair", tgl_cair: "2026-09-27" }),
+    ],
+    "/laporan/belum-cair": {
+      per_tanggal: "2026-10-04", jumlah_order: 1, total_penjualan: "955000", total_perkiraan_cair: "905000", tgl_kirim_tertua: "2026-09-24",
+      per_saluran: [{
+        saluran_id: "s1", nama: "Shopee", akun_id: "a2", jumlah_order: 1, total_penjualan: "955000", total_perkiraan_cair: "905000", tgl_kirim_tertua: "2026-09-24",
+        order: [{ order_id: "o3", no_order: "SHP-777", tgl_dikirim: "2026-09-24", penjualan: "955000", potongan: "50000", perkiraan_cair: "905000", status: "dikirim" }],
+      }],
+    },
     "/pembayaran-pemasok/siap": {
       selasa: "2026-09-29", batas_diambil: "2026-09-26", sudah_dicatat_id: null, total: "500000",
       pemasok: [{ pemasok_id: "m1", nama: "AHMAD NUR ALIM", jenis: "tukang_kayu", subtotal: "500000", items: [{ order_id: "o1", no_order: "260922PJ9B35EN", produk_id: "p1", qty: 1, tgl_diambil: "2026-09-26", jumlah: "500000", terlambat: false }] }],

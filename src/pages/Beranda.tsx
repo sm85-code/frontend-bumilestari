@@ -29,6 +29,10 @@ const STATUS_LABEL: Record<string, string> = {
 const GAYA_AKUN: Record<string, { warna: [string, string]; ikon: ReactNode }> = {
   KAS_UTAMA: { warna: ["#4f8f2e", "#2b5418"], ikon: <BankOutlined /> },
   SALDO_SHOPEE: { warna: ["#ffbf3d", "#f27d1c"], ikon: <ShopOutlined /> },
+  SALDO_TIKTOK: { warna: ["#5b5b66", "#25252b"], ikon: <ShopOutlined /> },
+  SALDO_LAZADA: { warna: ["#6f7bf7", "#3b2fc9"], ikon: <ShopOutlined /> },
+  SALDO_BLIBLI: { warna: ["#4aa3ff", "#0a62c9"], ikon: <ShopOutlined /> },
+  SALDO_IPAYMU: { warna: ["#5cc6c0", "#2a8a85"], ikon: <WalletOutlined /> },
   KAS_KECIL: { warna: ["#9a8f7c", "#655e54"], ikon: <AccountBookOutlined /> },
   DANA_CADANGAN: { warna: ["#79c27a", "#3a8a55"], ikon: <SafetyOutlined /> },
   KAS_IKLAN: { warna: ["#ffd75a", "#f2a30f"], ikon: <SoundOutlined /> },
