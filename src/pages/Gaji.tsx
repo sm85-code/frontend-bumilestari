@@ -59,7 +59,7 @@ function TabKaryawan() {
   const gajiQ = useQuery({ queryKey: ["gaji", periode], queryFn: () => api<Gaji[]>(`/gaji${query({ periode })}`) });
   const dana = useAkun().data?.find((a) => a.kode === "DANA_CADANGAN");
   const aksi = useAksi();
-  const { konfirmasi, tanya } = useDialog();
+  const { konfirmasi, konfirmasiTanggal, tanya } = useDialog();
   const nama = peta(karyawanQ.data);
   const belum = (gajiQ.data ?? []).filter((g) => !g.tanggal_bayar);
   const totalBelum = belum.reduce((t, g) => t + num(g.jumlah), 0);
@@ -129,9 +129,11 @@ function TabKaryawan() {
               <Button
                 disabled={aksi.isPending || belum.length === 0}
                 onClick={() =>
-                  void konfirmasi(`Bayar gaji ${bulanTahun(periode)} sebesar ${rp(totalBelum)} dari Dana cadangan?`, { ok: "Bayar gaji" }).then(
-                    (ya) => ya && aksi.mutate({ path: "/gaji/bayar", body: { periode, tanggal: hariIni() } }),
-                  )
+                  void konfirmasiTanggal(`Bayar gaji ${bulanTahun(periode)} sebesar ${rp(totalBelum)} dari Dana cadangan?`, {
+                    awal: hariIni(),
+                    label: "Tanggal bayar",
+                    ok: "Bayar gaji",
+                  }).then((tgl) => tgl && aksi.mutate({ path: "/gaji/bayar", body: { periode, tanggal: tgl } }))
                 }
               >
                 Bayar semua ({rp(totalBelum)})
@@ -140,7 +142,7 @@ function TabKaryawan() {
           </Col>
         </Row>
         <Typography.Paragraph type="secondary">
-          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di halaman Selasa.
+          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di Tutup Kas Mingguan.
         </Typography.Paragraph>
         <ErrorBox error={gajiQ.error ?? aksi.error} />
         <DataTabel
@@ -173,9 +175,10 @@ function TabLangganan() {
   const sudah = new Set((tagihanQ.data ?? []).filter((t) => !t.dibatalkan).map((t) => t.langganan_id));
   const { f, bind, reset } = useFields({ nama: "", jumlah: "" });
   const [angka, setAngka] = useState<Record<string, string>>({});
+  const [tglBayar, setTglBayar] = useState(hariIni());
   const rupiah = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomLangganan: TableColumnsType<Langganan> = [
-    { title: "Langganan", dataIndex: "nama", fixed: "left", width: 160 },
+    { title: "Tagihan rutin", dataIndex: "nama", fixed: "left", width: 160 },
     { title: "Perkiraan / bulan", dataIndex: "jumlah_bulanan", align: "right", render: rupiah },
     {
       title: "Aksi",
@@ -194,7 +197,7 @@ function TabLangganan() {
     },
   ];
   const kolomTagihan: TableColumnsType<Tagihan> = [
-    { title: "Langganan", dataIndex: "langganan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
+    { title: "Tagihan rutin", dataIndex: "langganan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
     { title: "Jumlah", dataIndex: "jumlah", align: "right", render: rupiah },
     { title: "Dibayar", render: (_, t) => (t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <Angka>{tanggal(t.tanggal_bayar)}</Angka>) },
     {
@@ -218,12 +221,12 @@ function TabLangganan() {
 
   return (
     <>
-      <Card judul="Daftar langganan" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Langganan</Button>}>
+      <Card judul="Daftar tagihan rutin" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Tagihan rutin</Button>}>
         <Typography.Paragraph type="secondary">Dibayar langsung saat tagihan datang (biasanya minggu ke-4); tidak dicicil. Nominal di sini hanya perkiraan.</Typography.Paragraph>
-        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada langganan." />
+        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada tagihan rutin (listrik, air, wifi, …). Tekan '+ Tagihan rutin'." />
       </Card>
 
-      <Card judul="Bayar tagihan">
+      <Card judul="Bayar tagihan rutin">
         <Row gutter={16} align="bottom">
           <Col xs={24} md={6}>
             <Field label="Periode tagihan">
@@ -235,6 +238,7 @@ function TabLangganan() {
               <Button
                 onClick={() => {
                   setAngka(Object.fromEntries((langgananQ.data ?? []).map((l) => [l.id, String(Math.round(num(l.jumlah_bulanan)))])));
+                  setTglBayar(hariIni());
                   setBayar(true);
                 }}
               >
@@ -248,7 +252,7 @@ function TabLangganan() {
       </Card>
 
       {baru && (
-        <Dialog judul="Langganan baru" onTutup={() => setBaru(false)}>
+        <Dialog judul="Tagihan rutin baru" onTutup={() => setBaru(false)}>
           <Formulir
             onKirim={() =>
               aksi.mutate(
@@ -277,7 +281,7 @@ function TabLangganan() {
         </Dialog>
       )}
       {bayar && (
-        <Dialog judul={`Bayar tagihan ${bulanTahun(periode)}`} onTutup={() => setBayar(false)}>
+        <Dialog judul={`Bayar tagihan rutin ${bulanTahun(periode)}`} onTutup={() => setBayar(false)}>
           <Typography.Paragraph type="secondary">Isi tagihan sebenarnya (kosongkan/0 untuk dilewati). Dibayar dari kas utama.</Typography.Paragraph>
           <Formulir
             onKirim={() => {
@@ -288,7 +292,7 @@ function TabLangganan() {
                 message.warning("Isi minimal satu tagihan.");
                 return;
               }
-              aksi.mutate({ path: "/tagihan/bayar", body: { periode, tanggal: hariIni(), items } }, { onSuccess: () => setBayar(false) });
+              aksi.mutate({ path: "/tagihan/bayar", body: { periode, tanggal: tglBayar, items } }, { onSuccess: () => setBayar(false) });
             }}
           >
             {(langgananQ.data ?? []).map((l) => (
@@ -296,8 +300,11 @@ function TabLangganan() {
                 <Input inputMode="numeric" disabled={sudah.has(l.id)} value={angka[l.id] ?? ""} onChange={(e) => setAngka((a) => ({ ...a, [l.id]: e.target.value }))} />
               </Field>
             ))}
+            <Field label="Tanggal bayar">
+              <InputTanggal value={tglBayar} onChange={setTglBayar} />
+            </Field>
             <AksiForm error={aksi.error}>
-              <Button type="submit" disabled={aksi.isPending} penuh>
+              <Button type="submit" disabled={aksi.isPending || !tglBayar} penuh>
                 Bayar
               </Button>
             </AksiForm>
@@ -312,11 +319,11 @@ export default function GajiPage() {
   const [tab, setTab] = useState<"gaji" | "langganan">("gaji");
   return (
     <>
-      <PageHeader judul="Gaji dan langganan" sub="Karyawan tetap, gaji bulanan, dan tagihan langganan" />
+      <PageHeader judul="Gaji & tagihan rutin" sub="Karyawan tetap, gaji bulanan, dan tagihan rutin (listrik, air, wifi, …)" />
       <Tabs
         daftar={[
           { id: "gaji", label: "Karyawan & gaji" },
-          { id: "langganan", label: "Langganan" },
+          { id: "langganan", label: "Tagihan rutin" },
         ]}
         aktif={tab}
         onPilih={setTab}

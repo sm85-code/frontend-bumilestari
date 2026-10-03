@@ -78,7 +78,7 @@ export default function MasterPelanggan() {
     },
   ];
   return (
-    <Card judul="Penjual lain (pemesan)" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Penjual</Button>}>
+    <Card judul="Penjual lain" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Penjual lain</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
       {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={700} kosong="Belum ada penjual lain." />}
       {form && (

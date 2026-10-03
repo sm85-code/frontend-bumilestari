@@ -41,7 +41,7 @@ export default function LaporanUmumPage() {
   const d = q.data;
   const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomArus: TableColumnsType<LaporanUmum["arus_kas"][number]> = [
-    { title: "Akun", dataIndex: "nama", fixed: "left", width: 150 },
+    { title: "Akun kas", dataIndex: "nama", fixed: "left", width: 150 },
     { title: "Saldo awal", dataIndex: "saldo_awal", align: "right", render: angka },
     { title: "Masuk", dataIndex: "masuk", align: "right", render: angka },
     { title: "Keluar", dataIndex: "keluar", align: "right", render: angka },
@@ -52,7 +52,7 @@ export default function LaporanUmumPage() {
 
   return (
     <>
-      <PageHeader judul="Laporan umum" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
+      <PageHeader judul="Laba rugi" sub="Pemasukan, biaya, laba bersih, dan arus kas per akun kas" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
       <Card>
         <Row gutter={16}>
           <Col xs={12} md={6}>

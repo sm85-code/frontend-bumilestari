@@ -7,7 +7,7 @@ import { peta, useAkun, useAksi, useSaluran } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import type { Saluran } from "../../lib/types";
 
-const JENIS = { marketplace: "Marketplace", web: "Toko web sendiri", reseller: "Penjual lain (reseller)" } as const;
+const JENIS = { marketplace: "Marketplace", web: "Toko web sendiri", reseller: "Penjual lain" } as const;
 
 function Form({ awal, onSelesai }: { awal?: Saluran; onSelesai: () => void }) {
   const aksi = useAksi();

@@ -1,16 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
-import { Col, Flex, Row, Typography } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import { Alert, Col, Flex, Row, Typography } from "antd";
 import { Link } from "react-router-dom";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import FormTransaksi from "../components/FormTransaksi";
-import { Angka, Card, ErrorBox, Memuat, PageHeader, Progress } from "../components/ui";
+import { PanduanStaf, usePanduanStaf } from "../components/PanduanStaf";
+import { Angka, Button, Card, ErrorBox, Kosong, Memuat, PageHeader, Progress } from "../components/ui";
 import { isPemilik, useAuth } from "../auth/AuthContext";
 import { api, query } from "../lib/api";
 import { num, rp } from "../lib/format";
+import { saldoRendah } from "../lib/kas";
 import type { AkunKas, Kategori, Transaksi } from "../lib/types";
 
+/**
+ * Kas kecil. Staf: tampilan sederhana (saldo besar, catat pengeluaran dengan 4 tombol kategori, 10 catatan terakhir,
+ * tanpa tombol batal). Admin/owner: sama, ditambah riwayat lengkap dan pembatalan transaksi manual.
+ */
 export default function KasKecil() {
   const { user } = useAuth();
+  const pemilik = isPemilik(user?.role);
+  const panduan = usePanduanStaf(user?.id, !pemilik);
   const akunQ = useQuery({ queryKey: ["akun"], queryFn: () => api<AkunKas[]>("/akun-kas") });
   const katQ = useQuery({ queryKey: ["kategori"], queryFn: () => api<Kategori[]>("/kategori") });
   const kas = akunQ.data?.find((a) => a.jenis === "kas_kecil");
@@ -22,32 +31,109 @@ export default function KasKecil() {
 
   if (akunQ.isLoading || katQ.isLoading) return <Memuat />;
   if (akunQ.error || katQ.error) return <ErrorBox error={akunQ.error ?? katQ.error} />;
-  if (!kas) return <ErrorBox error={new Error("Akun kas kecil belum tersedia. Minta admin menjalankan seed-now.")} />;
+  if (!kas)
+    return (
+      <>
+        <PageHeader judul="Kas kecil" />
+        <Card>
+          <Kosong teks="Kas kecil belum siap dipakai. Hubungi admin." />
+          {pemilik && (
+            <Typography.Paragraph type="secondary" style={{ textAlign: "center", marginBottom: 0 }}>
+              Untuk admin: akun kas kecil belum ada di Data master (biasanya dibuat saat penyiapan data awal backend).
+            </Typography.Paragraph>
+          )}
+        </Card>
+      </>
+    );
 
   const saldo = num(kas.saldo);
   const plafon = num(kas.plafon);
+  const rendah = saldoRendah(saldo, plafon);
+  const terbaru = (trxQ.data ?? []).slice(0, 10);
+
+  const kartuSaldo = (
+    <Card>
+      <Typography.Text type="secondary">Sisa uang kas kecil</Typography.Text>
+      <div style={{ fontSize: "clamp(34px, 7vw, 44px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.15, margin: "4px 0 10px" }}>
+        <Angka>{rp(saldo)}</Angka>
+      </div>
+      <Progress nilai={saldo} maks={plafon} />
+      <Typography.Text type="secondary">
+        Plafon {rp(plafon)} · diisi lagi sampai plafon setiap hari Selasa.
+      </Typography.Text>
+      {rendah && (
+        <Alert
+          style={{ marginTop: 12 }}
+          type="warning"
+          showIcon
+          title={pemilik ? "Saldo kas kecil di bawah 20% plafon. Isi ulang di Tutup Kas Mingguan." : "Uang kas kecil tinggal sedikit. Kabari admin."}
+        />
+      )}
+    </Card>
+  );
+  const kartuCatat = (
+    <Card judul="Catat pengeluaran">
+      <FormTransaksi akun={[kas]} kategori={katQ.data ?? []} jenisTetap="keluar" akunAwal={kas.id} staf={!pemilik} tombolKategori />
+    </Card>
+  );
+
+  if (!pemilik) {
+    return (
+      <>
+        <PageHeader
+          judul="Kas kecil"
+          sub="Catat setiap uang kas kecil yang kamu pakai."
+          aksi={
+            <Button variant="pinggir" kecil onClick={panduan.tampilkan}>
+              <QuestionCircleOutlined /> Panduan
+            </Button>
+          }
+        />
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={10}>
+            <Flex vertical gap="middle">
+              {kartuSaldo}
+              {kartuCatat}
+            </Flex>
+          </Col>
+          <Col xs={24} lg={14}>
+            <Card judul="10 catatan terakhir" aksi={<Link to="/laporan/kas-kecil">Riwayat bulan ini →</Link>}>
+              <Typography.Paragraph type="secondary">Salah catat? Minta admin membatalkan, lalu catat ulang yang benar.</Typography.Paragraph>
+              <DaftarTransaksi
+                data={terbaru}
+                kategori={katQ.data ?? []}
+                bolehBatal={false}
+                staf
+                memuat={trxQ.isLoading}
+                kosong="Belum ada catatan. Setelah memakai uang kas kecil, catat di 'Catat pengeluaran'."
+              />
+            </Card>
+          </Col>
+        </Row>
+        <PanduanStaf buka={panduan.buka} onTutup={panduan.tutup} />
+      </>
+    );
+  }
+
   return (
     <>
-      <PageHeader judul="Kas kecil" sub="Pegangan staf, diisi kembali ke jatah tiap Selasa" />
+      <PageHeader judul="Kas kecil" sub="Pegangan staf, diisi kembali sampai plafon saat Tutup Kas Mingguan (biasanya tiap Selasa)" />
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
           <Flex vertical gap="middle">
-            <Card judul="Kas kecil">
-              <Typography.Title level={2} style={{ margin: 0 }}>
-                <Angka>{rp(saldo)}</Angka>
-              </Typography.Title>
-              <Typography.Paragraph type="secondary">dari jatah {rp(plafon)}</Typography.Paragraph>
-              <Progress nilai={saldo} maks={plafon} />
-              <Typography.Text type="secondary">Diisi kembali ke jatah setiap hari Selasa.</Typography.Text>
-            </Card>
-            <Card judul="Catat pengeluaran">
-              <FormTransaksi akun={[kas]} kategori={katQ.data ?? []} jenisTetap="keluar" akunAwal={kas.id} />
-            </Card>
+            {kartuSaldo}
+            {kartuCatat}
           </Flex>
         </Col>
         <Col xs={24} lg={16}>
           <Card judul="Riwayat" aksi={<Link to="/laporan/kas-kecil">Laporan bulanan</Link>}>
-            <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal={isPemilik(user?.role)} memuat={trxQ.isLoading} />
+            <DaftarTransaksi
+              data={trxQ.data}
+              kategori={katQ.data ?? []}
+              bolehBatal
+              memuat={trxQ.isLoading}
+              kosong="Belum ada pengeluaran kas kecil."
+            />
           </Card>
         </Col>
       </Row>

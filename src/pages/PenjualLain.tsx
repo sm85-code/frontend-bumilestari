@@ -15,13 +15,19 @@ export default function PenjualLain() {
   const terimaQ = useQuery({ queryKey: ["penerimaan"], queryFn: () => api<PenerimaanReseller[]>("/penerimaan-reseller") });
   const pelanggan = peta(usePelanggan().data);
   const aksi = useAksi();
-  const { konfirmasi, tanya } = useDialog();
+  const { konfirmasiTanggal, tanya } = useDialog();
 
   async function catatBayar(inv: Invoice) {
-    if (!(await konfirmasi(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama} (${inv.items.length} order)?`, { ok: "Catat pembayaran" }))) return;
+    const tglBayar = await konfirmasiTanggal(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama}?`, {
+      awal: hariIni(),
+      teks: `${inv.items.length} order. Uang masuk ke Kas utama.`,
+      label: "Tanggal uang diterima",
+      ok: "Catat pembayaran",
+    });
+    if (!tglBayar) return;
     aksi.mutate({
       path: "/penerimaan-reseller",
-      body: { pelanggan_id: inv.kepada.pelanggan_id, tanggal: hariIni(), order_ids: inv.items.map((i) => i.order_id) },
+      body: { pelanggan_id: inv.kepada.pelanggan_id, tanggal: tglBayar, order_ids: inv.items.map((i) => i.order_id) },
     });
   }
 
@@ -47,7 +53,7 @@ export default function PenjualLain() {
   ];
   const kolomTerima: TableColumnsType<PenerimaanReseller> = [
     { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
-    { title: "Penjual", dataIndex: "pelanggan_id", render: (v: string) => pelanggan.get(v)?.nama ?? "—" },
+    { title: "Penjual lain", dataIndex: "pelanggan_id", render: (v: string) => pelanggan.get(v)?.nama ?? "—" },
     { title: "Jumlah", dataIndex: "total", align: "right", render: angka },
     { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">diterima</Lencana>) },
     {
@@ -71,7 +77,7 @@ export default function PenjualLain() {
 
   return (
     <>
-      <PageHeader judul="Penjual lain" sub="Invoice mingguan dan pembayaran yang diterima" />
+      <PageHeader judul="Tagihan penjual lain" sub="Tagihan (invoice) mingguan per penjual lain dan pembayaran yang diterima" />
       <Card>
         <Row>
           <Col xs={24} md={8}>
@@ -83,7 +89,7 @@ export default function PenjualLain() {
       </Card>
       <ErrorBox error={invQ.error ?? aksi.error} />
       {invQ.isLoading && <Memuat />}
-      {invQ.data?.length === 0 && <Kosong teks="Tidak ada tagihan penjual lain." />}
+      {invQ.data?.length === 0 && <Kosong teks="Tidak ada tagihan penjual lain untuk Selasa ini. Tagihan muncul setelah order penjual lain selesai diambil dari tukang (Senin–Sabtu minggu lalu)." />}
       {invQ.data?.map((inv) => (
         <Card
           key={inv.nomor}
@@ -126,7 +132,7 @@ export default function PenjualLain() {
       ))}
 
       <Card judul="Riwayat pembayaran diterima">
-        <DataTabel kolom={kolomTerima} data={terimaQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran." />
+        <DataTabel kolom={kolomTerima} data={terimaQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran diterima dari penjual lain." />
       </Card>
     </>
   );

@@ -1,73 +1,11 @@
-import { labelPeran } from "../lib/format";
-import {
-  AccountBookOutlined,
-  AppstoreOutlined,
-  BarChartOutlined,
-  CalendarOutlined,
-  DatabaseOutlined,
-  HomeOutlined,
-  InboxOutlined,
-  LogoutOutlined,
-  PieChartOutlined,
-  ShopOutlined,
-  TeamOutlined,
-  ToolOutlined,
-  UserOutlined,
-  WalletOutlined,
-} from "@ant-design/icons";
+import { LogoutOutlined } from "@ant-design/icons";
 import { Button, Flex, Menu, Typography } from "antd";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
+import { labelPeran } from "../lib/format";
 import { WARNA } from "../theme";
-
-interface ItemMenu {
-  ke: string;
-  label: string;
-  ikon: ReactNode;
-  admin?: boolean;
-}
-
-/** Menu utama pemilik: tampil di navigasi bawah (HP). Sisanya lewat halaman "Lainnya". */
-const MENU_UTAMA: ItemMenu[] = [
-  { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
-  { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
-  { ke: "/selasa", label: "Selasa", ikon: <CalendarOutlined /> },
-  { ke: "/keuangan", label: "Keuangan", ikon: <WalletOutlined /> },
-  { ke: "/lainnya", label: "Lainnya", ikon: <AppstoreOutlined /> },
-];
-
-/** Semua menu pemilik (menu samping di laptop dan halaman Lainnya). */
-const MENU_PEMILIK: ItemMenu[] = [
-  { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
-  { ke: "/selasa", label: "Selasa", ikon: <CalendarOutlined /> },
-  { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
-  { ke: "/pesanan-tukang", label: "Pesanan ke tukang", ikon: <ToolOutlined /> },
-  { ke: "/penjual-lain", label: "Penjual lain", ikon: <ShopOutlined /> },
-  { ke: "/keuangan", label: "Keuangan", ikon: <WalletOutlined /> },
-  { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
-  { ke: "/gaji", label: "Gaji & langganan", ikon: <TeamOutlined /> },
-  { ke: "/bagi-hasil", label: "Bagi hasil", ikon: <PieChartOutlined /> },
-  { ke: "/laporan", label: "Laporan", ikon: <BarChartOutlined /> },
-  { ke: "/master", label: "Master data", ikon: <DatabaseOutlined /> },
-  { ke: "/akun", label: "Akun", ikon: <UserOutlined /> },
-];
-
-/** Isi halaman "Lainnya" (menu yang tidak ada di navigasi bawah). */
-export const MENU_LAINNYA: ItemMenu[] = MENU_PEMILIK.filter((m) => !MENU_UTAMA.some((u) => u.ke === m.ke));
-
-const MENU_STAF: ItemMenu[] = [
-  { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
-  { ke: "/laporan/kas-kecil", label: "Laporan", ikon: <BarChartOutlined /> },
-  { ke: "/akun", label: "Akun", ikon: <UserOutlined /> },
-];
-
-/** Menu terpilih: cocokkan awalan path terpanjang (mis. /laporan/kas-kecil tidak ikut menyorot /laporan). */
-function kunciAktif(menu: ItemMenu[], path: string): string[] {
-  const cocok = menu.filter((m) => (m.ke === "/" ? path === "/" : path === m.ke || path.startsWith(m.ke + "/")));
-  cocok.sort((a, b) => b.ke.length - a.ke.length);
-  return cocok.length ? [cocok[0].ke] : [];
-}
+import { kunciAktif, MENU_BAWAH_PEMILIK, MENU_PEMILIK, MENU_STAF, semuaItem } from "./menu";
 
 /** true bila lebar layar >= 768px (laptop/tablet). Nilai awal langsung benar agar tidak berkedip. */
 function useLaptop(): boolean {
@@ -108,10 +46,19 @@ export default function Layout() {
   const navigate = useNavigate();
   const laptop = useLaptop();
   const pemilik = isPemilik(user?.role);
-  const menu = pemilik ? MENU_PEMILIK : MENU_STAF; // menu samping (laptop)
-  const menuBawah = pemilik ? MENU_UTAMA : MENU_STAF; // navigasi bawah (HP)
-  const aktif = kunciAktif(menu, pathname);
-  const aktifBawah = kunciAktif(menuBawah, pathname);
+  const menuBawah = pemilik ? MENU_BAWAH_PEMILIK : MENU_STAF; // navigasi bawah (HP)
+  const aktif = kunciAktif(pemilik ? semuaItem(MENU_PEMILIK) : MENU_STAF, pathname);
+  // Halaman yang tidak ada di navigasi bawah (mis. /gaji) menyorot "Lainnya".
+  const aktifBawah = kunciAktif(menuBawah, pathname).length ? kunciAktif(menuBawah, pathname) : pemilik ? ["/lainnya"] : [];
+  // Menu samping: admin/owner dikelompokkan (Mingguan, Penjualan, Pembelian, Uang, Laporan, Pengaturan); staf 3 menu.
+  const itemSamping = pemilik
+    ? MENU_PEMILIK.map((g) => ({
+        type: "group" as const,
+        key: `grup-${g.grup}`,
+        label: g.grup,
+        children: g.item.map((m) => ({ key: m.ke, icon: m.ikon, label: m.label })),
+      }))
+    : MENU_STAF.map((m) => ({ key: m.ke, icon: m.ikon, label: m.label }));
 
   if (laptop) {
     return (
@@ -140,7 +87,7 @@ export default function Layout() {
             style={{ flex: 1, borderInlineEnd: 0, padding: "4px 12px", overflowY: "auto", background: "transparent" }}
             selectedKeys={aktif}
             onClick={({ key }) => navigate(key)}
-            items={menu.map((m) => ({ key: m.ke, icon: m.ikon, label: m.label }))}
+            items={itemSamping}
           />
           <div style={{ padding: 16 }}>
             <Button block icon={<LogoutOutlined />} onClick={() => void keluar()}>

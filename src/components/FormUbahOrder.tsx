@@ -100,7 +100,7 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
           </>
         )}
         <Col xs={24} md={12}>
-          <Field label="Biaya ke pemasok (Rp)">
+          <Field label="Biaya ke tukang & supplier (Rp)">
             <Input inputMode="numeric" {...bind("biaya_pokok")} />
           </Field>
         </Col>

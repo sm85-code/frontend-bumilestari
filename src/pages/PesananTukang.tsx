@@ -12,7 +12,7 @@ import type { PembayaranPemasok, RincianPembayaran, SiapBayar } from "../lib/typ
 const kolomRincian: TableColumnsType<RincianPembayaran["items"][number]> = [
   { title: "Kode pesanan", dataIndex: "no_order", fixed: "left", width: 150, render: (v: string) => v || "—" },
   { title: "Barang", dataIndex: "produk_nama" },
-  { title: "Pemasok", dataIndex: "pemasok_nama" },
+  { title: "Tukang & supplier", dataIndex: "pemasok_nama" },
   { title: "Qty", dataIndex: "qty", align: "right", width: 70 },
   { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
 ];
@@ -51,8 +51,8 @@ export default function PesananTukang() {
   const { konfirmasi, tanya } = useDialog();
   const siap = siapQ.data;
 
-  async function kirimKeLaporan() {
-    if (!siap || !(await konfirmasi(`Catat pembayaran ${rp(siap.total)} ke laporan keuangan?`, { ok: "Kirim ke laporan" }))) return;
+  async function catatPembayaran() {
+    if (!siap || !(await konfirmasi(`Catat pembayaran ${rp(siap.total)} ke tukang & supplier?`, { teks: `Uang keluar dari Kas utama, tanggal ${tanggal(tgl)}.`, ok: "Catat pembayaran" }))) return;
     aksi.mutate({ path: "/pembayaran-pemasok", body: { tanggal: tgl } });
   }
 
@@ -111,7 +111,7 @@ export default function PesananTukang() {
 
   return (
     <>
-      <PageHeader judul="Pesanan ke tukang" sub="Dibayar sekali tiap Selasa, dicatat sebagai 1 transaksi" />
+      <PageHeader judul="Bayar tukang & supplier" sub="Utang ke tukang & supplier dibayar tiap Selasa, dicatat sebagai 1 transaksi" />
       <Card>
         <Row>
           <Col xs={24} md={8}>
@@ -138,17 +138,17 @@ export default function PesananTukang() {
               }
             />
           )}
-          {siap.pemasok.length === 0 && !siap.sudah_dicatat_id && <Kosong teks="Tidak ada pesanan yang siap dibayar." />}
+          {siap.pemasok.length === 0 && !siap.sudah_dicatat_id && <Kosong teks="Tidak ada utang ke tukang & supplier untuk Selasa ini. Order muncul di sini setelah barang diambil/diterima (Senin–Sabtu minggu lalu)." />}
           {siap.pemasok.map((g) => (
             <Card
               key={g.pemasok_id}
-              judul={`${g.nama} · ${g.jenis === "supplier" ? "supplier" : "tukang kayu"}`}
+              judul={`${g.nama} · ${g.jenis === "supplier" ? "supplier" : "tukang"}`}
               aksi={
                 <Space wrap>
                   <a href={apiUrl(`/po/${g.pemasok_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
-                    PDF PO
+                    PDF rekap pembayaran
                   </a>
-                  <BagikanWA jenis="po" id={g.pemasok_id} tanggal={tgl} label="Kirim PO" />
+                  <BagikanWA jenis="po" id={g.pemasok_id} tanggal={tgl} label="Kirim rekap" />
                 </Space>
               }
             >
@@ -167,8 +167,8 @@ export default function PesananTukang() {
                 <Typography.Title level={4} style={{ margin: 0 }}>
                   Total dibayar Selasa: {rp(siap.total)}
                 </Typography.Title>
-                <Button disabled={aksi.isPending} onClick={() => void kirimKeLaporan()}>
-                  Kirim ke laporan
+                <Button disabled={aksi.isPending} onClick={() => void catatPembayaran()}>
+                  Catat pembayaran
                 </Button>
               </Flex>
               <Typography.Text type="secondary">Dicatat 1 kali per Selasa sebagai 1 transaksi; rincian barang tersimpan di dalamnya.</Typography.Text>
@@ -178,7 +178,7 @@ export default function PesananTukang() {
       )}
 
       <Card judul="Riwayat pembayaran">
-        <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran." />
+        <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran ke tukang & supplier." />
       </Card>
       {lihat && <Rincian id={lihat} onTutup={() => setLihat(null)} />}
     </>

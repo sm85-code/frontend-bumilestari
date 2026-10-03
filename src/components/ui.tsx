@@ -250,16 +250,27 @@ function ambilOpsi(anak: ReactNode, hasil: OpsiSelect[] = []): OpsiSelect[] {
   return hasil;
 }
 
-export const Select = ({ children, value, onChange, disabled }: SelectHTMLAttributes<HTMLSelectElement>) => (
-  <ASelect
-    style={{ width: "100%" }}
-    value={value === undefined || value === null ? undefined : String(value)}
-    options={ambilOpsi(children)}
-    disabled={disabled}
-    showSearch={{ optionFilterProp: "label" }}
-    onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
-  />
-);
+/**
+ * Pilihan (antd Select) dengan anak `<option>`. Nilai "" tanpa opsi bernilai "" berarti belum dipilih,
+ * sehingga `placeholder` (mis. "Pilih kategori") yang tampil.
+ */
+export const Select = ({ children, value, onChange, disabled, placeholder, ...p }: SelectHTMLAttributes<HTMLSelectElement> & { placeholder?: string }) => {
+  const opsi = ambilOpsi(children);
+  const v = value === undefined || value === null ? undefined : String(value);
+  const tampil = v === "" && !opsi.some((o) => o.value === "") ? undefined : v;
+  return (
+    <ASelect
+      style={{ width: "100%" }}
+      value={tampil}
+      options={opsi}
+      disabled={disabled}
+      placeholder={placeholder}
+      aria-label={p["aria-label"]}
+      showSearch={{ optionFilterProp: "label" }}
+      onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
+    />
+  );
+};
 
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null;
@@ -431,5 +442,38 @@ export function useDialog() {
       });
     });
 
-  return { konfirmasi, tanya, message };
+  /**
+   * Konfirmasi aksi uang dengan pilihan tanggal (bawaan `awal`, biasanya hari ini). Hasil "YYYY-MM-DD", atau null bila dibatalkan.
+   * Dipakai agar transaksi yang terlambat dicatat tetap bertanggal benar.
+   */
+  const konfirmasiTanggal = (judul: string, opsi: { awal: string; teks?: ReactNode; ok?: string; label?: string }) =>
+    new Promise<string | null>((resolve) => {
+      let nilai = opsi.awal;
+      modal.confirm({
+        title: judul,
+        centered: true,
+        content: (
+          <Flex vertical gap="small" style={{ marginTop: 8 }}>
+            {opsi.teks && <div>{opsi.teks}</div>}
+            <Typography.Text type="secondary">{opsi.label ?? "Tanggal"}</Typography.Text>
+            <DatePicker
+              aria-label={opsi.label ?? "Tanggal"}
+              style={{ width: "100%" }}
+              format="DD/MM/YYYY"
+              allowClear={false}
+              defaultValue={dayjs(opsi.awal)}
+              onChange={(d) => {
+                if (d) nilai = d.format("YYYY-MM-DD");
+              }}
+            />
+          </Flex>
+        ),
+        okText: opsi.ok ?? "Simpan",
+        cancelText: "Batal",
+        onOk: () => resolve(nilai),
+        onCancel: () => resolve(null),
+      });
+    });
+
+  return { konfirmasi, konfirmasiTanggal, tanya, message };
 }

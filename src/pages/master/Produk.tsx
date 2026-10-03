@@ -54,7 +54,7 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Biaya ke pemasok (Rp)" hint="Bahan + jasa (kayu) atau harga beli (non kayu)">
+        <Field label="Biaya ke tukang & supplier (Rp)" hint="Bahan + jasa (kayu) atau harga beli (non kayu)">
           <Input inputMode="numeric" {...bind("biaya")} />
         </Field>
 </Col>
@@ -80,7 +80,7 @@ export default function MasterProduk() {
     { title: "Jenis", dataIndex: "jenis_produk", render: (v: string) => (v === "kayu" ? <Lencana warna="hijau">Kayu</Lencana> : <Lencana>Non kayu</Lencana>) },
     { title: "Ukuran", dataIndex: "ukuran", render: (v: string) => v || "—" },
     { title: "Harga jual", dataIndex: "harga_jual", align: "right", render: angka },
-    { title: "Biaya pemasok", dataIndex: "biaya_pokok_default", align: "right", render: angka },
+    { title: "Biaya tukang & supplier", dataIndex: "biaya_pokok_default", align: "right", render: angka },
     {
       title: "Aksi",
       width: 170,

@@ -39,7 +39,7 @@ export default function Masuk() {
           <Field label="Email">
             <Input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
-          <Field label="Password">
+          <Field label="Kata sandi">
             <Input type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
           <AksiForm error={error}>

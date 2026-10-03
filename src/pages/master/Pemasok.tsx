@@ -35,12 +35,12 @@ function Form({ awal, onSelesai }: { awal?: Pemasok; onSelesai: () => void }) {
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Kode PO" hint="Kosong = otomatis berurutan. Tampil di nomor PO, mis. 005">
+        <Field label="Kode rekap" hint="Kosong = otomatis berurutan. Tampil di nomor rekap pembayaran, mis. 005">
           <Input {...bind("kode")} />
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Nomor WhatsApp" hint="mis. 0812xxxx; untuk tombol Kirim PO">
+        <Field label="Nomor WhatsApp" hint="mis. 0812xxxx; untuk tombol Kirim rekap">
           <Input inputMode="tel" {...bind("no_wa")} />
         </Field>
 </Col>
@@ -82,7 +82,7 @@ export default function MasterPemasok() {
   const kolom: TableColumnsType<Pemasok> = [
     { title: "Nama", dataIndex: "nama", fixed: "left", width: 170 },
     { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "tukang_kayu" ? <Lencana warna="hijau">Tukang kayu</Lencana> : <Lencana>Supplier</Lencana>) },
-    { title: "Kode PO", dataIndex: "kode", render: (v: string) => v || "—" },
+    { title: "Kode rekap", dataIndex: "kode", render: (v: string) => v || "—" },
     { title: "WhatsApp", dataIndex: "no_wa", render: (v: string) => v || <Typography.Text type="warning">belum diisi</Typography.Text> },
     { title: "Rekening", render: (_, p) => (p.no_rekening ? `${p.nama_bank} ${p.no_rekening}` : "—") },
     {
@@ -99,11 +99,11 @@ export default function MasterPemasok() {
     },
   ];
   return (
-    <Card judul="Tukang kayu dan supplier" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Tukang/supplier</Button>}>
+    <Card judul="Tukang & supplier" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Tukang & supplier</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
       {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={820} kosong="Belum ada data." />}
       {form && (
-        <Dialog judul={form === "baru" ? "Tukang/supplier baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
+        <Dialog judul={form === "baru" ? "Tukang & supplier baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />
         </Dialog>
       )}
