@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
-import { Button, Card, ErrorBox, Field, Input, Lencana, Memuat, Select, Tabel, Td, TdTotal, Th } from "../components/ui";
+import type { TableColumnsType } from "antd";
+import { BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Input, Lencana, Memuat, PageHeader, Select } from "../components/ui";
 import { api, query } from "../lib/api";
 import { useAkun, useAksi } from "../lib/data";
 import { bersihkanAngka, hariIni, num, rp, tanggal } from "../lib/format";
@@ -13,7 +14,7 @@ function Langkah({ no, judul, status, children }: { no: number; judul: string; s
     <Card>
       <div className="mb-2 flex items-center gap-3">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hijau text-sm font-bold text-white">{no}</span>
-        <h2 className="flex-1 text-sm font-bold">{judul}</h2>
+        <h2 className="flex-1 text-base font-bold">{judul}</h2>
         {status}
       </div>
       <div className="space-y-2 pl-0 md:pl-11">{children}</div>
@@ -44,6 +45,11 @@ function Pengisian({ jenis, label }: { jenis: "kas-kecil" | "kas-iklan"; label: 
   );
 }
 
+const kolomSisihan: TableColumnsType<Sisihan["items"][number]> = [
+  { title: "Karyawan", dataIndex: "nama" },
+  { title: "Cicilan", dataIndex: "jumlah", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+];
+
 export default function Selasa() {
   const { user } = useAuth();
   const [tgl, setTgl] = useState(hariIni());
@@ -69,17 +75,17 @@ export default function Selasa() {
 
   return (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-bold">Selasa</h1>
-          <p className="text-xs text-stone-500">Urutan kerja mingguan; kerjakan dari atas ke bawah.</p>
-        </div>
-        <div className="w-44">
-          <Field label="Tanggal">
-            <Input type="date" value={tgl} onChange={(e) => setTgl(e.target.value)} />
-          </Field>
-        </div>
-      </div>
+      <PageHeader
+        judul="Selasa"
+        sub="Urutan kerja mingguan; kerjakan dari atas ke bawah."
+        aksi={
+          <div className="w-44">
+            <Field label="Tanggal">
+              <Input type="date" value={tgl} onChange={(e) => setTgl(e.target.value)} />
+            </Field>
+          </div>
+        }
+      />
 
       <Langkah no={1} judul="Terima pembayaran penjual lain" status={<Lencana warna={totalPiutang > 0 ? "oranye" : "hijau"}>{totalPiutang > 0 ? "ada tagihan" : "tidak ada"}</Lencana>}>
         <p className="text-sm">
@@ -151,26 +157,13 @@ export default function Selasa() {
               Cicilan gaji {s.periode} · Selasa ke-{s.minggu_ke}. {s.catatan}
             </p>
             {s.items.length > 0 && (
-              <Tabel minLebar={320}>
-                <thead>
-                  <tr>
-                    <Th lengket>Karyawan</Th>
-                    <Th kanan>Cicilan</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {s.items.map((i) => (
-                    <tr key={i.nama}>
-                      <Td lengket>{i.nama}</Td>
-                      <Td kanan>{rp(i.jumlah)}</Td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <TdTotal lengket>Total</TdTotal>
-                    <TdTotal kanan>{rp(s.total)}</TdTotal>
-                  </tr>
-                </tbody>
-              </Tabel>
+              <DataTabel
+                kolom={kolomSisihan}
+                data={s.items}
+                rowKey="nama"
+                minLebar={320}
+                ringkasan={() => <BarisTotal sel={[{ isi: "Total" }, { isi: rp(s.total), kanan: true }]} />}
+              />
             )}
             {s.items.length > 0 && !s.cukup && <p className="text-sm text-red-600">Saldo kas utama {rp(s.saldo_kas_utama)} belum cukup.</p>}
             <Button disabled={aksi.isPending || s.items.length === 0 || !!s.sudah_dicatat_id || !s.cukup} onClick={() => aksi.mutate({ path: "/sisihan", body: { tanggal: tgl } })}>

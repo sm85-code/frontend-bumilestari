@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Kosong, Memuat, Tabel, Td, Th } from "./ui";
+import { Button } from "antd";
+import type { TableColumnsType } from "antd";
+import { DataTabel, Memuat } from "./ui";
 import { api } from "../lib/api";
 import { rp, tanggal } from "../lib/format";
 import type { Kategori, Transaksi } from "../lib/types";
@@ -25,44 +27,42 @@ export default function DaftarTransaksi({
   });
 
   if (memuat) return <Memuat />;
-  if (!data || data.length === 0) return <Kosong teks="Belum ada transaksi." />;
-  return (
-    <Tabel minLebar={bolehBatal ? 560 : 460}>
-      <thead>
-        <tr>
-          <Th lengket>Tanggal</Th>
-          <Th>Kategori</Th>
-          <Th>Keterangan</Th>
-          <Th kanan>Jumlah</Th>
-          {bolehBatal && <Th>Aksi</Th>}
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((t) => (
-          <tr key={t.id}>
-            <Td lengket className="whitespace-nowrap">{tanggal(t.tanggal)}</Td>
-            <Td>{nama.get(t.kategori_id) ?? "—"}</Td>
-            <Td className="text-stone-600">{t.keterangan || "—"}</Td>
-            <Td kanan className={t.jenis === "masuk" ? "text-hijau" : ""}>
-              {t.jenis === "masuk" ? "+" : "−"}
-              {rp(t.jumlah)}
-            </Td>
-            {bolehBatal && (
-              <Td>
-                <button
-                  className="text-xs text-red-600 hover:underline"
-                  onClick={() => {
-                    const alasan = window.prompt("Alasan membatalkan transaksi ini?");
-                    if (alasan && alasan.trim().length >= 3) batal.mutate({ id: t.id, alasan: alasan.trim() });
-                  }}
-                >
-                  Batalkan
-                </button>
-              </Td>
-            )}
-          </tr>
-        ))}
-      </tbody>
-    </Tabel>
-  );
+
+  const kolom: TableColumnsType<Transaksi> = [
+    { title: "Tanggal", dataIndex: "tanggal", width: 110, fixed: "left", render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Kategori", dataIndex: "kategori_id", width: 160, render: (v: string) => nama.get(v) ?? "—" },
+    { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <span className="text-coklat">{v || "—"}</span> },
+    {
+      title: "Jumlah",
+      dataIndex: "jumlah",
+      align: "right",
+      width: 150,
+      render: (_, t) => (
+        <b className={`tabular-nums whitespace-nowrap ${t.jenis === "masuk" ? "text-hijau" : ""}`}>
+          {t.jenis === "masuk" ? "+" : "−"}
+          {rp(t.jumlah)}
+        </b>
+      ),
+    },
+  ];
+  if (bolehBatal)
+    kolom.push({
+      title: "Aksi",
+      width: 100,
+      render: (_, t) => (
+        <Button
+          type="link"
+          danger
+          size="small"
+          onClick={() => {
+            const alasan = window.prompt("Alasan membatalkan transaksi ini?");
+            if (alasan && alasan.trim().length >= 3) batal.mutate({ id: t.id, alasan: alasan.trim() });
+          }}
+        >
+          Batalkan
+        </Button>
+      ),
+    });
+
+  return <DataTabel kolom={kolom} data={data ?? []} rowKey="id" minLebar={bolehBatal ? 620 : 520} kosong="Belum ada transaksi." />;
 }

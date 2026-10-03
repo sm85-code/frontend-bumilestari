@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Select, Tabel, Tabs, Td, TdTotal, Th } from "../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Lencana, PageHeader, Select, Tabs, TombolLink } from "../components/ui";
 import { api, query } from "../lib/api";
 import { peta, useAkun, useAksi } from "../lib/data";
 import { useFields } from "../lib/form";
@@ -60,44 +62,51 @@ function TabKaryawan() {
   const nama = peta(karyawanQ.data);
   const belum = (gajiQ.data ?? []).filter((g) => !g.tanggal_bayar);
   const totalBelum = belum.reduce((t, g) => t + num(g.jumlah), 0);
+  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolomKaryawan: TableColumnsType<Karyawan> = [
+    { title: "Nama", dataIndex: "nama", fixed: "left", width: 160 },
+    { title: "Peran", dataIndex: "peran", render: (v: string) => <span className="text-coklat">{PERAN[v] ?? v}</span> },
+    { title: "Gaji / bulan", dataIndex: "gaji_bulanan", align: "right", render: angka },
+    {
+      title: "Aksi",
+      width: 170,
+      render: (_, k) => (
+        <span className="whitespace-nowrap">
+          <TombolLink onClick={() => setForm(k)}>Ubah</TombolLink>
+          <TombolLink bahaya onClick={() => window.confirm(`Nonaktifkan ${k.nama}?`) && aksi.mutate({ path: `/karyawan/${k.id}`, method: "PATCH", body: { aktif: false } })}>
+            Nonaktifkan
+          </TombolLink>
+        </span>
+      ),
+    },
+  ];
+  const kolomGaji: TableColumnsType<Gaji> = [
+    { title: "Karyawan", dataIndex: "karyawan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
+    { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
+    { title: "Jatuh tempo", dataIndex: "jatuh_tempo", render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Status", render: (_, g) => (g.tanggal_bayar ? <Lencana warna="hijau">dibayar {tanggal(g.tanggal_bayar)}</Lencana> : <Lencana warna="oranye">belum</Lencana>) },
+    {
+      title: "Aksi",
+      width: 150,
+      render: (_, g) =>
+        g.tanggal_bayar && (
+          <TombolLink
+            bahaya
+            onClick={() => {
+              const alasan = window.prompt("Alasan membatalkan pembayaran gaji ini?");
+              if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/gaji/${g.id}/batal-bayar`, body: { alasan: alasan.trim() } });
+            }}
+          >
+            Batalkan bayar
+          </TombolLink>
+        ),
+    },
+  ];
 
   return (
     <>
-      <Card judul="Karyawan tetap" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setForm("baru")}>+ Karyawan</Button>}>
-        {!karyawanQ.data?.length ? (
-          <Kosong teks="Belum ada karyawan." />
-        ) : (
-          <Tabel minLebar={460}>
-            <thead>
-              <tr>
-                <Th lengket>Nama</Th>
-                <Th>Peran</Th>
-                <Th kanan>Gaji / bulan</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {karyawanQ.data.map((k) => (
-                <tr key={k.id}>
-                  <Td lengket>{k.nama}</Td>
-                  <Td className="text-stone-600">{PERAN[k.peran] ?? k.peran}</Td>
-                  <Td kanan>{rp(k.gaji_bulanan)}</Td>
-                  <Td className="whitespace-nowrap">
-                    <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setForm(k)}>
-                      Ubah
-                    </button>
-                    <button
-                      className="text-xs text-red-600 hover:underline"
-                      onClick={() => window.confirm(`Nonaktifkan ${k.nama}?`) && aksi.mutate({ path: `/karyawan/${k.id}`, method: "PATCH", body: { aktif: false } })}
-                    >
-                      Nonaktifkan
-                    </button>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabel>
-        )}
+      <Card judul="Karyawan tetap" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Karyawan</Button>}>
+        <DataTabel kolom={kolomKaryawan} data={karyawanQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada karyawan." />
       </Card>
 
       <Card judul="Gaji bulanan (dibayar tanggal 1 bulan berikutnya, dari Dana cadangan)">
@@ -116,49 +125,14 @@ function TabKaryawan() {
         </div>
         <p className="mb-2 text-xs text-stone-500">Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di halaman Selasa.</p>
         <ErrorBox error={gajiQ.error ?? aksi.error} />
-        {!gajiQ.data?.length ? (
-          <Kosong teks="Belum ada gaji untuk periode ini. Tekan 'Siapkan gaji'." />
-        ) : (
-          <Tabel minLebar={520}>
-            <thead>
-              <tr>
-                <Th lengket>Karyawan</Th>
-                <Th kanan>Jumlah</Th>
-                <Th>Jatuh tempo</Th>
-                <Th>Status</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {gajiQ.data.map((g) => (
-                <tr key={g.id}>
-                  <Td lengket>{nama.get(g.karyawan_id)?.nama ?? "—"}</Td>
-                  <Td kanan>{rp(g.jumlah)}</Td>
-                  <Td>{tanggal(g.jatuh_tempo)}</Td>
-                  <Td>{g.tanggal_bayar ? <Lencana warna="hijau">dibayar {tanggal(g.tanggal_bayar)}</Lencana> : <Lencana warna="oranye">belum</Lencana>}</Td>
-                  <Td>
-                    {g.tanggal_bayar && (
-                      <button
-                        className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          const alasan = window.prompt("Alasan membatalkan pembayaran gaji ini?");
-                          if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/gaji/${g.id}/batal-bayar`, body: { alasan: alasan.trim() } });
-                        }}
-                      >
-                        Batalkan bayar
-                      </button>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-              <tr>
-                <TdTotal lengket>Total</TdTotal>
-                <TdTotal kanan>{rp(gajiQ.data.reduce((t, g) => t + num(g.jumlah), 0))}</TdTotal>
-                <TdTotal colSpan={3} />
-              </tr>
-            </tbody>
-          </Tabel>
-        )}
+        <DataTabel
+          kolom={kolomGaji}
+          data={gajiQ.data ?? []}
+          rowKey="id"
+          minLebar={560}
+          kosong="Belum ada gaji untuk periode ini. Tekan 'Siapkan gaji'."
+          ringkasan={gajiQ.data?.length ? () => <BarisTotal sel={[{ isi: "Total" }, { isi: rp(gajiQ.data!.reduce((t, g) => t + num(g.jumlah), 0)), kanan: true }, { isi: "", span: 3 }]} /> : undefined}
+        />
       </Card>
       {form && (
         <Dialog judul={form === "baru" ? "Karyawan baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
@@ -180,43 +154,52 @@ function TabLangganan() {
   const sudah = new Set((tagihanQ.data ?? []).filter((t) => !t.dibatalkan).map((t) => t.langganan_id));
   const { f, bind, reset } = useFields({ nama: "", jumlah: "" });
   const [angka, setAngka] = useState<Record<string, string>>({});
+  const rupiah = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolomLangganan: TableColumnsType<Langganan> = [
+    { title: "Langganan", dataIndex: "nama", fixed: "left", width: 160 },
+    { title: "Perkiraan / bulan", dataIndex: "jumlah_bulanan", align: "right", render: rupiah },
+    {
+      title: "Aksi",
+      width: 140,
+      render: (_, l) => (
+        <TombolLink
+          onClick={() => {
+            const v = window.prompt(`Perkiraan tagihan ${l.nama} per bulan (Rp)?`, String(Math.round(num(l.jumlah_bulanan))));
+            if (v !== null) aksi.mutate({ path: `/langganan/${l.id}`, method: "PATCH", body: { jumlah_bulanan: bersihkanAngka(v) || "0" } });
+          }}
+        >
+          Ubah nominal
+        </TombolLink>
+      ),
+    },
+  ];
+  const kolomTagihan: TableColumnsType<Tagihan> = [
+    { title: "Langganan", dataIndex: "langganan_id", fixed: "left", width: 160, render: (v: string) => nama.get(v)?.nama ?? "—" },
+    { title: "Jumlah", dataIndex: "jumlah", align: "right", render: rupiah },
+    { title: "Dibayar", render: (_, t) => (t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <span className="whitespace-nowrap">{tanggal(t.tanggal_bayar)}</span>) },
+    {
+      title: "Aksi",
+      width: 110,
+      render: (_, t) =>
+        !t.dibatalkan && (
+          <TombolLink
+            bahaya
+            onClick={() => {
+              const alasan = window.prompt("Alasan membatalkan tagihan ini?");
+              if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/tagihan/${t.id}/batal`, body: { alasan: alasan.trim() } });
+            }}
+          >
+            Batalkan
+          </TombolLink>
+        ),
+    },
+  ];
 
   return (
     <>
-      <Card judul="Daftar langganan" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setBaru(true)}>+ Langganan</Button>}>
+      <Card judul="Daftar langganan" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Langganan</Button>}>
         <p className="mb-2 text-xs text-stone-500">Dibayar langsung saat tagihan datang (biasanya minggu ke-4); tidak dicicil. Nominal di sini hanya perkiraan.</p>
-        {!langgananQ.data?.length ? (
-          <Kosong teks="Belum ada langganan." />
-        ) : (
-          <Tabel minLebar={420}>
-            <thead>
-              <tr>
-                <Th lengket>Langganan</Th>
-                <Th kanan>Perkiraan / bulan</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {langgananQ.data.map((l) => (
-                <tr key={l.id}>
-                  <Td lengket>{l.nama}</Td>
-                  <Td kanan>{rp(l.jumlah_bulanan)}</Td>
-                  <Td>
-                    <button
-                      className="text-xs font-semibold text-hijau hover:underline"
-                      onClick={() => {
-                        const v = window.prompt(`Perkiraan tagihan ${l.nama} per bulan (Rp)?`, String(Math.round(num(l.jumlah_bulanan))));
-                        if (v !== null) aksi.mutate({ path: `/langganan/${l.id}`, method: "PATCH", body: { jumlah_bulanan: bersihkanAngka(v) || "0" } });
-                      }}
-                    >
-                      Ubah nominal
-                    </button>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabel>
-        )}
+        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada langganan." />
       </Card>
 
       <Card judul="Bayar tagihan">
@@ -231,42 +214,7 @@ function TabLangganan() {
           </Button>
         </div>
         <ErrorBox error={tagihanQ.error ?? aksi.error} />
-        {!tagihanQ.data?.length ? (
-          <Kosong teks="Belum ada tagihan dibayar untuk periode ini." />
-        ) : (
-          <Tabel minLebar={460}>
-            <thead>
-              <tr>
-                <Th lengket>Langganan</Th>
-                <Th kanan>Jumlah</Th>
-                <Th>Dibayar</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {tagihanQ.data.map((t) => (
-                <tr key={t.id}>
-                  <Td lengket>{nama.get(t.langganan_id)?.nama ?? "—"}</Td>
-                  <Td kanan>{rp(t.jumlah)}</Td>
-                  <Td>{t.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : tanggal(t.tanggal_bayar)}</Td>
-                  <Td>
-                    {!t.dibatalkan && (
-                      <button
-                        className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          const alasan = window.prompt("Alasan membatalkan tagihan ini?");
-                          if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/tagihan/${t.id}/batal`, body: { alasan: alasan.trim() } });
-                        }}
-                      >
-                        Batalkan
-                      </button>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabel>
-        )}
+        <DataTabel kolom={kolomTagihan} data={tagihanQ.data ?? []} rowKey="id" minLebar={500} kosong="Belum ada tagihan dibayar untuk periode ini." />
       </Card>
 
       {baru && (
@@ -325,7 +273,7 @@ export default function GajiPage() {
   const [tab, setTab] = useState<"gaji" | "langganan">("gaji");
   return (
     <>
-      <h1 className="text-lg font-bold">Gaji dan langganan</h1>
+      <PageHeader judul="Gaji dan langganan" sub="Karyawan tetap, gaji bulanan, dan tagihan langganan" />
       <Tabs
         daftar={[
           { id: "gaji", label: "Karyawan & gaji" },

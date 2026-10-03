@@ -1,11 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import BagikanWA from "../components/BagikanWA";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, Tabel, Td, TdTotal, Th } from "../components/ui";
+import { Alert } from "antd";
+import type { TableColumnsType } from "antd";
+import { BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, PageHeader, TombolLink } from "../components/ui";
 import { api, apiUrl, query } from "../lib/api";
 import { peta, useAksi, useProduk } from "../lib/data";
 import { hariIni, rp, tanggal } from "../lib/format";
 import type { PembayaranPemasok, RincianPembayaran, SiapBayar } from "../lib/types";
+
+const kolomRincian: TableColumnsType<RincianPembayaran["items"][number]> = [
+  { title: "Kode pesanan", dataIndex: "no_order", fixed: "left", width: 150, render: (v: string) => v || "—" },
+  { title: "Barang", dataIndex: "produk_nama" },
+  { title: "Pemasok", dataIndex: "pemasok_nama" },
+  { title: "Qty", dataIndex: "qty", align: "right", width: 70 },
+  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+];
 
 function Rincian({ id, onTutup }: { id: string; onTutup: () => void }) {
   const q = useQuery({ queryKey: ["pembayaran", id], queryFn: () => api<RincianPembayaran>(`/pembayaran-pemasok/${id}`) });
@@ -18,33 +28,13 @@ function Rincian({ id, onTutup }: { id: string; onTutup: () => void }) {
           <p className="mb-2 text-sm text-stone-600">
             Di laporan keuangan tampil sebagai <b>1 transaksi</b> {rp(q.data.total)}; isinya {q.data.total_qty} barang:
           </p>
-          <Tabel minLebar={520}>
-            <thead>
-              <tr>
-                <Th lengket>Kode pesanan</Th>
-                <Th>Barang</Th>
-                <Th>Pemasok</Th>
-                <Th kanan>Qty</Th>
-                <Th kanan>Jumlah</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {q.data.items.map((i) => (
-                <tr key={i.order_id}>
-                  <Td lengket>{i.no_order || "—"}</Td>
-                  <Td>{i.produk_nama}</Td>
-                  <Td>{i.pemasok_nama}</Td>
-                  <Td kanan>{i.qty}</Td>
-                  <Td kanan>{rp(i.jumlah)}</Td>
-                </tr>
-              ))}
-              <tr>
-                <TdTotal lengket colSpan={3}>Total</TdTotal>
-                <TdTotal kanan>{q.data.total_qty}</TdTotal>
-                <TdTotal kanan>{rp(q.data.total)}</TdTotal>
-              </tr>
-            </tbody>
-          </Tabel>
+          <DataTabel
+            kolom={kolomRincian}
+            data={q.data.items}
+            rowKey="order_id"
+            minLebar={520}
+            ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 3 }, { isi: q.data.total_qty, kanan: true }, { isi: rp(q.data.total), kanan: true }]} />}
+          />
         </>
       )}
     </Dialog>
@@ -65,9 +55,60 @@ export default function PesananTukang() {
     aksi.mutate({ path: "/pembayaran-pemasok", body: { tanggal: tgl } });
   }
 
+  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolomSiap: TableColumnsType<SiapBayar["pemasok"][number]["items"][number]> = [
+    {
+      title: "Tanggal selesai",
+      fixed: "left",
+      width: 150,
+      render: (_, i) => (
+        <span className="whitespace-nowrap">
+          {tanggal(i.tgl_diambil)} {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
+        </span>
+      ),
+    },
+    { title: "Kode pesanan", dataIndex: "no_order", width: 150, render: (v: string) => v || "—" },
+    {
+      title: "Barang",
+      render: (_, i) => (
+        <>
+          {produk.get(i.produk_id)?.nama ?? "—"} <span className="text-coklat">{produk.get(i.produk_id)?.ukuran}</span>
+        </>
+      ),
+    },
+    { title: "Qty", dataIndex: "qty", align: "right", width: 70 },
+    { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
+  ];
+  const kolomRiwayat: TableColumnsType<PembayaranPemasok> = [
+    { title: "Selasa", dataIndex: "selasa", fixed: "left", width: 110, render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Tanggal catat", dataIndex: "tanggal", render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Total", dataIndex: "total", align: "right", render: angka },
+    { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>) },
+    {
+      title: "Aksi",
+      width: 170,
+      render: (_, p) => (
+        <span className="whitespace-nowrap">
+          <TombolLink onClick={() => setLihat(p.id)}>Rincian</TombolLink>
+          {!p.dibatalkan && (
+            <TombolLink
+              bahaya
+              onClick={() => {
+                const alasan = window.prompt("Alasan membatalkan pembayaran ini?");
+                if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/pembayaran-pemasok/${p.id}/batal`, body: { alasan: alasan.trim() } });
+              }}
+            >
+              Batalkan
+            </TombolLink>
+          )}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
-      <h1 className="text-lg font-bold">Pesanan ke tukang</h1>
+      <PageHeader judul="Pesanan ke tukang" sub="Dibayar sekali tiap Selasa, dicatat sebagai 1 transaksi" />
       <Card>
         <div className="max-w-xs">
           <Field label="Tanggal pembayaran" hint="Diambil Senin–Sabtu minggu sebelum Selasa acuan ikut dibayar">
@@ -83,12 +124,14 @@ export default function PesananTukang() {
             Selasa acuan <b>{tanggal(siap.selasa)}</b> · diambil sampai <b>{tanggal(siap.batas_diambil)}</b> (Sabtu)
           </p>
           {siap.sudah_dicatat_id && (
-            <p className="rounded-xl bg-hijau-muda px-3 py-2 text-sm text-hijau">
-              Pembayaran Selasa ini sudah dicatat.{" "}
-              <button className="font-semibold underline" onClick={() => setLihat(siap.sudah_dicatat_id)}>
-                Lihat rincian
-              </button>
-            </p>
+            <Alert
+              type="success"
+              showIcon
+              title="Pembayaran Selasa ini sudah dicatat."
+              action={
+                <TombolLink onClick={() => setLihat(siap.sudah_dicatat_id)}>Lihat rincian</TombolLink>
+              }
+            />
           )}
           {siap.pemasok.length === 0 && !siap.sudah_dicatat_id && <Kosong teks="Tidak ada pesanan yang siap dibayar." />}
           {siap.pemasok.map((g) => (
@@ -97,41 +140,20 @@ export default function PesananTukang() {
               judul={`${g.nama} · ${g.jenis === "supplier" ? "supplier" : "tukang kayu"}`}
               aksi={
                 <span className="flex flex-wrap items-center gap-2">
-                  <a className="text-xs font-semibold text-hijau hover:underline" href={apiUrl(`/po/${g.pemasok_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
+                  <a className="text-sm font-semibold text-hijau hover:underline" href={apiUrl(`/po/${g.pemasok_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
                     PDF PO
                   </a>
                   <BagikanWA jenis="po" id={g.pemasok_id} tanggal={tgl} label="Kirim PO" />
                 </span>
               }
             >
-              <Tabel minLebar={640}>
-                <thead>
-                  <tr>
-                    <Th lengket>Tanggal selesai</Th>
-                    <Th>Kode pesanan</Th>
-                    <Th>Barang</Th>
-                    <Th kanan>Qty</Th>
-                    <Th kanan>Jumlah</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {g.items.map((i) => (
-                    <tr key={i.order_id}>
-                      <Td lengket className="whitespace-nowrap">
-                        {tanggal(i.tgl_diambil)} {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
-                      </Td>
-                      <Td>{i.no_order || "—"}</Td>
-                      <Td>{produk.get(i.produk_id)?.nama ?? "—"} <span className="text-stone-500">{produk.get(i.produk_id)?.ukuran}</span></Td>
-                      <Td kanan>{i.qty}</Td>
-                      <Td kanan>{rp(i.jumlah)}</Td>
-                    </tr>
-                  ))}
-                  <tr>
-                    <TdTotal lengket colSpan={4}>Subtotal {g.nama}</TdTotal>
-                    <TdTotal kanan>{rp(g.subtotal)}</TdTotal>
-                  </tr>
-                </tbody>
-              </Tabel>
+              <DataTabel
+                kolom={kolomSiap}
+                data={g.items}
+                rowKey="order_id"
+                minLebar={640}
+                ringkasan={() => <BarisTotal sel={[{ isi: `Subtotal ${g.nama}`, span: 4 }, { isi: rp(g.subtotal), kanan: true }]} />}
+              />
             </Card>
           ))}
           {siap.pemasok.length > 0 && !siap.sudah_dicatat_id && (
@@ -149,47 +171,7 @@ export default function PesananTukang() {
       )}
 
       <Card judul="Riwayat pembayaran">
-        {!riwayatQ.data?.length ? (
-          <Kosong teks="Belum ada pembayaran." />
-        ) : (
-          <Tabel minLebar={480}>
-            <thead>
-              <tr>
-                <Th lengket>Selasa</Th>
-                <Th>Tanggal catat</Th>
-                <Th kanan>Total</Th>
-                <Th>Status</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {riwayatQ.data.map((p) => (
-                <tr key={p.id}>
-                  <Td lengket>{tanggal(p.selasa)}</Td>
-                  <Td>{tanggal(p.tanggal)}</Td>
-                  <Td kanan>{rp(p.total)}</Td>
-                  <Td>{p.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>}</Td>
-                  <Td className="whitespace-nowrap">
-                    <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setLihat(p.id)}>
-                      Rincian
-                    </button>
-                    {!p.dibatalkan && (
-                      <button
-                        className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          const alasan = window.prompt("Alasan membatalkan pembayaran ini?");
-                          if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/pembayaran-pemasok/${p.id}/batal`, body: { alasan: alasan.trim() } });
-                        }}
-                      >
-                        Batalkan
-                      </button>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabel>
-        )}
+        <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran." />
       </Card>
       {lihat && <Rincian id={lihat} onTutup={() => setLihat(null)} />}
     </>

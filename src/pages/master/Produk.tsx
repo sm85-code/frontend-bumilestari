@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, Select, Tabel, Td, Th } from "../../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Lencana, Memuat, Select, TombolLink } from "../../components/ui";
 import { useAksi, useProduk } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import { bersihkanAngka, num, rp } from "../../lib/format";
@@ -58,44 +60,31 @@ export default function MasterProduk() {
   const q = useProduk();
   const aksi = useAksi();
   const [form, setForm] = useState<Produk | "baru" | null>(null);
+  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolom: TableColumnsType<Produk> = [
+    { title: "SKU", dataIndex: "sku", fixed: "left", width: 110 },
+    { title: "Nama", dataIndex: "nama" },
+    { title: "Jenis", dataIndex: "jenis_produk", render: (v: string) => (v === "kayu" ? <Lencana warna="hijau">kayu</Lencana> : <Lencana>non kayu</Lencana>) },
+    { title: "Ukuran", dataIndex: "ukuran", render: (v: string) => v || "—" },
+    { title: "Harga jual", dataIndex: "harga_jual", align: "right", render: angka },
+    { title: "Biaya pemasok", dataIndex: "biaya_pokok_default", align: "right", render: angka },
+    {
+      title: "Aksi",
+      width: 170,
+      render: (_, p) => (
+        <span className="whitespace-nowrap">
+          <TombolLink onClick={() => setForm(p)}>Ubah</TombolLink>
+          <TombolLink bahaya onClick={() => window.confirm(`Nonaktifkan ${p.sku}?`) && aksi.mutate({ path: `/produk/${p.id}`, method: "PATCH", body: { aktif: false } })}>
+            Nonaktifkan
+          </TombolLink>
+        </span>
+      ),
+    },
+  ];
   return (
-    <Card judul="Katalog produk" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setForm("baru")}>+ Produk</Button>}>
+    <Card judul="Katalog produk" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Produk</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? (
-        <Memuat />
-      ) : !q.data?.length ? (
-        <Kosong teks="Belum ada produk." />
-      ) : (
-        <Tabel minLebar={760}>
-          <thead>
-            <tr>
-              <Th lengket>SKU</Th>
-              <Th>Nama</Th>
-              <Th>Jenis</Th>
-              <Th>Ukuran</Th>
-              <Th kanan>Harga jual</Th>
-              <Th kanan>Biaya pemasok</Th>
-              <Th>Aksi</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {q.data.map((p) => (
-              <tr key={p.id}>
-                <Td lengket>{p.sku}</Td>
-                <Td>{p.nama}</Td>
-                <Td>{p.jenis_produk === "kayu" ? <Lencana warna="hijau">kayu</Lencana> : <Lencana>non kayu</Lencana>}</Td>
-                <Td>{p.ukuran || "—"}</Td>
-                <Td kanan>{rp(p.harga_jual)}</Td>
-                <Td kanan>{rp(p.biaya_pokok_default)}</Td>
-                <Td className="whitespace-nowrap">
-                  <button className="mr-3 text-xs font-semibold text-hijau hover:underline" onClick={() => setForm(p)}>Ubah</button>
-                  <button className="text-xs text-red-600 hover:underline" onClick={() => window.confirm(`Nonaktifkan ${p.sku}?`) && aksi.mutate({ path: `/produk/${p.id}`, method: "PATCH", body: { aktif: false } })}>Nonaktifkan</button>
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
-      )}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={800} kosong="Belum ada produk." />}
       {form && (
         <Dialog judul={form === "baru" ? "Produk baru" : `Ubah ${form.sku}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />

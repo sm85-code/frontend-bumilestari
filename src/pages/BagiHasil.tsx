@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Baris, Button, Card, ErrorBox, Field, Input, Kosong, Lencana, Memuat, Tabel, Td, Th } from "../components/ui";
+import type { TableColumnsType } from "antd";
+import { Baris, Button, Card, DataTabel, ErrorBox, Field, Input, Lencana, Memuat, PageHeader, TombolLink } from "../components/ui";
 import { api, query } from "../lib/api";
 import { useAksi } from "../lib/data";
 import { bulanIni, hariIni, num, rp, tanggal } from "../lib/format";
@@ -14,9 +15,47 @@ export default function BagiHasilPage() {
   const h = hitungQ.data;
   const adaAktif = (daftarQ.data ?? []).some((b) => b.periode === periode && !b.dibatalkan);
 
+  const persen = (n: string) => <span className="text-xs text-coklat">({num(n)}%)</span>;
+  const kolom: TableColumnsType<BagiHasil> = [
+    { title: "Periode", dataIndex: "periode", fixed: "left", width: 100 },
+    { title: "Laba bersih", dataIndex: "laba_bersih", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+    { title: "Admin", align: "right", render: (_, b) => <span className="tabular-nums whitespace-nowrap">{rp(b.bagian_admin)} {persen(b.persen_admin)}</span> },
+    { title: "Owner", align: "right", render: (_, b) => <span className="tabular-nums whitespace-nowrap">{rp(b.bagian_owner)} {persen(b.persen_owner)}</span> },
+    {
+      title: "Status",
+      render: (_, b) => (b.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : b.tanggal_bayar ? <Lencana warna="hijau">dibayar {tanggal(b.tanggal_bayar)}</Lencana> : <Lencana warna="oranye">draft</Lencana>),
+    },
+    {
+      title: "Aksi",
+      width: 150,
+      render: (_, b) => (
+        <span className="whitespace-nowrap">
+          {!b.dibatalkan && !b.tanggal_bayar && num(b.bagian_admin) + num(b.bagian_owner) > 0 && (
+            <TombolLink
+              onClick={() => window.confirm(`Bayar bagi hasil ${b.periode} (${rp(num(b.bagian_admin) + num(b.bagian_owner))}) tunai dari kas utama?`) && aksi.mutate({ path: `/bagi-hasil/${b.id}/bayar?tanggal=${hariIni()}` })}
+            >
+              Bayar
+            </TombolLink>
+          )}
+          {!b.dibatalkan && (
+            <TombolLink
+              bahaya
+              onClick={() => {
+                const alasan = window.prompt("Alasan membatalkan/menghitung ulang?");
+                if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/bagi-hasil/${b.id}/batal`, body: { alasan: alasan.trim() } });
+              }}
+            >
+              Batalkan
+            </TombolLink>
+          )}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <>
-      <h1 className="text-lg font-bold">Bagi hasil bulanan</h1>
+      <PageHeader judul="Bagi hasil bulanan" sub="Admin dan owner, dihitung dari laba bersih tiap bulan" />
       <Card>
         <div className="max-w-xs">
           <Field label="Periode">
@@ -44,54 +83,7 @@ export default function BagiHasilPage() {
         </Card>
       )}
       <Card judul="Riwayat bagi hasil">
-        {!daftarQ.data?.length ? (
-          <Kosong teks="Belum ada bagi hasil tersimpan." />
-        ) : (
-          <Tabel minLebar={720}>
-            <thead>
-              <tr>
-                <Th lengket>Periode</Th>
-                <Th kanan>Laba bersih</Th>
-                <Th kanan>Admin</Th>
-                <Th kanan>Owner</Th>
-                <Th>Status</Th>
-                <Th>Aksi</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {daftarQ.data.map((b) => (
-                <tr key={b.id}>
-                  <Td lengket>{b.periode}</Td>
-                  <Td kanan>{rp(b.laba_bersih)}</Td>
-                  <Td kanan>{rp(b.bagian_admin)} <span className="text-xs text-stone-500">({num(b.persen_admin)}%)</span></Td>
-                  <Td kanan>{rp(b.bagian_owner)} <span className="text-xs text-stone-500">({num(b.persen_owner)}%)</span></Td>
-                  <Td>{b.dibatalkan ? <Lencana warna="merah">dibatalkan</Lencana> : b.tanggal_bayar ? <Lencana warna="hijau">dibayar {tanggal(b.tanggal_bayar)}</Lencana> : <Lencana warna="oranye">draft</Lencana>}</Td>
-                  <Td className="whitespace-nowrap">
-                    {!b.dibatalkan && !b.tanggal_bayar && num(b.bagian_admin) + num(b.bagian_owner) > 0 && (
-                      <button
-                        className="mr-3 text-xs font-semibold text-hijau hover:underline"
-                        onClick={() => window.confirm(`Bayar bagi hasil ${b.periode} (${rp(num(b.bagian_admin) + num(b.bagian_owner))}) tunai dari kas utama?`) && aksi.mutate({ path: `/bagi-hasil/${b.id}/bayar?tanggal=${hariIni()}` })}
-                      >
-                        Bayar
-                      </button>
-                    )}
-                    {!b.dibatalkan && (
-                      <button
-                        className="text-xs text-red-600 hover:underline"
-                        onClick={() => {
-                          const alasan = window.prompt("Alasan membatalkan/menghitung ulang?");
-                          if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/bagi-hasil/${b.id}/batal`, body: { alasan: alasan.trim() } });
-                        }}
-                      >
-                        Batalkan
-                      </button>
-                    )}
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabel>
-        )}
+        <DataTabel kolom={kolom} data={daftarQ.data ?? []} rowKey="id" minLebar={760} kosong="Belum ada bagi hasil tersimpan." />
       </Card>
     </>
   );

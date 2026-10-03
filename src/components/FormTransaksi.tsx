@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Segmented } from "antd";
 import { useMemo, useState, type FormEvent } from "react";
 import { Button, ErrorBox, Field, Input, Select } from "./ui";
 import { api } from "../lib/api";
@@ -65,18 +66,17 @@ export default function FormTransaksi({ akun, kategori, jenisTetap, akunAwal, on
         </Field>
       )}
       {!jenisTetap && (
-        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Jenis transaksi">
-          {(["keluar", "masuk"] as const).map((j) => (
-            <button
-              type="button"
-              key={j}
-              onClick={() => setJenis(j)}
-              className={`min-h-11 rounded-xl border text-sm font-semibold ${jenis === j ? "border-hijau bg-hijau-muda text-hijau" : "border-garis bg-white text-stone-600"}`}
-            >
-              {j === "keluar" ? "Pengeluaran" : "Pemasukan"}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          block
+          size="large"
+          value={jenis}
+          onChange={(v) => setJenis(v as "keluar" | "masuk")}
+          options={[
+            { label: "Pengeluaran", value: "keluar" },
+            { label: "Pemasukan", value: "masuk" },
+          ]}
+          aria-label="Jenis transaksi"
+        />
       )}
       <Field label="Kategori">
         <Select value={kategoriAktif} onChange={(e) => setKategoriId(e.target.value)} required>

@@ -1,73 +1,159 @@
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Alert, Button as AButton, Card as ACard, Empty, Input as AInput, Modal, Progress as AProgress, Select as ASelect, Spin, Statistic, Tabs as ATabs, Tag, Typography } from "antd";
+import type { TableColumnsType } from "antd";
+import { Table } from "antd";
+import {
+  Children,
+  Fragment,
+  isValidElement,
+  type ChangeEvent,
+  type ButtonHTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactElement,
+  type ReactNode,
+  type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
+} from "react";
+import { WARNA } from "../theme";
 
-export function Card({ judul, aksi, children, className = "" }: { judul?: string; aksi?: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <section className={`rounded-2xl border border-garis bg-white p-4 shadow-soft ${className}`}>
-      {(judul || aksi) && (
-        <div className="mb-3 flex items-center justify-between gap-2">
-          {judul && <h2 className="text-sm font-semibold text-coklat">{judul}</h2>}
-          {aksi}
-        </div>
-      )}
-      {children}
-    </section>
-  );
-}
+/** Komponen dasar aplikasi, dibangun di atas Ant Design. Nama dan prop dipertahankan agar halaman tidak perlu diubah. */
 
-export function Stat({ label, nilai, sub, warna }: { label: string; nilai: string; sub?: string; warna?: "hijau" | "merah" | "oranye" }) {
-  const w = warna === "merah" ? "text-red-600" : warna === "oranye" ? "text-oranye" : warna === "hijau" ? "text-hijau" : "text-stone-900";
+export function PageHeader({ judul, sub, aksi }: { judul: string; sub?: ReactNode; aksi?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-garis bg-white p-3 shadow-soft">
-      <p className="text-xs text-coklat">{label}</p>
-      <p className={`mt-1 text-lg font-bold leading-tight ${w}`}>{nilai}</p>
-      {sub && <p className="mt-0.5 text-xs text-stone-500">{sub}</p>}
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="min-w-0">
+        <Typography.Title level={3} style={{ margin: 0, fontWeight: 800, letterSpacing: "-0.01em" }}>
+          {judul}
+        </Typography.Title>
+        {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
+      </div>
+      {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
     </div>
   );
 }
 
-export function Button({ variant = "utama", className = "", ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "utama" | "pinggir" | "bahaya" }) {
-  const v =
-    variant === "utama"
-      ? "bg-hijau text-white hover:bg-hijau-tua active:bg-hijau-tua"
-      : variant === "bahaya"
-        ? "bg-red-600 text-white"
-        : "border border-garis bg-white text-stone-800 active:bg-stone-100";
+export function Card({ judul, aksi, children, className = "" }: { judul?: string; aksi?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <button
-      {...p}
-      className={`min-h-11 rounded-xl px-4 text-sm font-semibold transition disabled:opacity-50 ${v} ${className}`}
-    />
+    <ACard className={className} variant="borderless" style={{ boxShadow: "var(--ant-box-shadow-tertiary)" }} styles={{ body: { padding: 0 } }}>
+      {(judul || aksi) && (
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-garis px-4 py-3">
+          {judul && <h2 className="min-w-0 text-sm font-extrabold">{judul}</h2>}
+          {aksi && <div className="flex flex-wrap items-center gap-2">{aksi}</div>}
+        </div>
+      )}
+      <div className="p-4">{children}</div>
+    </ACard>
+  );
+}
+
+export function Stat({ label, nilai, sub, warna }: { label: string; nilai: string; sub?: string; warna?: "hijau" | "merah" | "oranye" }) {
+  const w = warna === "merah" ? "#d03a3a" : warna === "oranye" ? WARNA.oranye : warna === "hijau" ? WARNA.hijau : WARNA.tinta;
+  return (
+    <ACard variant="borderless" style={{ boxShadow: "var(--ant-box-shadow-tertiary)", height: "100%" }} styles={{ body: { padding: 16 } }}>
+      <Statistic title={label} value={nilai} styles={{ content: { color: w, fontWeight: 800, fontSize: 22 } }} />
+      {sub && <Typography.Text type="secondary" style={{ fontSize: 12 }}>{sub}</Typography.Text>}
+    </ACard>
+  );
+}
+
+export function Button({ variant = "utama", kecil, className = "", type, children, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "utama" | "pinggir" | "bahaya"; kecil?: boolean }) {
+  const { onClick, disabled, style, title, form } = p;
+  return (
+    <AButton
+      htmlType={type ?? "button"}
+      type={variant === "pinggir" ? "default" : "primary"}
+      danger={variant === "bahaya"}
+      size={kecil ? "small" : "middle"}
+      onClick={onClick as never}
+      disabled={disabled}
+      style={style}
+      title={title}
+      form={form}
+      className={className}
+    >
+      {children}
+    </AButton>
   );
 }
 
 export function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-coklat">{label}</span>
+      <span className="mb-1 block text-xs font-semibold" style={{ color: WARNA.redup }}>
+        {label}
+      </span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-stone-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs" style={{ color: WARNA.redup }}>{hint}</span>}
     </label>
   );
 }
 
-const inputCls = "min-h-11 w-full rounded-xl border border-garis bg-white px-3 text-base outline-none focus:border-hijau focus:ring-2 focus:ring-hijau/20";
-export const Input = (p: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={`${inputCls} ${p.className ?? ""}`} />;
-export const Select = (p: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={`${inputCls} ${p.className ?? ""}`} />;
+export const Input = ({ className, ...p }: InputHTMLAttributes<HTMLInputElement>) =>
+  p.type === "password" ? (
+    <AInput.Password {...(p as object)} size="large" className={className} onChange={p.onChange as never} />
+  ) : (
+    <AInput {...(p as object)} size="large" className={className} onChange={p.onChange as never} />
+  );
+
+export const Teks = ({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+  <AInput.TextArea {...(p as object)} autoSize={{ minRows: 3 }} className={className} onChange={p.onChange as never} />
+);
+
+interface OpsiSelect {
+  value: string;
+  label: ReactNode;
+  disabled?: boolean;
+}
+/** Ubah anak `<option>` (gaya HTML) menjadi opsi antd, termasuk yang dibungkus fragment/array. */
+function ambilOpsi(anak: ReactNode, hasil: OpsiSelect[] = []): OpsiSelect[] {
+  Children.forEach(anak, (c) => {
+    if (!isValidElement(c)) return;
+    const el = c as ReactElement<{ value?: string | number; children?: ReactNode; disabled?: boolean }>;
+    if (el.type === "option") {
+      const teks = el.props.children;
+      hasil.push({ value: String(el.props.value ?? (typeof teks === "string" ? teks : "")), label: teks, disabled: el.props.disabled });
+    } else if (el.type === Fragment || el.props.children) {
+      ambilOpsi(el.props.children, hasil);
+    }
+  });
+  return hasil;
+}
+
+export const Select = ({ className, children, value, onChange, disabled }: SelectHTMLAttributes<HTMLSelectElement>) => {
+  const opsi = ambilOpsi(children);
+  return (
+    <ASelect
+      size="large"
+      className={`w-full ${className ?? ""}`}
+      value={value === undefined || value === null ? undefined : String(value)}
+      options={opsi}
+      disabled={disabled}
+      showSearch={{ optionFilterProp: "label" }}
+      onChange={(v) => onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as ChangeEvent<HTMLSelectElement>)}
+      popupMatchSelectWidth={false}
+      getPopupContainer={(el) => el.parentElement ?? document.body}
+    />
+  );
+};
 
 export function ErrorBox({ error }: { error: unknown }) {
   if (!error) return null;
   const teks = error instanceof Error ? error.message : String(error);
-  return <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{teks}</p>;
+  return <Alert type="error" showIcon title={teks} role="alert" />;
 }
 
 export function Memuat({ teks = "Memuat…" }: { teks?: string }) {
-  return <p className="py-8 text-center text-sm text-stone-500">{teks}</p>;
+  return (
+    <div className="py-10 text-center">
+      <Spin />
+      <p className="mt-2 text-sm" style={{ color: WARNA.redup }}>{teks}</p>
+    </div>
+  );
 }
 
 export function Baris({ kiri, kanan, tebal }: { kiri: ReactNode; kanan: ReactNode; tebal?: boolean }) {
   return (
-    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-sm ${tebal ? "font-semibold" : ""}`}>
-      <span className="text-stone-700">{kiri}</span>
+    <div className={`flex items-baseline justify-between gap-3 py-1.5 text-sm ${tebal ? "font-bold" : ""}`}>
+      <span>{kiri}</span>
       <span className="shrink-0 tabular-nums">{kanan}</span>
     </div>
   );
@@ -75,114 +161,94 @@ export function Baris({ kiri, kanan, tebal }: { kiri: ReactNode; kanan: ReactNod
 
 export function Progress({ nilai, maks }: { nilai: number; maks: number }) {
   const persen = maks > 0 ? Math.max(0, Math.min(100, (nilai / maks) * 100)) : 0;
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={Math.round(persen)} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full rounded-full bg-hijau" style={{ width: `${persen}%` }} />
-    </div>
-  );
+  return <AProgress percent={Math.round(persen)} showInfo={false} strokeColor={WARNA.hijau} size="small" />;
 }
 
-/** Tabel sungguhan di semua ukuran layar: di layar sempit digulir ke samping (bukan diubah jadi kartu). */
-export function Tabel({ children, minLebar = 520, className = "" }: { children: ReactNode; minLebar?: number; className?: string }) {
-  return (
-    <div className={`overflow-x-auto rounded-xl border border-garis bg-white ${className}`}>
-      <table className="w-full border-collapse text-sm" style={{ minWidth: minLebar }}>
-        {children}
-      </table>
-    </div>
-  );
-}
+export const Kosong = ({ teks }: { teks: string }) => <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={teks} className="!my-4" />;
 
-interface SelProps {
-  kanan?: boolean;
-  /** Kolom pertama tetap terlihat saat tabel digulir ke samping. */
-  lengket?: boolean;
-  tebal?: boolean;
-  className?: string;
-  colSpan?: number;
-  children?: ReactNode;
-}
-
-export function Th({ kanan, lengket, className = "", colSpan, children }: SelProps) {
-  return (
-    <th
-      colSpan={colSpan}
-      className={`whitespace-nowrap bg-stone-50 px-3 py-2 text-xs font-semibold text-coklat ${kanan ? "text-right" : "text-left"} ${lengket ? "sticky left-0 z-[1] min-w-[7rem]" : ""} ${className}`}
-    >
-      {children}
-    </th>
-  );
-}
-
-export function Td({ kanan, lengket, tebal, className = "", colSpan, children }: SelProps) {
-  return (
-    <td
-      colSpan={colSpan}
-      className={`border-t border-garis px-3 py-2 align-top ${kanan ? "whitespace-nowrap text-right tabular-nums" : ""} ${tebal ? "font-semibold" : ""} ${lengket ? "sticky left-0 min-w-[7rem] bg-white" : ""} ${className}`}
-    >
-      {children}
-    </td>
-  );
-}
-
-export function TdTotal({ kanan, lengket, colSpan, children }: SelProps) {
-  return (
-    <td
-      colSpan={colSpan}
-      className={`border-t-2 border-stone-400 bg-stone-50 px-3 py-2 font-semibold ${kanan ? "whitespace-nowrap text-right tabular-nums" : ""} ${lengket ? "sticky left-0" : ""}`}
-    >
-      {children}
-    </td>
-  );
-}
-
-export const Kosong = ({ teks }: { teks: string }) => <p className="py-4 text-center text-sm text-stone-500">{teks}</p>;
-
-export const Teks = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => (
-  <textarea {...p} className={`min-h-20 w-full rounded-xl border border-garis bg-white px-3 py-2 text-base outline-none focus:border-hijau focus:ring-2 focus:ring-hijau/20 ${p.className ?? ""}`} />
-);
-
-/** Jendela formulir: dari bawah di HP, di tengah di laptop. Esc menutup. */
+/** Jendela formulir (antd Modal). Esc menutup. */
 export function Dialog({ judul, onTutup, children }: { judul: string; onTutup: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const tutup = (e: KeyboardEvent) => e.key === "Escape" && onTutup();
-    window.addEventListener("keydown", tutup);
-    return () => window.removeEventListener("keydown", tutup);
-  }, [onTutup]);
   return (
-    <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/40 md:items-center" role="dialog" aria-modal="true" aria-label={judul}>
-      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl md:max-w-xl md:rounded-2xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold">{judul}</h2>
-          <button onClick={onTutup} className="min-h-11 min-w-11 text-xl text-stone-500" aria-label="Tutup">
-            ✕
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
+    <Modal open title={<span style={{ fontWeight: 800 }}>{judul}</span>} onCancel={onTutup} footer={null} destroyOnHidden centered width={560} maskClosable={false}>
+      {children}
+    </Modal>
   );
 }
 
 export function Tabs<T extends string>({ daftar, aktif, onPilih }: { daftar: { id: T; label: string }[]; aktif: T; onPilih: (id: T) => void }) {
+  return <ATabs activeKey={aktif} onChange={(k) => onPilih(k as T)} items={daftar.map((t) => ({ key: t.id, label: t.label }))} />;
+}
+
+const WARNA_TAG = { hijau: "success", oranye: "warning", merah: "error", abu: "default" } as const;
+export function Lencana({ children, warna = "abu" }: { children: ReactNode; warna?: "hijau" | "oranye" | "merah" | "abu" }) {
   return (
-    <div className="flex gap-1 overflow-x-auto rounded-xl bg-stone-200 p-1" role="tablist">
-      {daftar.map((t) => (
-        <button
-          key={t.id}
-          role="tab"
-          aria-selected={aktif === t.id}
-          onClick={() => onPilih(t.id)}
-          className={`min-h-10 whitespace-nowrap rounded-lg px-4 text-sm font-semibold ${aktif === t.id ? "bg-white text-hijau shadow-soft" : "text-stone-600"}`}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
+    <Tag color={WARNA_TAG[warna]} variant="filled" style={{ marginInlineEnd: 0, fontWeight: 600 }}>
+      {children}
+    </Tag>
   );
 }
 
-export function Lencana({ children, warna = "abu" }: { children: ReactNode; warna?: "hijau" | "oranye" | "merah" | "abu" }) {
-  const w = { hijau: "bg-hijau-muda text-hijau", oranye: "bg-oranye-muda text-coklat", merah: "bg-red-50 text-red-700", abu: "bg-stone-100 text-stone-600" }[warna];
-  return <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${w}`}>{children}</span>;
+/**
+ * Tabel sungguhan (antd Table) di semua ukuran layar: di layar sempit digulir ke samping, bukan diubah jadi kartu.
+ * Kolom pertama bisa dikunci (`fixed: "left"`) agar tetap terlihat saat digulir.
+ */
+export function DataTabel<T extends object>({
+  kolom,
+  data,
+  rowKey,
+  minLebar = 640,
+  ringkasan,
+  kosong = "Belum ada data",
+  onKlikBaris,
+}: {
+  kolom: TableColumnsType<T>;
+  data: readonly T[];
+  rowKey: keyof T & string | ((r: T) => string);
+  minLebar?: number;
+  ringkasan?: () => ReactNode;
+  kosong?: string;
+  onKlikBaris?: (r: T) => void;
+}) {
+  return (
+    <Table<T>
+      size="middle"
+      columns={kolom}
+      dataSource={data as T[]}
+      rowKey={rowKey as never}
+      pagination={false}
+      tableLayout="auto"
+      scroll={{ x: minLebar }}
+      locale={{ emptyText: <Kosong teks={kosong} /> }}
+      summary={ringkasan ? () => <Table.Summary>{ringkasan()}</Table.Summary> : undefined}
+      onRow={onKlikBaris ? (r) => ({ onClick: () => onKlikBaris(r), style: { cursor: "pointer" } }) : undefined}
+    />
+  );
+}
+
+
+/** Tombol aksi kecil bergaya tautan di dalam sel tabel. */
+export function TombolLink({ bahaya, disabled, onClick, children }: { bahaya?: boolean; disabled?: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <AButton type="link" size="small" danger={bahaya} disabled={disabled} onClick={onClick} style={{ paddingInline: 6, fontWeight: 600 }}>
+      {children}
+    </AButton>
+  );
+}
+
+/** Baris total di dasar DataTabel. `span` menggabungkan kolom; `kanan` meratakan ke kanan. */
+export function BarisTotal({ sel }: { sel: { isi: ReactNode; kanan?: boolean; span?: number }[] }) {
+  let idx = 0;
+  return (
+    <Table.Summary.Row>
+      {sel.map((c, i) => {
+        const index = idx;
+        idx += c.span ?? 1;
+        return (
+          <Table.Summary.Cell key={i} index={index} colSpan={c.span ?? 1} align={c.kanan ? "right" : "left"}>
+            <b className={c.kanan ? "tabular-nums" : ""}>{c.isi}</b>
+          </Table.Summary.Cell>
+        );
+      })}
+    </Table.Summary.Row>
+  );
 }

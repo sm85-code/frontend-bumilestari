@@ -32,7 +32,7 @@ export default function Masuk() {
       <div className="relative z-10 mx-auto flex min-h-full max-w-sm flex-col justify-center gap-6 p-6">
       <div className="text-center">
         <img src="/logo.png" alt="Bumi Lestari" className="mx-auto h-32 w-32" />
-        <h1 className="mt-2 text-xl font-extrabold text-hijau">Masuk</h1>
+        <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-hijau">Masuk</h1>
         <p className="text-sm text-coklat">Keuangan dan order Bumi Lestari</p>
       </div>
       <form onSubmit={kirim} className="space-y-4 rounded-2xl border border-garis bg-white p-5 shadow-soft">

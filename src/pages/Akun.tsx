@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { Button, Card, ErrorBox, Field, Input } from "../components/ui";
+import { Alert } from "antd";
+import { Button, Card, ErrorBox, Field, Input, PageHeader } from "../components/ui";
 import { api } from "../lib/api";
 import type { User } from "../lib/types";
 
@@ -37,11 +38,8 @@ export default function Akun() {
 
   return (
     <>
-      {user?.must_change_password && (
-        <p className="rounded-xl bg-oranye-muda px-3 py-2 text-sm text-coklat">
-          Demi keamanan, ganti password bawaan Anda dulu sebelum memakai aplikasi.
-        </p>
-      )}
+      <PageHeader judul="Akun" />
+      {user?.must_change_password && <Alert type="warning" showIcon title="Demi keamanan, ganti password bawaan Anda dulu sebelum memakai aplikasi." />}
       <Card judul="Akun saya">
         <p className="font-semibold">{user?.nama}</p>
         <p className="text-sm text-coklat">{user?.email}</p>
@@ -59,7 +57,7 @@ export default function Akun() {
             <Input type="password" autoComplete="new-password" required value={ulang} onChange={(e) => setUlang(e.target.value)} />
           </Field>
           <ErrorBox error={error} />
-          {sukses && <p className="rounded-xl bg-hijau-muda px-3 py-2 text-sm text-hijau">Password berhasil diganti.</p>}
+          {sukses && <Alert type="success" showIcon title="Password berhasil diganti." />}
           <Button type="submit" disabled={proses} className="w-full">
             Simpan password
           </Button>

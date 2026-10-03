@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
-import { Baris, Card, ErrorBox, Field, Input, Kosong, Memuat, Tabel, Td, TdTotal, Th } from "../components/ui";
+import { Alert } from "antd";
+import type { TableColumnsType } from "antd";
+import { Baris, BarisTotal, Card, DataTabel, ErrorBox, Field, Input, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { bersihkanAngka, bulanIni, num, rp, tanggal } from "../lib/format";
 import type { LaporanKasKecil } from "../lib/types";
@@ -19,16 +21,38 @@ export default function LaporanKasKecilPage() {
   });
   const d = q.data;
 
+  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const kolomKategori: TableColumnsType<LaporanKasKecil["per_kategori"][number]> = [
+    { title: "Kategori", dataIndex: "kategori" },
+    { title: "Transaksi", dataIndex: "jumlah_transaksi", align: "right", width: 100, render: (v: number) => <span className="text-coklat">{v}</span> },
+    { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
+  ];
+  const kolomMinggu: TableColumnsType<LaporanKasKecil["per_minggu"][number]> = [
+    { title: "Minggu", dataIndex: "minggu_ke", fixed: "left", width: 90, render: (v: number) => `Ke-${v}` },
+    { title: "Periode", render: (_, w) => <span className="whitespace-nowrap text-coklat">{tanggal(w.dari)} – {tanggal(w.sampai)}</span> },
+    { title: "Dipakai", dataIndex: "pemakaian", align: "right", render: angka },
+    { title: "Diisi", dataIndex: "pengisian", align: "right", render: angka },
+    { title: "Saldo akhir", dataIndex: "saldo_akhir", align: "right", render: angka },
+  ];
+  const kolomRincian: TableColumnsType<LaporanKasKecil["transaksi"][number]> = [
+    { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Kategori", dataIndex: "kategori" },
+    { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <span className="text-coklat">{v || "—"}</span> },
+    { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
+  ];
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-bold">Laporan kas kecil</h1>
-        {isPemilik(user?.role) && (
-          <Link to="/laporan" className="text-xs font-semibold text-hijau">
-            ← Laporan umum
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        judul="Laporan kas kecil"
+        aksi={
+          isPemilik(user?.role) && (
+            <Link to="/laporan" className="text-sm font-semibold text-hijau">
+              ← Laporan umum
+            </Link>
+          )
+        }
+      />
       <Card>
         <div className="grid max-w-md grid-cols-2 gap-3">
           <Field label="Bulan">
@@ -45,14 +69,11 @@ export default function LaporanKasKecilPage() {
       {d && (
         <>
           {d.status_selisih && (
-            <p
-              role="status"
-              className={`rounded-xl px-3 py-2 text-sm font-semibold ${d.status_selisih === "sesuai" ? "bg-hijau-muda text-hijau" : "bg-red-50 text-red-700"}`}
-            >
-              {d.status_selisih === "sesuai"
-                ? "Uang fisik sesuai catatan."
-                : `Uang fisik ${d.status_selisih} ${rp(Math.abs(num(d.selisih)))} dari catatan.`}
-            </p>
+            <Alert
+              type={d.status_selisih === "sesuai" ? "success" : "error"}
+              showIcon
+              title={d.status_selisih === "sesuai" ? "Uang fisik sesuai catatan." : `Uang fisik ${d.status_selisih} ${rp(Math.abs(num(d.selisih)))} dari catatan.`}
+            />
           )}
 
           <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
@@ -67,90 +88,25 @@ export default function LaporanKasKecilPage() {
             </Card>
 
             <Card judul="Dipakai per kategori" className="min-w-0">
-              {d.per_kategori.length === 0 ? (
-                <Kosong teks="Belum ada pengeluaran." />
-              ) : (
-                <Tabel minLebar={300}>
-                  <thead>
-                    <tr>
-                      <Th lengket>Kategori</Th>
-                      <Th kanan>Transaksi</Th>
-                      <Th kanan>Jumlah</Th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {d.per_kategori.map((b) => (
-                      <tr key={b.kategori}>
-                        <Td lengket>{b.kategori}</Td>
-                        <Td kanan className="text-stone-500">{b.jumlah_transaksi}</Td>
-                        <Td kanan>{rp(b.jumlah)}</Td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Tabel>
-              )}
+              <DataTabel kolom={kolomKategori} data={d.per_kategori} rowKey="kategori" minLebar={300} kosong="Belum ada pengeluaran." />
             </Card>
 
           </div>
 
           <Card judul="Per minggu" className="min-w-0">
-            <Tabel minLebar={520}>
-              <thead>
-                <tr>
-                  <Th lengket>Minggu</Th>
-                  <Th>Periode</Th>
-                  <Th kanan>Dipakai</Th>
-                  <Th kanan>Diisi</Th>
-                  <Th kanan>Saldo akhir</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.per_minggu.map((w) => (
-                  <tr key={w.minggu_ke}>
-                    <Td lengket>Ke-{w.minggu_ke}</Td>
-                    <Td className="whitespace-nowrap text-stone-600">
-                      {tanggal(w.dari)} – {tanggal(w.sampai)}
-                    </Td>
-                    <Td kanan>{rp(w.pemakaian)}</Td>
-                    <Td kanan>{rp(w.pengisian)}</Td>
-                    <Td kanan>{rp(w.saldo_akhir)}</Td>
-                  </tr>
-                ))}
-                <tr>
-                  <TdTotal lengket colSpan={2}>Total</TdTotal>
-                  <TdTotal kanan>{rp(d.total_pemakaian)}</TdTotal>
-                  <TdTotal kanan>{rp(d.total_pengisian)}</TdTotal>
-                  <TdTotal kanan>{rp(d.saldo_akhir)}</TdTotal>
-                </tr>
-              </tbody>
-            </Tabel>
+            <DataTabel
+              kolom={kolomMinggu}
+              data={d.per_minggu}
+              rowKey="minggu_ke"
+              minLebar={560}
+              ringkasan={() => (
+                <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(d.total_pemakaian), kanan: true }, { isi: rp(d.total_pengisian), kanan: true }, { isi: rp(d.saldo_akhir), kanan: true }]} />
+              )}
+            />
           </Card>
 
           <Card judul="Rincian pengeluaran" className="min-w-0">
-            {d.transaksi.length === 0 ? (
-              <Kosong teks="Tidak ada." />
-            ) : (
-              <Tabel minLebar={460}>
-                <thead>
-                  <tr>
-                    <Th lengket>Tanggal</Th>
-                    <Th>Kategori</Th>
-                    <Th>Keterangan</Th>
-                    <Th kanan>Jumlah</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.transaksi.map((t, i) => (
-                    <tr key={i}>
-                      <Td lengket className="whitespace-nowrap">{tanggal(t.tanggal)}</Td>
-                      <Td>{t.kategori}</Td>
-                      <Td className="text-stone-600">{t.keterangan || "—"}</Td>
-                      <Td kanan>{rp(t.jumlah)}</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Tabel>
-            )}
+            <DataTabel kolom={kolomRincian} data={d.transaksi} rowKey={(t) => `${t.tanggal}-${t.kategori}-${t.jumlah}-${t.keterangan}`} minLebar={500} kosong="Tidak ada." />
           </Card>
         </>
       )}

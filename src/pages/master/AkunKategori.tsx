@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Button, Card, Dialog, ErrorBox, Field, Input, Select, Tabel, Td, Th } from "../../components/ui";
+import { PlusOutlined } from "@ant-design/icons";
+import type { TableColumnsType } from "antd";
+import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Select } from "../../components/ui";
+import type { AkunKas, Kategori } from "../../lib/types";
 import { useAkun, useAksi, useKategori } from "../../lib/data";
 import { useFields } from "../../lib/form";
 import { bersihkanAngka, rp } from "../../lib/format";
@@ -13,50 +16,26 @@ export default function MasterAkunKategori() {
   const [dialog, setDialog] = useState<"akun" | "kategori" | null>(null);
   const a = useFields({ kode: "", nama: "", jenis: "ewallet", saldo_awal: "" });
   const k = useFields({ nama: "", jenis: "pengeluaran" });
+  const kolomAkun: TableColumnsType<AkunKas> = [
+    { title: "Akun", dataIndex: "nama", fixed: "left", width: 170 },
+    { title: "Kode", dataIndex: "kode", render: (v: string) => <span className="text-coklat">{v}</span> },
+    { title: "Jenis", dataIndex: "jenis", render: (v: string) => JENIS_AKUN[v] ?? v },
+    { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+  ];
+  const kolomKategori: TableColumnsType<Kategori> = [
+    { title: "Kategori", dataIndex: "nama" },
+    { title: "Jenis", dataIndex: "jenis", render: (v: string) => (v === "pemasukan" ? "Pemasukan" : "Pengeluaran") },
+  ];
 
   return (
     <>
-      <Card judul="Akun kas" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setDialog("akun")}>+ Akun</Button>}>
+      <Card judul="Akun kas" aksi={<Button kecil onClick={() => setDialog("akun")}><PlusOutlined /> Akun</Button>}>
         <ErrorBox error={akunQ.error} />
-        <Tabel minLebar={420}>
-          <thead>
-            <tr>
-              <Th lengket>Akun</Th>
-              <Th>Kode</Th>
-              <Th>Jenis</Th>
-              <Th kanan>Saldo</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(akunQ.data ?? []).map((x) => (
-              <tr key={x.id}>
-                <Td lengket>{x.nama}</Td>
-                <Td className="text-stone-500">{x.kode}</Td>
-                <Td>{JENIS_AKUN[x.jenis] ?? x.jenis}</Td>
-                <Td kanan>{rp(x.saldo)}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
+        <DataTabel kolom={kolomAkun} data={akunQ.data ?? []} rowKey="id" minLebar={460} />
       </Card>
-      <Card judul="Kategori transaksi" aksi={<Button className="!min-h-9 !px-3 !text-xs" onClick={() => setDialog("kategori")}>+ Kategori</Button>}>
+      <Card judul="Kategori transaksi" aksi={<Button kecil onClick={() => setDialog("kategori")}><PlusOutlined /> Kategori</Button>}>
         <ErrorBox error={kategoriQ.error} />
-        <Tabel minLebar={320}>
-          <thead>
-            <tr>
-              <Th lengket>Kategori</Th>
-              <Th>Jenis</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {(kategoriQ.data ?? []).map((x) => (
-              <tr key={x.id}>
-                <Td lengket>{x.nama}</Td>
-                <Td>{x.jenis === "pemasukan" ? "Pemasukan" : "Pengeluaran"}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </Tabel>
+        <DataTabel kolom={kolomKategori} data={kategoriQ.data ?? []} rowKey="id" minLebar={320} />
       </Card>
 
       {dialog === "akun" && (

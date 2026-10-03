@@ -1,3 +1,4 @@
+import { Checkbox } from "antd";
 import { useMemo, type FormEvent } from "react";
 import { Button, ErrorBox, Field, Input, Select, Teks } from "./ui";
 import { useAksi, usePelanggan, usePemasok, useProduk, useSaluran } from "../lib/data";
@@ -121,7 +122,7 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
               </Select>
             </Field>
             <label className="flex min-h-11 items-center gap-2 text-sm">
-              <input type="checkbox" checked={f.polos === "ya"} onChange={(e) => bind("polos").onChange({ target: { value: e.target.checked ? "ya" : "" } } as never)} className="h-5 w-5" />
+              <Checkbox checked={f.polos === "ya"} onChange={(e) => bind("polos").onChange({ target: { value: e.target.checked ? "ya" : "" } } as never)} />
               Polos (tanpa cat)
             </label>
           </>

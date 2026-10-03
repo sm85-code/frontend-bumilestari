@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
-import { Tabs } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
 import MasterAkunKategori from "./master/AkunKategori";
 import MasterHargaGrosir from "./master/HargaGrosir";
 import MasterPelanggan from "./master/Pelanggan";
@@ -28,7 +28,7 @@ export default function Master() {
   ];
   return (
     <>
-      <h1 className="text-lg font-bold">Master data</h1>
+      <PageHeader judul="Master data" sub="Produk, tukang, penjual lain, harga, akun, dan profil usaha" />
       <Tabs daftar={daftar} aktif={tab} onPilih={setTab} />
       {tab === "produk" && <MasterProduk />}
       {tab === "pemasok" && <MasterPemasok />}
