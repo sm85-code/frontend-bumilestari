@@ -22,7 +22,7 @@ describe("selasa", () => {
 
   it("urutan langkah sesuai spesifikasi; langkah tanpa backend ditandai segera hadir", () => {
     expect(LANGKAH.map((l) => l.id)).toEqual(["terima", "pencairan", "tarik", "bayar_tukang", "talangan", "sisihan", "isi_kas", "kirim"]);
-    expect(LANGKAH_AKTIF.map((l) => l.id)).toEqual(["terima", "tarik", "bayar_tukang", "sisihan", "isi_kas", "kirim"]);
+    expect(LANGKAH_AKTIF.map((l) => l.id)).toEqual(["terima", "pencairan", "tarik", "bayar_tukang", "sisihan", "isi_kas", "kirim"]);
   });
 
   it("status otomatis dari data endpoint", () => {

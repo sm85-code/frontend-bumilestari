@@ -68,6 +68,19 @@ function LangkahTerima({ d, tgl }: { d: DataSelasa; tgl: string }) {
 }
 
 /* ---------- Langkah 3: tarik saldo ---------- */
+function LangkahPencairan({ d }: { d: DataSelasa }) {
+  const draf = d.drafQ.data?.find((x) => x.sumber === "pencairan");
+  return (
+    <Flex vertical gap="small" align="flex-start">
+      <Typography.Text type="secondary">
+        Unggah file "Penghasilan Saya" tiap marketplace dan catat pencairan iPaymu (Toko web). Order yang cair ditandai saat dikirim ke laporan.
+      </Typography.Text>
+      {draf && draf.jumlah_entri > 0 && <Typography.Text>{draf.jumlah_entri} catatan pencairan masih draf ({rp(draf.total)}).</Typography.Text>}
+      <Link to="/pencairan">Buka halaman Pencairan</Link>
+    </Flex>
+  );
+}
+
 function LangkahTarik({ d, tgl }: { d: DataSelasa; tgl: string }) {
   const aksi = useAksi();
   const [dari, setDari] = useState("");
@@ -351,6 +364,7 @@ export default function Selasa() {
 
   const isi: Record<string, ReactNode> = {
     terima: <LangkahTerima d={d} tgl={tgl} />,
+    pencairan: <LangkahPencairan d={d} />,
     tarik: <LangkahTarik d={d} tgl={tgl} />,
     bayar_tukang: <LangkahBayarTukang d={d} tgl={tgl} />,
     sisihan: <LangkahSisihan d={d} tgl={tgl} />,

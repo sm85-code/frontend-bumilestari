@@ -28,15 +28,10 @@ export interface Langkah {
   segera?: string;
 }
 
-/** Urutan langkah sesuai spesifikasi 7.4 + langkah akhir "Kirim semua ke laporan keuangan" (1.13). Langkah 2 dan 5 menunggu Fase 2. */
+/** Urutan langkah sesuai spesifikasi 7.4 + langkah akhir "Kirim semua ke laporan keuangan" (1.13). Langkah 5 (talangan) menunggu Fase 2. */
 export const LANGKAH: Langkah[] = [
   { id: "terima", judul: "Terima bayar penjual lain", bagian: "Uang masuk" },
-  {
-    id: "pencairan",
-    judul: "Catat pencairan marketplace & iPaymu",
-    bagian: "Uang masuk",
-    segera: "Pemasukan marketplace & iPaymu akan masuk dari impor file pencairan (segera hadir).",
-  },
+  { id: "pencairan", judul: "Catat pencairan marketplace & iPaymu", bagian: "Uang masuk" },
   { id: "tarik", judul: "Tarik saldo ke Kas utama", bagian: "Uang masuk" },
   { id: "bayar_tukang", judul: "Bayar tukang & supplier", bagian: "Uang keluar" },
   { id: "talangan", judul: "Lunasi talangan", bagian: "Uang keluar", segera: "Pencatatan talangan belum tersedia." },

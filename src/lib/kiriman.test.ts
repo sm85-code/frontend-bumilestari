@@ -25,6 +25,6 @@ describe("kiriman (posting berkelompok)", () => {
   });
   it("kas iklan hanya untuk admin", () => {
     expect(sumberUntuk(true)).toContain("kas_iklan");
-    expect(sumberUntuk(false)).toEqual(["kas_kecil", "penerimaan_reseller", "pembayaran_pemasok"]);
+    expect(sumberUntuk(false)).toEqual(["kas_kecil", "penerimaan_reseller", "pembayaran_pemasok", "pencairan"]);
   });
 });

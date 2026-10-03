@@ -81,7 +81,7 @@ export interface TransaksiIn {
 
 /* ---------- Kirim ke laporan keuangan (posting berkelompok) ---------- */
 export type StatusKirim = "draf" | "terkirim";
-export type SumberKiriman = "kas_kecil" | "kas_iklan" | "penerimaan_reseller" | "pembayaran_pemasok";
+export type SumberKiriman = "kas_kecil" | "kas_iklan" | "penerimaan_reseller" | "pembayaran_pemasok" | "pencairan";
 
 export interface EntriDraf {
   ref_jenis: string;
@@ -573,4 +573,143 @@ export interface BelumCair {
   total_perkiraan_cair: string;
   tgl_kirim_tertua: string | null;
   per_saluran: SaluranBelumCair[];
+}
+
+/* ---------- Pencairan & format file penghasilan (Fase 2.4/2.5) ---------- */
+
+export type KolomTujuan = "kode_pesanan" | "tanggal_cair" | "harga_jual" | "potongan_biaya" | "jumlah_cair";
+export type KelompokPencairan = "cocok" | "selisih" | "tidak_cocok" | "duplikat" | "penyesuaian";
+
+export interface KolomPeta {
+  kolom_tujuan: KolomTujuan;
+  kolom_sumber: string;
+  operasi: "ambil" | "jumlahkan" | "mutlak" | "balik_tanda";
+  nama_rincian: string | null;
+}
+
+export interface FormatPenghasilanIn {
+  saluran_id: string;
+  nama: string;
+  jenis_file: "xlsx" | "csv";
+  nama_sheet: string | null;
+  baris_header: number;
+  baris_data_mulai: number | null;
+  format_tanggal: string;
+  pemisah_desimal: "," | ".";
+  pemisah_ribuan: "." | "," | " " | "";
+  aturan_tanda: "mutlak" | "positif" | "kurung";
+  aturan_jenis_baris: { kolom?: string | null; retur?: string[]; penyesuaian?: string[]; negatif_penyesuaian?: boolean };
+  satuan_baris: "per_pesanan" | "per_produk";
+  aturan_abaikan: Record<string, unknown>;
+  catatan: string;
+  kolom: KolomPeta[];
+}
+
+export interface FormatPenghasilan extends FormatPenghasilanIn {
+  id: string;
+  versi: number;
+  status: "draf" | "aktif" | "arsip";
+  contoh_nama: string | null;
+  hasil_uji: { lulus: boolean; jumlah_sah: number; jumlah_masalah: number; total_cair: string; neto: boolean; diuji_pada: string } | null;
+  lulus_uji: boolean;
+  diaktifkan_pada: string | null;
+  created_at: string;
+}
+
+export interface BacaHeader {
+  sheets: string[];
+  nama_sheet: string | null;
+  baris_header: number;
+  kolom: string[];
+  contoh: string[][];
+  saran: Partial<Record<KolomTujuan, string | null>>;
+}
+
+export interface MasalahBaris {
+  baris: number;
+  kolom: string;
+  nilai: string;
+  alasan: string;
+}
+
+export interface BarisStandar {
+  baris_file: number | null;
+  kode_pesanan: string;
+  tanggal_cair: string;
+  harga_jual: string | null;
+  potongan_biaya: string | null;
+  rincian_biaya: Record<string, string>;
+  jumlah_cair: string;
+  jenis_baris: "pesanan" | "penyesuaian" | "retur";
+  mode_catat: "bruto" | "neto";
+  catatan: string[];
+  kelompok: KelompokPencairan;
+  order_id: string | null;
+  perkiraan_cair: string | null;
+  selisih: string;
+  alasan: string;
+}
+
+export interface UjiFormat {
+  lulus: boolean;
+  jumlah_sah: number;
+  jumlah_masalah: number;
+  total_cair: string;
+  neto: boolean;
+  baris: BarisStandar[];
+  masalah: MasalahBaris[];
+}
+
+export interface PratinjauPencairan {
+  saluran_id: string;
+  format_id: string | null;
+  format_versi: number | null;
+  nama_file: string;
+  kelompok: Record<KelompokPencairan, { jumlah: number; total_cair: string }>;
+  bermasalah: number;
+  baris: BarisStandar[];
+  masalah: MasalahBaris[];
+  jumlah_disimpan: number;
+  total_dibukukan: string;
+  neto: boolean;
+}
+
+export interface PencairanBaris {
+  id: string;
+  kode_pesanan: string;
+  tanggal_cair: string;
+  harga_jual: string | null;
+  potongan_biaya: string | null;
+  rincian_biaya: Record<string, string>;
+  jumlah_cair: string;
+  jenis_baris: string;
+  mode_catat: string;
+  order_id: string | null;
+  status_cocok: "cocok" | "selisih" | "tidak_cocok";
+  selisih: string;
+  baris_file: number | null;
+  masalah: string[] | null;
+  dibatalkan: boolean;
+}
+
+export interface PencairanUnggahan {
+  id: string;
+  saluran_id: string;
+  format_id: string | null;
+  format_versi: number | null;
+  nama_file: string;
+  tanggal: string;
+  periode_dari: string | null;
+  periode_sampai: string | null;
+  jumlah_baris: number;
+  total: string;
+  total_harga_jual: string;
+  total_potongan: string;
+  status_kirim: StatusKirim;
+  kiriman_id: string | null;
+  diunggah_oleh: string;
+  dibatalkan: boolean;
+  alasan_batal: string | null;
+  created_at: string;
+  baris?: PencairanBaris[];
 }

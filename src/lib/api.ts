@@ -116,6 +116,20 @@ export async function api<T>(path: string, init: { method?: string; body?: unkno
   return body as T;
 }
 
+/** Unggah file (multipart/form-data): browser mengisi Content-Type + boundary sendiri. */
+export async function unggah<T>(path: string, form: FormData): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${PREFIX}${path}`, { method: "POST", credentials: "include", body: form });
+  } catch {
+    throw new ApiError(0, PESAN_OFFLINE);
+  }
+  const teks = await res.text();
+  const body = teks ? safeJson(teks) : null;
+  if (!res.ok) throw new ApiError(res.status, pesanError(body, res.status));
+  return body as T;
+}
+
 function safeJson(teks: string): unknown {
   try {
     return JSON.parse(teks);
