@@ -4,7 +4,7 @@ import type { TableColumnsType } from "antd";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
-import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Input, InputTanggal, Lencana, Memuat, PageHeader, Select } from "../components/ui";
+import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Input, InputTanggal, Lencana, Memuat, PageHeader, Select, useDialog } from "../components/ui";
 import { api, query } from "../lib/api";
 import { useAkun, useAksi } from "../lib/data";
 import { bersihkanAngka, hariIni, num, rp, tanggal } from "../lib/format";
@@ -49,6 +49,7 @@ export default function Selasa() {
   const sisihanQ = useQuery({ queryKey: ["sisihan", tgl], queryFn: () => api<Sisihan>(`/sisihan/hitung${query({ tanggal: tgl })}`) });
   const siapQ = useQuery({ queryKey: ["siap-bayar", tgl], queryFn: () => api<SiapBayar>(`/pembayaran-pemasok/siap${query({ tanggal: tgl })}`) });
   const aksi = useAksi();
+  const { tanya } = useDialog();
   const [dari, setDari] = useState("");
   const [jumlah, setJumlah] = useState("");
 
@@ -117,7 +118,9 @@ export default function Selasa() {
               Tarik ke kas utama
             </Button>
             <ErrorBox error={aksi.error} />
-            <Typography.Text type="secondary">Pemasukan marketplace dicatat sendiri saat dana cair (halaman Keuangan); penarikan ini hanya memindahkan saldo.</Typography.Text>
+            <Typography.Text type="secondary">
+              Pemasukan marketplace dicatat sendiri saat dana cair (halaman Keuangan); penarikan ini hanya memindahkan saldo. Salah jumlah? Batalkan di <Link to="/keuangan">Riwayat transfer</Link>.
+            </Typography.Text>
           </Flex>
         ),
     },
@@ -140,9 +143,24 @@ export default function Selasa() {
                 </div>
               )}
               {s.items.length > 0 && !s.cukup && <Typography.Text type="danger">Saldo kas utama {rp(s.saldo_kas_utama)} belum cukup.</Typography.Text>}
-              <Button disabled={aksi.isPending || s.items.length === 0 || !!s.sudah_dicatat_id || !s.cukup} onClick={() => aksi.mutate({ path: "/sisihan", body: { tanggal: tgl } })}>
-                Sisihkan {rp(s.total)}
-              </Button>
+              <Flex gap="small" wrap>
+                <Button disabled={aksi.isPending || s.items.length === 0 || !!s.sudah_dicatat_id || !s.cukup} onClick={() => aksi.mutate({ path: "/sisihan", body: { tanggal: tgl } })}>
+                  Sisihkan {rp(s.total)}
+                </Button>
+                {s.sudah_dicatat_id && (
+                  <Button
+                    variant="bahaya"
+                    disabled={aksi.isPending}
+                    onClick={() =>
+                      void tanya("Batalkan penyisihan dana gaji?", { label: "Alasan pembatalan", min: 3, panjang: true, ok: "Batalkan penyisihan" }).then(
+                        (alasan) => alasan && aksi.mutate({ path: `/sisihan/${s.sudah_dicatat_id}/batal`, body: { alasan } }),
+                      )
+                    }
+                  >
+                    Batalkan penyisihan
+                  </Button>
+                )}
+              </Flex>
             </>
           )}
         </Flex>
