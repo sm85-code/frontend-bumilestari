@@ -84,7 +84,7 @@ export default function Layout() {
   return (
     <div className="relative min-h-full md:flex">
       <Wallpaper />
-      <aside className="z-10 hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col" aria-label="Menu samping">
+      <aside className="z-30 hidden border-r border-garis bg-white md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col" aria-label="Menu samping">
         <div className="flex items-center gap-3 border-b border-garis px-5 py-4">
           <img src="/logo.png" alt="" className="h-12 w-12" />
           <div className="min-w-0">
