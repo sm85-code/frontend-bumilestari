@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { Angka, DataTabel, Lencana, Memuat, TombolLink, useDialog } from "./ui";
 import { OtomatisDari } from "./OtomatisDari";
 import { api } from "../lib/api";
-import { rp, tanggal } from "../lib/format";
+import { bulanTahun, rp, tanggal } from "../lib/format";
 import { labelKategori } from "../lib/kategori";
 import { sumberTransaksi } from "../lib/sumber";
 import type { Kategori, Transaksi } from "../lib/types";
@@ -48,7 +48,16 @@ export default function DaftarTransaksi({
   const kolom: TableColumnsType<Transaksi> = [
     { title: "Tanggal", dataIndex: "tanggal", width: 110, fixed: "left", render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Kategori", dataIndex: "kategori_id", width: 160, render: (v: string) => labelKategori(nama.get(v)) },
-    { title: "Keterangan", dataIndex: "keterangan", render: (v: string) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
+    {
+      title: "Keterangan",
+      dataIndex: "keterangan",
+      render: (v: string, t) => (
+        <>
+          <Typography.Text type="secondary">{v || "—"}</Typography.Text>
+          {t.koreksi_periode && <Lencana>koreksi {bulanTahun(t.koreksi_periode)}</Lencana>}
+        </>
+      ),
+    },
     {
       title: "Jumlah",
       dataIndex: "jumlah",

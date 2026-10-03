@@ -15,7 +15,7 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
     const menu: [string, string][] = [
       ["Tutup Kas Mingguan", "/selasa"], ["Order", "/order"], ["Tagihan penjual lain", "/penjual-lain"], ["Bayar tukang & supplier", "/pesanan-tukang"],
       ["Kas & transaksi", "/keuangan"], ["Gaji & tagihan rutin", "/gaji"], ["Bagi hasil", "/bagi-hasil"],
-      ["Laba rugi", "/laporan"], ["Kirim ke laporan keuangan", "/kiriman"], ["Data master", "/master"], ["Profil saya", "/akun"], ["Beranda", "/"],
+      ["Laba rugi", "/laporan"], ["Kirim ke laporan keuangan", "/kiriman"], ["Tutup buku", "/laporan/tutup-buku"], ["Data master", "/master"], ["Profil saya", "/akun"], ["Beranda", "/"],
     ];
     for (const [label, path] of menu) {
       await samping.locator(".ant-menu-item", { hasText: new RegExp(`^${label}$`) }).click();

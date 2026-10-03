@@ -3,7 +3,7 @@ import { Alert, Col, Row, Typography } from "antd";
 import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ringkasDraf, teksDraf } from "../lib/kiriman";
+import { ringkasDraf, teksDraf, waktu } from "../lib/kiriman";
 import { Angka, BarisTotal, Card, DataTabel, ErrorBox, Field, InputTanggal, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
@@ -54,6 +54,9 @@ export default function LaporanUmumPage() {
   return (
     <>
       <PageHeader judul="Laba rugi" sub="Pemasukan, biaya, laba bersih, dan arus kas per akun kas" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
+      {d?.dari_snapshot && (
+        <Alert type="success" showIcon style={{ marginBottom: 16 }} title={`Bulan ini sudah tutup buku${d.ditutup_pada ? ` (${waktu(d.ditutup_pada)})` : ""}: angka terkunci dari snapshot.`} />
+      )}
       {d?.draf_belum_dikirim && d.draf_belum_dikirim.length > 0 && (
         <Alert
           type="warning"
