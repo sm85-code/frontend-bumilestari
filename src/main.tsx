@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App as AntApp, ConfigProvider } from "antd";
 import idID from "antd/locale/id_ID";
+import "@fontsource-variable/plus-jakarta-sans";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import { StrictMode } from "react";

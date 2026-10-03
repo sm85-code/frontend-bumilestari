@@ -13,7 +13,6 @@ import {
   Select as ASelect,
   Space,
   Spin,
-  Statistic,
   Table,
   Tabs as ATabs,
   Tag,
@@ -21,7 +20,9 @@ import {
   theme,
 } from "antd";
 import type { TableColumnsType } from "antd";
+import { ArrowUpOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { Link } from "react-router-dom";
 import {
   Children,
   Fragment,
@@ -37,11 +38,11 @@ import {
 
 /** Komponen dasar aplikasi: pembungkus tipis di atas Ant Design (tampilan default antd). */
 
-export function PageHeader({ judul, sub, aksi }: { judul: string; sub?: ReactNode; aksi?: ReactNode }) {
+export function PageHeader({ judul, sub, aksi }: { judul: ReactNode; sub?: ReactNode; aksi?: ReactNode }) {
   return (
-    <Flex justify="space-between" align="flex-start" wrap gap="small">
-      <div>
-        <Typography.Title level={3} style={{ margin: 0 }}>
+    <Flex justify="space-between" align="flex-end" wrap gap="middle" style={{ paddingBlock: 4 }}>
+      <div style={{ minWidth: 0 }}>
+        <Typography.Title level={2} style={{ margin: 0, fontWeight: 600, letterSpacing: "-0.02em" }}>
           {judul}
         </Typography.Title>
         {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
@@ -51,21 +52,91 @@ export function PageHeader({ judul, sub, aksi }: { judul: string; sub?: ReactNod
   );
 }
 
-export function Card({ judul, aksi, children }: { judul?: string; aksi?: ReactNode; children: ReactNode }) {
+/** Tombol bulat kecil bertanda panah (↗) untuk membuka halaman terkait, seperti di desain bento. */
+export function TautanBulat({ ke, terang }: { ke: string; terang?: boolean }) {
   return (
-    <ACard title={judul} extra={aksi}>
+    <Link
+      to={ke}
+      aria-label="Buka"
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 999,
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flex: "0 0 auto",
+        background: terang ? "rgba(255,255,255,0.18)" : "#f3f4f6",
+        color: terang ? "#fff" : "#4b535b",
+      }}
+    >
+      <ArrowUpOutlined style={{ transform: "rotate(45deg)" }} />
+    </Link>
+  );
+}
+
+/** Kartu putih sangat bulat. `sub` = keterangan kecil di bawah judul; `aksi` = tombol di kanan judul. */
+export function Card({ judul, sub, aksi, children }: { judul?: string; sub?: ReactNode; aksi?: ReactNode; children: ReactNode }) {
+  return (
+    <ACard variant="borderless" styles={{ body: { padding: 24 } }} style={{ boxShadow: "var(--ant-box-shadow-tertiary)" }}>
+      {(judul || aksi) && (
+        <Flex justify="space-between" align="flex-start" gap="small" wrap style={{ marginBottom: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            {judul && (
+              <Typography.Title level={5} style={{ margin: 0, fontWeight: 700 }}>
+                {judul}
+              </Typography.Title>
+            )}
+            {sub && (
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {sub}
+              </Typography.Text>
+            )}
+          </div>
+          {aksi && <div>{aksi}</div>}
+        </Flex>
+      )}
       {children}
     </ACard>
   );
 }
 
-export function Stat({ label, nilai, sub, warna }: { label: string; nilai: string; sub?: string; warna?: "hijau" | "merah" | "oranye" }) {
+/** Kartu angka. `hero` = kartu hijau dengan teks putih; `ke` = tautan bulat ke halaman terkait. */
+export function Stat({
+  label,
+  nilai,
+  sub,
+  warna,
+  hero,
+  ke,
+}: {
+  label: string;
+  nilai: string;
+  sub?: string;
+  warna?: "hijau" | "merah" | "oranye";
+  hero?: boolean;
+  ke?: string;
+}) {
   const { token } = theme.useToken();
-  const w = warna === "merah" ? token.colorError : warna === "oranye" ? token.colorWarning : warna === "hijau" ? token.colorSuccess : undefined;
+  const w = hero ? "#fff" : warna === "merah" ? token.colorError : warna === "oranye" ? "#d98a00" : warna === "hijau" ? token.colorSuccess : undefined;
   return (
-    <ACard style={{ height: "100%" }}>
-      <Statistic title={label} value={nilai} styles={{ content: { color: w } }} />
-      {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
+    <ACard
+      variant="borderless"
+      style={{ height: "100%", boxShadow: "var(--ant-box-shadow-tertiary)", ...(hero ? { background: `linear-gradient(135deg, ${token.colorPrimary}, #2b5418)` } : {}) }}
+      styles={{ body: { padding: 22, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", gap: 14 } }}
+    >
+      <Flex justify="space-between" align="flex-start" gap="small">
+        <Typography.Text style={{ fontSize: 13, color: hero ? "rgba(255,255,255,0.8)" : token.colorTextSecondary }}>{label}</Typography.Text>
+        {ke && <TautanBulat ke={ke} terang={hero} />}
+      </Flex>
+      <div>
+        <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15, color: w, fontVariantNumeric: "tabular-nums" }}>{nilai}</div>
+        {sub && (
+          <Tag variant="filled" color={hero ? undefined : "success"} style={{ marginTop: 10, marginInlineEnd: 0, ...(hero ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : {}) }}>
+            {sub}
+          </Tag>
+        )}
+      </div>
     </ACard>
   );
 }

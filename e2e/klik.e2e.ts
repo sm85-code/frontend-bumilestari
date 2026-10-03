@@ -27,7 +27,7 @@ test("semua menu navigasi bisa diklik", async ({ page }, info) => {
       ["Laporan", "/laporan"], ["Master data", "/master"], ["Akun", "/akun"], ["Beranda", "/"],
     ];
     for (const [label, path] of menu) {
-      await page.locator(".ant-layout-sider .ant-menu-item", { hasText: label }).click();
+      await page.locator('aside[aria-label="Menu samping"] .ant-menu-item', { hasText: label }).click();
       await expect(page).toHaveURL(urlAkhir(path));
     }
   } else {
