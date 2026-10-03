@@ -31,6 +31,8 @@ const GAYA_LAIN = { warna: ["#8aa0b3", "#52687c"] as [string, string], ikon: <Wa
 
 function KartuAkun({ akun }: { akun: AkunKas }) {
   const g = GAYA_AKUN[akun.kode] ?? GAYA_LAIN;
+  const [nama, sisa] = akun.nama.split(/\s*\(/);
+  const rincian = sisa?.replace(/\)$/, "");
   return (
     <div
       style={{
@@ -49,7 +51,10 @@ function KartuAkun({ akun }: { akun: AkunKas }) {
         <span style={{ width: 38, height: 38, flexShrink: 0, borderRadius: 14, background: "rgba(255,255,255,0.92)", color: g.warna[1], display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>
           {g.ikon}
         </span>
-        <Typography.Text style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{akun.nama}</Typography.Text>
+        <div style={{ minWidth: 0, lineHeight: 1.25 }}>
+          <div style={{ color: "#fff", fontWeight: 600, fontSize: 15 }}>{nama}</div>
+          {rincian && <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 11 }}>{rincian}</div>}
+        </div>
       </Flex>
       <div>
         <div style={{ fontSize: "clamp(17px, 2.4vw, 24px)", fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{rp(akun.saldo)}</div>
@@ -110,7 +115,7 @@ export default function Beranda() {
       </Row>
 
       <Card judul="Akun" sub="Saldo setiap akun kas" aksi={<TautanBulat ke="/keuangan" />}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 150px), 1fr))", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16 }}>
           {data.akun.map((a) => (
             <KartuAkun key={a.id} akun={a} />
           ))}
