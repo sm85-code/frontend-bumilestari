@@ -121,9 +121,9 @@ test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ p
   const panggilan = await pasangApiTiruan(page);
   await page.goto("/selasa");
   await expect(page.getByRole("heading", { name: "Tutup Kas Mingguan" })).toBeVisible();
-  await expect(page.getByText(/dari 6 langkah selesai/)).toBeVisible();
+  await expect(page.getByText(/dari 7 langkah selesai/)).toBeVisible();
   // Langkah tanpa backend: tampil "Segera hadir", tidak bisa dikerjakan.
-  await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(2);
+  await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(1);
 
   // Langkah 1 terbuka otomatis (ada tagihan): catat pembayaran di dalam wizard.
   await page.getByRole("button", { name: "Catat diterima" }).click();
@@ -131,7 +131,9 @@ test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ p
   await dlg.getByRole("button", { name: "Catat pembayaran" }).click();
   expect(await tulisanTerkirim(panggilan, "POST", "/penerimaan-reseller")).toMatchObject({ pelanggan_id: "c1", order_ids: ["o1"] });
 
-  // Berikutnya → langkah 3 (tarik saldo), lewati, status tersimpan setelah muat ulang.
+  // Berikutnya → langkah 2 (pencairan: tautan ke halaman Pencairan) → langkah 3 (tarik saldo), lewati, status tersimpan.
+  await page.getByRole("button", { name: "Berikutnya →" }).click();
+  await expect(page.getByRole("link", { name: "Buka halaman Pencairan" })).toBeVisible();
   await page.getByRole("button", { name: "Berikutnya →" }).click();
   await expect(page.getByRole("button", { name: "Tarik ke Kas utama" })).toBeVisible();
   await page.getByRole("button", { name: "Lewati langkah" }).click();

@@ -3,6 +3,7 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   CalendarOutlined,
+  CloudDownloadOutlined,
   DatabaseOutlined,
   FileTextOutlined,
   HistoryOutlined,
@@ -57,6 +58,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
     item: [
       { ke: "/keuangan", label: "Kas & transaksi", ikon: <WalletOutlined /> },
       { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
+      { ke: "/pencairan", label: "Pencairan", ikon: <CloudDownloadOutlined /> },
       { ke: "/gaji", label: "Gaji & tagihan rutin", ikon: <TeamOutlined /> },
       { ke: "/bagi-hasil", label: "Bagi hasil", ikon: <PieChartOutlined /> },
     ],

@@ -13,6 +13,7 @@ export const LABEL_SUMBER: Record<SumberKiriman, string> = {
   kas_iklan: "Kas iklan",
   penerimaan_reseller: "Penerimaan penjual lain",
   pembayaran_pemasok: "Pembayaran tukang & supplier",
+  pencairan: "Pencairan marketplace & iPaymu",
 };
 
 /** Sumber yang boleh dikirim pengguna: kas iklan khusus admin (sama dengan backend). */

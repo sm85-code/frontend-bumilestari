@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { PageHeader, Tabs } from "../components/ui";
 import MasterAkunKategori from "./master/AkunKategori";
+import MasterFormatPenghasilan from "./master/FormatPenghasilan";
 import MasterHargaGrosir from "./master/HargaGrosir";
 import MasterPelanggan from "./master/Pelanggan";
 import MasterPemasok from "./master/Pemasok";
@@ -35,6 +36,7 @@ export default function Master() {
       {tab === "pelanggan" && <MasterPelanggan />}
       {tab === "harga" && <MasterHargaGrosir />}
       {tab === "saluran" && <MasterSaluran />}
+      {tab === "saluran" && admin && <MasterFormatPenghasilan />}
       {tab === "akun" && <MasterAkunKategori />}
       {tab === "pengguna" && admin && <MasterPengguna />}
       {tab === "profil" && <MasterProfil />}

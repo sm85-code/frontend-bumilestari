@@ -16,6 +16,7 @@ const Lainnya = lazy(() => import("./pages/Lainnya"));
 const KirimanPage = lazy(() => import("./pages/Kiriman"));
 const TutupBukuPage = lazy(() => import("./pages/TutupBuku"));
 const BelumCairPage = lazy(() => import("./pages/BelumCair"));
+const PencairanPage = lazy(() => import("./pages/Pencairan"));
 const Master = lazy(() => import("./pages/Master"));
 const OrderPage = lazy(() => import("./pages/Order"));
 const PenjualLain = lazy(() => import("./pages/PenjualLain"));
@@ -124,6 +125,16 @@ export default function App() {
             <WajibGantiPassword>
               <HanyaPemilik>
                 <BagiHasilPage />
+              </HanyaPemilik>
+            </WajibGantiPassword>
+          }
+        />
+        <Route
+          path="/pencairan"
+          element={
+            <WajibGantiPassword>
+              <HanyaPemilik>
+                <PencairanPage />
               </HanyaPemilik>
             </WajibGantiPassword>
           }

@@ -15,6 +15,7 @@ const SUMBER: Record<string, Sumber> = {
   tagihan: { label: "Gaji & tagihan rutin", ke: "/gaji" },
   bagi_hasil: { label: "Bagi hasil", ke: "/bagi-hasil" },
   sisihan: { label: "Tutup Kas Mingguan", ke: "/selasa" },
+  pencairan: { label: "Pencairan", ke: "/pencairan" },
 };
 
 /** Halaman asal transaksi otomatis, atau null bila transaksi manual. ref_jenis yang belum dikenal tetap dianggap otomatis. */
