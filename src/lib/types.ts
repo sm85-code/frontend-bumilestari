@@ -56,6 +56,8 @@ export interface Transaksi {
   jenis: "masuk" | "keluar";
   jumlah: string;
   keterangan: string;
+  platform_iklan_id?: string | null;
+  melebihi_porsi?: boolean;
   dibatalkan: boolean;
   /** Sumber transaksi otomatis (pembayaran_pemasok, penerimaan_reseller, gaji, tagihan, bagi_hasil, sisihan); null = manual. */
   ref_jenis?: string | null;
@@ -81,6 +83,8 @@ export interface TransaksiIn {
   koreksi_periode?: string | null;
   /** Kas kecil/kas iklan kurang: kekurangannya dicatat sebagai talangan oleh orang ini. */
   talangan_oleh?: string | null;
+  /** Wajib untuk pengeluaran (top up) kas iklan. */
+  platform_iklan_id?: string | null;
 }
 
 /* ---------- Kirim ke laporan keuangan (posting berkelompok) ---------- */
@@ -746,4 +750,38 @@ export interface Talangan {
   alasan_batal: string | null;
   created_at: string;
   bayar: TalanganBayar[];
+}
+
+/* ---------- Kas iklan (Fase 2.9/2.10) ---------- */
+
+export interface PlatformIklan {
+  id: string;
+  nama: string;
+  grup: "internal" | "eksternal";
+  saluran_id: string | null;
+  aktif: boolean;
+}
+
+export interface BudgetIklan {
+  periode: string;
+  budget_total: string;
+  dasar: "pengaturan" | "plafon";
+  grup: { grup: "internal" | "eksternal"; porsi: string; budget: string; terpakai: string; sisa: string }[];
+}
+
+export interface PengaturanIklan {
+  porsi_internal: string;
+  porsi_eksternal: string;
+  budget_bulanan: string | null;
+}
+
+export interface PlafonLog {
+  id: string;
+  akun_id: string;
+  tanggal: string;
+  dari: string;
+  ke: string;
+  oleh: string;
+  alasan: string;
+  created_at: string;
 }

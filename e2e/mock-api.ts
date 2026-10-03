@@ -177,6 +177,19 @@ function peta(pengguna: (typeof PENGGUNA)[Peran]): Record<string, unknown> {
     },
     "/kiriman/draf": draf,
     "/talangan": [],
+    "/platform-iklan": [
+      { id: "pi1", nama: "Shopee", grup: "internal", saluran_id: "s1", aktif: true },
+      { id: "pi2", nama: "Meta", grup: "eksternal", saluran_id: null, aktif: true },
+    ],
+    "/kas-iklan/sisa-budget": {
+      periode: "2026-09", budget_total: "10000000", dasar: "plafon",
+      grup: [
+        { grup: "internal", porsi: "25", budget: "2500000", terpakai: "2300000", sisa: "200000" },
+        { grup: "eksternal", porsi: "75", budget: "7500000", terpakai: "1000000", sisa: "6500000" },
+      ],
+    },
+    "/kas-iklan/pengaturan": { porsi_internal: "25", porsi_eksternal: "75", budget_bulanan: null },
+    "/akun-kas/a5/plafon-log": [{ id: "pl1", akun_id: "a5", tanggal: "2026-09-01", dari: "1500000", ke: "2000000", oleh: "u1", alasan: "naik", created_at: "2026-09-01T00:00:00Z" }],
     "/talangan/nama": ["Sari", "Bu Admin"],
     "/kiriman": [
       kiriman("kr1"),

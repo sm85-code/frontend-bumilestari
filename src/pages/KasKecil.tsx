@@ -4,6 +4,7 @@ import { Alert, Col, Flex, Row, Typography } from "antd";
 import { Link } from "react-router-dom";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import DaftarTalangan from "../components/DaftarTalangan";
+import UbahPlafon from "../components/UbahPlafon";
 import FormTransaksi from "../components/FormTransaksi";
 import KirimKeLaporan from "../components/KirimKeLaporan";
 import { PanduanStaf, usePanduanStaf } from "../components/PanduanStaf";
@@ -91,6 +92,11 @@ export default function KasKecil() {
           showIcon
           title={pemilik ? "Saldo kas kecil di bawah 20% plafon. Isi ulang di Tutup Kas Mingguan." : "Uang kas kecil tinggal sedikit. Kabari admin."}
         />
+      )}
+      {pemilik && (
+        <div style={{ marginTop: 8 }}>
+          <UbahPlafon akun={kas} />
+        </div>
       )}
       {pemilik && saldo < plafon && (
         <div style={{ marginTop: 8 }}>
