@@ -121,7 +121,7 @@ test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ p
   const panggilan = await pasangApiTiruan(page);
   await page.goto("/selasa");
   await expect(page.getByRole("heading", { name: "Tutup Kas Mingguan" })).toBeVisible();
-  await expect(page.getByText(/dari 5 langkah selesai/)).toBeVisible();
+  await expect(page.getByText(/dari 6 langkah selesai/)).toBeVisible();
   // Langkah tanpa backend: tampil "Segera hadir", tidak bisa dikerjakan.
   await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(2);
 
@@ -139,9 +139,9 @@ test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ p
   await page.reload();
   await expect(page.locator('[data-langkah="tarik"]')).toContainText("Dilewati");
 
-  // Langkah 4: bayar tukang & supplier, tombol "Catat pembayaran".
+  // Langkah 4: bayar tukang & supplier, tombol "Bayar semua" (boleh juga per tukang).
   await page.getByText("4. Bayar tukang & supplier").click();
-  await page.getByRole("button", { name: "Catat pembayaran Rp500.000" }).click();
+  await page.getByRole("button", { name: "Bayar semua Rp500.000" }).click();
   const dlg2 = await dialogKonfirmasi(page);
   await dlg2.getByRole("button", { name: "Catat pembayaran" }).click();
   const body = (await tulisanTerkirim(panggilan, "POST", "/pembayaran-pemasok")) as Record<string, unknown>;

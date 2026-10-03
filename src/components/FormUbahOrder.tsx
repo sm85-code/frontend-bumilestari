@@ -1,4 +1,4 @@
-import { Checkbox, Col, Form, Row } from "antd";
+import { Alert, Checkbox, Col, Form, Row } from "antd";
 import { useMemo } from "react";
 import { AksiForm, Button, Field, Formulir, Input, Select, Teks } from "./ui";
 import { useAksi, usePemasok } from "../lib/data";
@@ -16,6 +16,8 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
   const pemasokQ = usePemasok();
   const aksi = useAksi<Order>();
   const kayu = produk?.jenis_produk !== "non_kayu";
+  // Sudah masuk pembayaran (tukang/penjual lain): backend menolak perubahan selain nama pembeli, warna, catatan.
+  const kunci = Boolean(order.terkunci);
   const awal = useMemo(
     () => ({
       pemasok_id: order.pemasok_id ?? "",
@@ -53,10 +55,18 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
 
   return (
     <Formulir onKirim={kirim}>
+      {kunci && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 12 }}
+          title="Order ini sudah masuk pembayaran. Hanya nama pembeli, warna, dan catatan yang bisa diubah; batalkan pembayarannya dulu untuk mengubah harga."
+        />
+      )}
       <Row gutter={16}>
         <Col xs={24} md={12}>
           <Field label={kayu ? "Tukang kayu" : "Supplier"} hint="Pilih sesuai siapa yang sedang bisa mengerjakan">
-            <Select {...bind("pemasok_id")}>
+            <Select {...bind("pemasok_id")} disabled={kunci}>
               <option value="">Belum dipilih</option>
               {pemasokCocok.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -80,7 +90,7 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
             </Col>
             <Col xs={24} md={12}>
               <Field label="Packing">
-                <Select {...bind("jenis_packing")}>
+                <Select {...bind("jenis_packing")} disabled={kunci}>
                   <option value="biasa">Biasa</option>
                   <option value="kayu">Packing kayu</option>
                 </Select>
@@ -90,7 +100,7 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
               <Form.Item labelCol={{ span: 24 }} wrapperCol={{ span: 24 }}>
                 <Checkbox
                   checked={f.polos === "ya"}
-                  disabled={order.status === "dicat" || order.status === "dikirim"}
+                  disabled={kunci || order.status === "dicat" || order.status === "dikirim"}
                   onChange={(e) => bind("polos").onChange({ target: { value: e.target.checked ? "ya" : "" } } as never)}
                 >
                   Polos (tanpa cat)
@@ -101,17 +111,17 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
         )}
         <Col xs={24} md={12}>
           <Field label="Biaya ke tukang & supplier (Rp)">
-            <Input inputMode="numeric" {...bind("biaya_pokok")} />
+            <Input inputMode="numeric" {...bind("biaya_pokok")} disabled={kunci} />
           </Field>
         </Col>
         <Col xs={24} md={12}>
           <Field label="Harga barang per unit (Rp)">
-            <Input inputMode="numeric" {...bind("harga_satuan")} />
+            <Input inputMode="numeric" {...bind("harga_satuan")} disabled={kunci} />
           </Field>
         </Col>
         <Col xs={24} md={12}>
           <Field label="Potongan marketplace (Rp)">
-            <Input inputMode="numeric" {...bind("potongan_marketplace")} />
+            <Input inputMode="numeric" {...bind("potongan_marketplace")} disabled={kunci} />
           </Field>
         </Col>
       </Row>

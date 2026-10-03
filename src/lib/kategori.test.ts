@@ -49,8 +49,29 @@ describe("kategori", () => {
   it("pilihanKategori: staf dan pengeluaran akun kas kecil memakai 4 kategori", () => {
     expect(nama(pilihanKategori(kategori, { jenis: "keluar", staf: true }))).toHaveLength(4);
     expect(nama(pilihanKategori(kategori, { jenis: "keluar", akun: { jenis: "kas_kecil" } }))).toHaveLength(4);
-    expect(nama(pilihanKategori(kategori, { jenis: "keluar", akun: { jenis: "kas" } }))).toContain("Prive");
+    expect(nama(pilihanKategori(kategori, { jenis: "keluar", admin: true, akun: { jenis: "kas" } }))).toContain("Prive");
     expect(nama(pilihanKategori(kategori, { jenis: "masuk", akun: { jenis: "kas_kecil" } }))).toContain("Pemasukan lain");
+  });
+
+  it("pilihanKategori: Prive/Setoran modal khusus admin, Biaya iklan hanya di Kas iklan", () => {
+    const plus = [...kategori, { id: "sm", nama: "Setoran modal", jenis: "pemasukan" } as Kategori];
+    expect(nama(pilihanKategori(plus, { jenis: "keluar", akun: { jenis: "kas" } }))).not.toContain("Prive");
+    expect(nama(pilihanKategori(plus, { jenis: "masuk", akun: { jenis: "kas" } }))).not.toContain("Setoran modal");
+    expect(nama(pilihanKategori(plus, { jenis: "masuk", admin: true, akun: { jenis: "kas" } }))).toContain("Setoran modal");
+    expect(nama(pilihanKategori(plus, { jenis: "keluar", admin: true, akun: { jenis: "kas" } }))).not.toContain("Biaya iklan");
+    expect(nama(pilihanKategori(plus, { jenis: "keluar", admin: true, akun: { jenis: "kas_iklan" } }))).toEqual(["Biaya iklan"]);
+  });
+
+  it("tanda dari server diutamakan daripada cocok-nama", () => {
+    const server: Kategori[] = [
+      { id: "1", nama: "Operasional", jenis: "pengeluaran", sistem: false, untuk_staf: true },
+      { id: "2", nama: "Transport", jenis: "pengeluaran", sistem: false, untuk_staf: true },
+      { id: "3", nama: "Kategori baru", jenis: "pengeluaran", sistem: true, untuk_staf: false },
+      { id: "4", nama: "Lain-lain admin", jenis: "pengeluaran", sistem: false, untuk_staf: false, khusus_admin: true },
+    ];
+    expect(nama(kategoriKasKecil(server))).toEqual(["Transport", "Operasional"]);
+    expect(nama(pilihanKategori(server, { jenis: "keluar", akun: { jenis: "kas" } }))).toEqual(["Operasional", "Transport"]);
+    expect(nama(pilihanKategori(server, { jenis: "keluar", admin: true, akun: { jenis: "kas" } }))).toContain("Lain-lain admin");
   });
 
   it("isKategoriSistem dan label tampil", () => {

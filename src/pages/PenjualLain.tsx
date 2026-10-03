@@ -3,6 +3,8 @@ import { useState } from "react";
 import BagikanWA from "../components/BagikanWA";
 import { Col, Flex, Row, Space, Typography } from "antd";
 import type { TableColumnsType } from "antd";
+import { Link } from "react-router-dom";
+import KirimKeLaporan from "../components/KirimKeLaporan";
 import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, InputTanggal, Kosong, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
 import { api, apiUrl, query } from "../lib/api";
 import { peta, usePelanggan, useAksi } from "../lib/data";
@@ -34,9 +36,9 @@ export default function PenjualLain() {
   const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomInvoice: TableColumnsType<Invoice["items"][number]> = [
     {
-      title: "Tanggal",
+      title: "Tanggal kirim",
       fixed: "left",
-      width: 130,
+      width: 140,
       render: (_, i) => (
         <Space size={4} wrap={false}>
           <Angka>{tanggal(i.tanggal)}</Angka>
@@ -55,12 +57,22 @@ export default function PenjualLain() {
     { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Penjual lain", dataIndex: "pelanggan_id", render: (v: string) => pelanggan.get(v)?.nama ?? "—" },
     { title: "Jumlah", dataIndex: "total", align: "right", render: angka },
-    { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">diterima</Lencana>) },
+    {
+      title: "Status",
+      dataIndex: "dibatalkan",
+      render: (v: boolean, p) =>
+        v ? <Lencana warna="merah">dibatalkan</Lencana> : p.status_kirim === "draf" ? <Lencana warna="oranye">draf</Lencana> : <Lencana warna="hijau">terkirim</Lencana>,
+    },
     {
       title: "Aksi",
       width: 100,
       render: (_, p) =>
-        !p.dibatalkan && (
+        !p.dibatalkan &&
+        (p.status_kirim === "terkirim" && p.kiriman_id ? (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            terkunci · <Link to="/kiriman">batalkan kiriman</Link>
+          </Typography.Text>
+        ) : (
           <TombolLink
             bahaya
             onClick={() =>
@@ -71,7 +83,7 @@ export default function PenjualLain() {
           >
             Batalkan
           </TombolLink>
-        ),
+        )),
     },
   ];
 
@@ -89,7 +101,7 @@ export default function PenjualLain() {
       </Card>
       <ErrorBox error={invQ.error ?? aksi.error} />
       {invQ.isLoading && <Memuat />}
-      {invQ.data?.length === 0 && <Kosong teks="Tidak ada tagihan penjual lain untuk Selasa ini. Tagihan muncul setelah order penjual lain selesai diambil dari tukang (Senin–Sabtu minggu lalu)." />}
+      {invQ.data?.length === 0 && <Kosong teks="Tidak ada tagihan penjual lain untuk Selasa ini. Tagihan berisi order penjual lain yang dikirim Senin–Sabtu minggu lalu." />}
       {invQ.data?.map((inv) => (
         <Card
           key={inv.nomor}
@@ -132,6 +144,9 @@ export default function PenjualLain() {
       ))}
 
       <Card judul="Riwayat pembayaran diterima">
+        <div style={{ marginBottom: 12 }}>
+          <KirimKeLaporan sumber="penerimaan_reseller" />
+        </div>
         <DataTabel kolom={kolomTerima} data={terimaQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran diterima dari penjual lain." />
       </Card>
     </>

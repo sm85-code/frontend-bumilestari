@@ -4,6 +4,7 @@ import { Alert, Col, Flex, Row, Typography } from "antd";
 import { Link } from "react-router-dom";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import FormTransaksi from "../components/FormTransaksi";
+import KirimKeLaporan from "../components/KirimKeLaporan";
 import { PanduanStaf, usePanduanStaf } from "../components/PanduanStaf";
 import { Angka, Button, Card, ErrorBox, Kosong, Memuat, PageHeader, Progress } from "../components/ui";
 import { isPemilik, useAuth } from "../auth/AuthContext";
@@ -24,8 +25,8 @@ export default function KasKecil() {
   const katQ = useQuery({ queryKey: ["kategori"], queryFn: () => api<Kategori[]>("/kategori") });
   const kas = akunQ.data?.find((a) => a.jenis === "kas_kecil");
   const trxQ = useQuery({
-    queryKey: ["transaksi", kas?.id],
-    queryFn: () => api<Transaksi[]>(`/transaksi${query({ akun_id: kas?.id })}`),
+    queryKey: ["transaksi", kas?.id, "draf"],
+    queryFn: () => api<Transaksi[]>(`/transaksi${query({ akun_id: kas?.id, termasuk_draf: "true" })}`),
     enabled: !!kas,
   });
 
@@ -46,7 +47,9 @@ export default function KasKecil() {
       </>
     );
 
-  const saldo = num(kas.saldo);
+  // Uang fisik di tangan staf = saldo setelah draf; saldo resmi (laporan) baru berkurang setelah dikirim.
+  const saldo = num(kas.saldo_setelah_draf ?? kas.saldo);
+  const selisihDraf = num(kas.saldo) - saldo;
   const plafon = num(kas.plafon);
   const rendah = saldoRendah(saldo, plafon);
   const terbaru = (trxQ.data ?? []).slice(0, 10);
@@ -61,6 +64,11 @@ export default function KasKecil() {
       <Typography.Text type="secondary">
         Plafon {rp(plafon)} · diisi lagi sampai plafon setiap hari Selasa.
       </Typography.Text>
+      {pemilik && selisihDraf !== 0 && (
+        <Typography.Paragraph type="secondary" style={{ margin: "6px 0 0" }}>
+          Saldo tercatat di laporan {rp(kas.saldo)} · draf belum dikirim {rp(selisihDraf)}
+        </Typography.Paragraph>
+      )}
       {rendah && (
         <Alert
           style={{ marginTop: 12 }}
@@ -127,6 +135,9 @@ export default function KasKecil() {
         </Col>
         <Col xs={24} lg={16}>
           <Card judul="Riwayat" aksi={<Link to="/laporan/kas-kecil">Laporan bulanan</Link>}>
+            <div style={{ marginBottom: 12 }}>
+              <KirimKeLaporan sumber="kas_kecil" />
+            </div>
             <DaftarTransaksi
               data={trxQ.data}
               kategori={katQ.data ?? []}

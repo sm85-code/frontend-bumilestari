@@ -6,6 +6,7 @@ import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import DaftarTransaksi from "../components/DaftarTransaksi";
 import FormTransaksi from "../components/FormTransaksi";
+import KirimKeLaporan from "../components/KirimKeLaporan";
 import { OtomatisDari } from "../components/OtomatisDari";
 import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Lencana, Memuat, PageHeader, Select, TombolLink, useDialog } from "../components/ui";
 import { api, query } from "../lib/api";
@@ -19,7 +20,19 @@ const kolomAkun: TableColumnsType<AkunKas> = [
   { title: "Akun kas", dataIndex: "nama" },
   { title: "Plafon", dataIndex: "plafon", align: "right", render: (v: string | null) => (v ? <Angka>{rp(v)}</Angka> : "—") },
   { title: "Jenis", dataIndex: "jenis", render: (v: string) => JENIS[v] ?? v },
-  { title: "Saldo", dataIndex: "saldo", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
+  {
+    title: "Saldo",
+    dataIndex: "saldo",
+    align: "right",
+    render: (v: string, a) => (
+      <>
+        <Angka>{rp(v)}</Angka>
+        {a.saldo_setelah_draf != null && num(a.saldo_setelah_draf) !== num(v) && (
+          <div style={{ fontSize: 12, opacity: 0.7 }}>setelah draf {rp(a.saldo_setelah_draf)}</div>
+        )}
+      </>
+    ),
+  },
 ];
 
 export default function Keuangan() {
@@ -28,8 +41,8 @@ export default function Keuangan() {
   const akunQ = useQuery({ queryKey: ["akun"], queryFn: () => api<AkunKas[]>("/akun-kas") });
   const katQ = useQuery({ queryKey: ["kategori"], queryFn: () => api<Kategori[]>("/kategori") });
   const trxQ = useQuery({
-    queryKey: ["transaksi", akunId || "semua"],
-    queryFn: () => api<Transaksi[]>(`/transaksi${query({ akun_id: akunId })}`),
+    queryKey: ["transaksi", akunId || "semua", "draf"],
+    queryFn: () => api<Transaksi[]>(`/transaksi${query({ akun_id: akunId, termasuk_draf: "true" })}`),
   });
 
   const transferQ = useQuery({ queryKey: ["transfer"], queryFn: () => api<Transfer[]>("/transfer?termasuk_batal=true") });
@@ -117,6 +130,11 @@ export default function Keuangan() {
                   </Field>
                 </Col>
               </Row>
+              {akun.find((a) => a.id === akunId)?.jenis === "kas_iklan" && (
+                <div style={{ marginBottom: 12 }}>
+                  <KirimKeLaporan sumber="kas_iklan" />
+                </div>
+              )}
               <DaftarTransaksi data={trxQ.data} kategori={katQ.data ?? []} bolehBatal memuat={trxQ.isLoading} kosong="Belum ada transaksi. Tekan 'Catat transaksi' untuk mencatat pemasukan atau pengeluaran manual." />
             </Card>
             <Card judul="Riwayat transfer antar akun kas">

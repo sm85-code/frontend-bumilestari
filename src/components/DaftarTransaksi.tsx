@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TableColumnsType } from "antd";
 import { Typography } from "antd";
-import { Angka, DataTabel, Memuat, TombolLink, useDialog } from "./ui";
+import { Link } from "react-router-dom";
+import { Angka, DataTabel, Lencana, Memuat, TombolLink, useDialog } from "./ui";
 import { OtomatisDari } from "./OtomatisDari";
 import { api } from "../lib/api";
 import { rp, tanggal } from "../lib/format";
@@ -15,6 +16,8 @@ export const TEKS_SALAH_CATAT = "Salah catat? Minta admin membatalkan.";
  * Riwayat transaksi sebagai tabel (digulir ke samping di layar sempit).
  * Transaksi otomatis (punya `ref_jenis`) tidak bisa dibatalkan di sini: tampil tautan ke halaman asalnya.
  * Staf tidak bisa membatalkan: setiap baris memuat teks "Salah catat? Minta admin membatalkan."
+ * Catatan kas kecil/kas iklan berstatus Draf sampai dikirim ke laporan keuangan; yang sudah dikirim terkunci
+ * (backend menolak pembatalan per baris) sampai kirimannya dibatalkan di Riwayat kiriman.
  */
 export default function DaftarTransaksi({
   data,
@@ -61,6 +64,13 @@ export default function DaftarTransaksi({
       ),
     },
   ];
+  if ((data ?? []).some((t) => t.status_kirim))
+    kolom.push({
+      title: "Status",
+      dataIndex: "status_kirim",
+      width: 100,
+      render: (v: Transaksi["status_kirim"]) => (v === "draf" ? <Lencana warna="oranye">Draf</Lencana> : <Lencana warna="hijau">Terkirim</Lencana>),
+    });
   if (bolehBatal)
     kolom.push({
       title: "Aksi",
@@ -68,6 +78,12 @@ export default function DaftarTransaksi({
       render: (_, t) => {
         const sumber = sumberTransaksi(t);
         if (sumber) return <OtomatisDari sumber={sumber} />;
+        if (t.status_kirim === "terkirim" && t.kiriman_id)
+          return (
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              Terkunci (sudah dikirim). <Link to="/kiriman">Batalkan kirimannya dulu</Link>
+            </Typography.Text>
+          );
         return (
           <TombolLink
             bahaya

@@ -9,6 +9,7 @@ import { Angka, Baris, Button, Card, ErrorBox, Memuat, PageHeader, Progress, Sta
 import { api, query } from "../lib/api";
 import { bulanTahun, hariIni, num, rp, tanggal } from "../lib/format";
 import { pisahKas, saldoRendah } from "../lib/kas";
+import { ringkasDraf } from "../lib/kiriman";
 import { awalBulan, daftarTugas, periodeSebelum } from "../lib/tugas";
 import { useSelasa } from "../lib/useSelasa";
 import type { AkunKas, Dashboard, Gaji, Imprest, Karyawan, Langganan, Tagihan } from "../lib/types";
@@ -121,7 +122,8 @@ function YangPerluDikerjakan({ data, admin }: { data: Dashboard; admin: boolean 
     selasaBeres: s.beres,
     selasaTotal: s.total,
     utangTukang: num(s.siapQ.data?.total ?? data.utang_pemasok_siap_bayar),
-    tukangSudahDibayar: Boolean(s.siapQ.data?.sudah_dicatat_id),
+    // Boleh beberapa pembayaran per minggu: "sudah" bila tidak ada lagi yang belum dibayar.
+    tukangSudahDibayar: Boolean(s.siapQ.data && s.siapQ.data.pemasok.length === 0),
     tagihanPenjualLain: s.tagihanSelasaIni,
     jumlahInvoice: s.invoiceQ.data?.length ?? 0,
     kasKecil: data.kas_kecil,
@@ -130,6 +132,7 @@ function YangPerluDikerjakan({ data, admin }: { data: Dashboard; admin: boolean 
     gajiBelumDibayar: gajiBelum,
     tagihanRutinBelum: tagihanBelum,
     cekFisikSelesai: cekFisik,
+    draf: data.draf_belum_dikirim ? ringkasDraf(data.draf_belum_dikirim) : undefined,
   });
 
   const tandaiCekFisik = () => {

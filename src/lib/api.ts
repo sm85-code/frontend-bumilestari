@@ -48,7 +48,23 @@ const PESAN_TETAP: Record<string, string> = {
   "Akses ditolak": "Anda tidak punya akses untuk ini. Hubungi admin bila perlu.",
   "Tidak terautentikasi": "Sesi habis, silakan masuk lagi.",
   "Sesi tidak valid": "Sesi habis, silakan masuk lagi.",
+  "Sesi berakhir, silakan login lagi": "Sesi Anda sudah diakhiri (kata sandi atau peran berubah, atau keluar dari semua perangkat). Silakan masuk lagi.",
+  "Entri ini sudah dikirim ke laporan keuangan; batalkan kirimannya dulu":
+    "Catatan ini sudah dikirim ke laporan keuangan sehingga terkunci. Minta admin membatalkan kirimannya dulu di Riwayat kiriman.",
+  "Sudah dikirim ke laporan keuangan; batalkan kirimannya dulu":
+    "Catatan ini sudah dikirim ke laporan keuangan sehingga terkunci. Minta admin membatalkan kirimannya dulu di Riwayat kiriman.",
+  "Transaksi otomatis; batalkan dari halaman asalnya":
+    "Transaksi ini dibuat otomatis (mis. dari pembayaran, gaji, atau tagihan). Batalkan dari halaman asalnya.",
+  "Transfer sisihan hanya bisa dibatalkan dari halaman Sisihan": "Penyisihan dana gaji dibatalkan dari langkah Sisihkan dana gaji di Tutup Kas Mingguan.",
+  "Kas iklan hanya bisa diurus admin": "Kas iklan hanya bisa diurus admin.",
+  "Kiriman ini sudah dibatalkan": "Kiriman ini sudah dibatalkan sebelumnya.",
+  "Biaya iklan hanya dicatat dari Kas iklan, dan Kas iklan hanya untuk biaya iklan":
+    "Biaya iklan dicatat dari akun Kas iklan, dan akun Kas iklan hanya untuk biaya iklan.",
 };
+
+/** Pesan 409 setoran modal kedua: form menanyakan konfirmasi lalu mengirim ulang dengan tanda konfirmasi. */
+export const PESAN_SETORAN_KEDUA = "Setoran modal sudah pernah dicatat.";
+export const isSetoranKedua = (e: unknown) => e instanceof ApiError && e.status === 409 && e.message.startsWith(PESAN_SETORAN_KEDUA);
 
 /**
  * Ubah pesan teknis dari backend menjadi pesan ramah tanpa istilah teknis (mis. "seed-now"), agar staf tidak bingung.
@@ -57,8 +73,11 @@ const PESAN_TETAP: Record<string, string> = {
 export function pesanError(body: unknown, status: number): string {
   const detail = (body as { detail?: unknown } | null)?.detail;
   if (typeof detail === "string") {
-    if (/seed-now|seed now|belum dibuat|belum ada \(jalankan/i.test(detail)) return PESAN_BELUM_SIAP;
+    if (/seed-now|seed now|belum dibuat|belum ada \(jalankan|belum siap dipakai/i.test(detail)) return PESAN_BELUM_SIAP;
     if (PESAN_TETAP[detail]) return PESAN_TETAP[detail];
+    if (/diisi otomatis oleh aplikasi/.test(detail)) return `${detail.replace(/ dan tidak bisa.*$/, "")}, jadi tidak bisa dipilih di catatan manual. Pilih kategori lain.`;
+    if (/^Order sudah masuk /.test(detail))
+      return "Order ini sudah masuk pembayaran, jadi harga dan status batal terkunci. Batalkan pembayarannya dulu (atau minta admin membatalkan kirimannya bila sudah dikirim).";
     const saldo = detail.match(/^Saldo (.+?) tidak cukup/);
     if (saldo) return `Saldo ${saldo[1]} tidak cukup untuk jumlah ini. Periksa jumlahnya atau hubungi admin.`;
     if (status === 403 && /hanya/i.test(detail)) return `${detail}. Hubungi admin bila perlu.`;

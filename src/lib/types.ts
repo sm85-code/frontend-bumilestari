@@ -16,13 +16,22 @@ export interface AkunKas {
   nama: string;
   jenis: "kas" | "bank" | "ewallet" | "kas_kecil" | "kas_iklan";
   plafon: string | null;
+  /** Saldo resmi: hanya entri yang sudah dikirim ke laporan keuangan. */
   saldo: string;
+  /** Uang fisik: termasuk draf yang belum dikirim (backend Fase 1). */
+  saldo_setelah_draf?: string;
 }
 
 export interface Kategori {
   id: string;
   nama: string;
   jenis: "pemasukan" | "pengeluaran";
+  /** Tanda dari backend (Fase 1); bila belum ada, frontend memakai daftar nama di kategori.ts. */
+  sistem?: boolean;
+  untuk_staf?: boolean;
+  khusus_admin?: boolean;
+  masuk_laba?: boolean;
+  grup?: string;
 }
 
 export interface Transfer {
@@ -49,6 +58,9 @@ export interface Transaksi {
   /** Sumber transaksi otomatis (pembayaran_pemasok, penerimaan_reseller, gaji, tagihan, bagi_hasil, sisihan); null = manual. */
   ref_jenis?: string | null;
   ref_id?: string | null;
+  /** draf = belum dikirim ke laporan keuangan; terkirim = sudah masuk buku besar. */
+  status_kirim?: StatusKirim;
+  kiriman_id?: string | null;
   created_at?: string;
 }
 
@@ -59,6 +71,48 @@ export interface TransaksiIn {
   jenis: "masuk" | "keluar";
   jumlah: string;
   keterangan: string;
+  /** Setoran modal kedua dst. wajib dikonfirmasi admin. */
+  konfirmasi_setoran_modal_kedua?: boolean;
+}
+
+/* ---------- Kirim ke laporan keuangan (posting berkelompok) ---------- */
+export type StatusKirim = "draf" | "terkirim";
+export type SumberKiriman = "kas_kecil" | "kas_iklan" | "penerimaan_reseller" | "pembayaran_pemasok";
+
+export interface EntriDraf {
+  ref_jenis: string;
+  ref_id: string;
+  tanggal: string;
+  jenis: "masuk" | "keluar";
+  jumlah: string;
+  keterangan: string;
+}
+
+export interface DrafSumber {
+  sumber: SumberKiriman;
+  label: string;
+  jumlah_entri: number;
+  total_masuk: string;
+  total_keluar: string;
+  total: string;
+  tanggal_tertua: string | null;
+  entri: EntriDraf[];
+}
+
+export interface Kiriman {
+  id: string;
+  nomor: string;
+  sumber: SumberKiriman;
+  sampai_tanggal: string | null;
+  jumlah_entri: number;
+  total: string;
+  status: "terkirim" | "dibatalkan";
+  dikirim_oleh: string;
+  dikirim_pada: string;
+  dibatalkan_oleh: string | null;
+  dibatalkan_pada: string | null;
+  alasan_batal: string | null;
+  tutup_kas_mingguan_id: string | null;
 }
 
 export interface Imprest {
@@ -85,6 +139,11 @@ export interface Dashboard {
   kas_iklan: Imprest | null;
   bagian_admin_pratinjau: string | null;
   bagian_owner_pratinjau: string | null;
+  /* Backend Fase 1 */
+  order_aktif_per_status?: Record<string, number>;
+  tagihan_penjual_lain_minggu_ini?: string;
+  belum_cair_sementara?: string;
+  draf_belum_dikirim?: DrafSumber[];
 }
 
 export interface BarisKategori {
@@ -117,6 +176,8 @@ export interface LaporanUmum {
   arus_kas: ArusAkun[];
   total_kas_awal: string;
   total_kas_akhir: string;
+  /** Draf yang belum dikirim (tidak dihitung di laporan ini). */
+  draf_belum_dikirim?: DrafSumber[];
 }
 
 export interface LaporanKasKecil {
@@ -135,6 +196,8 @@ export interface LaporanKasKecil {
   saldo_fisik: string | null;
   selisih: string | null;
   status_selisih: "sesuai" | "lebih" | "kurang" | null;
+  /** Pengeluaran draf bulan ini yang belum dikirim (belum masuk laporan). */
+  total_draf_belum_dikirim?: string;
 }
 
 /* ---------- Master data & order ---------- */
@@ -222,6 +285,10 @@ export interface Order {
   catatan: string;
   total_penjualan: string;
   laba_kotor: string;
+  /** Sudah masuk pembayaran tukang / penerimaan penjual lain (draf maupun terkirim): harga & batal terkunci. */
+  dibayar_tukang?: boolean;
+  dibayar_penjual_lain?: boolean;
+  terkunci?: boolean;
 }
 
 /* ---------- Selasa: pembayaran tukang, penjual lain ---------- */
@@ -239,6 +306,8 @@ export interface SiapBayar {
   selasa: string;
   batas_diambil: string;
   sudah_dicatat_id: string | null;
+  /** Semua pembayaran aktif untuk Selasa ini (boleh lebih dari satu, mis. per tukang). */
+  pembayaran_ids?: string[];
   total: string;
   pemasok: { pemasok_id: string; nama: string; jenis: string; subtotal: string; items: ItemSiapBayar[] }[];
 }
@@ -250,13 +319,22 @@ export interface PembayaranPemasok {
   akun_id: string;
   total: string;
   dibatalkan: boolean;
+  status_kirim?: StatusKirim;
+  kiriman_id?: string | null;
 }
 
 export interface PiutangPelanggan {
   pelanggan_id: string;
   nama: string;
   subtotal: string;
-  items: { order_id: string; no_order: string; tanggal_order: string; jumlah: string }[];
+  items: {
+    order_id: string;
+    no_order: string;
+    tanggal_order: string;
+    tgl_dikirim?: string | null;
+    jumlah: string;
+    terlambat?: boolean;
+  }[];
 }
 
 export interface Bagikan {
@@ -396,6 +474,8 @@ export interface PenerimaanReseller {
   akun_id: string;
   total: string;
   dibatalkan: boolean;
+  status_kirim?: StatusKirim;
+  kiriman_id?: string | null;
 }
 
 export interface RincianPembayaran extends PembayaranPemasok {
