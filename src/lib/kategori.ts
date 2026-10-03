@@ -12,8 +12,8 @@ export const KATEGORI_KAS_KECIL = ["Transport", "Packing", "Operasional", "Penge
 /**
  * Kategori sistem: hanya dipakai transaksi otomatis dari halaman asalnya (bagi hasil, gaji, pembayaran
  * tukang & supplier, tagihan rutin, penerimaan penjual lain), jadi tidak muncul di form manual.
- * "Penjualan marketplace" BELUM termasuk: sampai unggah pencairan (Fase 2) ada, pemasukan marketplace
- * masih dicatat manual di Kas & transaksi.
+ * Pemasukan marketplace juga tidak dicatat manual: nanti hanya dari impor file Excel marketplace (lihat
+ * `isKategoriMarketplace`).
  */
 export const KATEGORI_SISTEM = [
   "Bagi hasil",
@@ -42,6 +42,16 @@ export function isKategoriSistem(k: Pick<Kategori, "nama">): boolean {
   return SISTEM.has(kunci(k.nama));
 }
 
+/**
+ * Pemasukan marketplace (mis. "Penjualan marketplace", "Penjualan Shopee") hanya akan masuk lewat impor file
+ * Excel marketplace (dibangun nanti), jadi disembunyikan dari form manual.
+ */
+const POLA_MARKETPLACE = /marketplace|shopee|tokopedia|tiktok|lazada|bukalapak|blibli/i;
+
+export function isKategoriMarketplace(k: Pick<Kategori, "nama" | "jenis">): boolean {
+  return k.jenis === "pemasukan" && POLA_MARKETPLACE.test(k.nama);
+}
+
 const jenisKategori = (jenis: "masuk" | "keluar") => (jenis === "masuk" ? "pemasukan" : "pengeluaran");
 
 /** Kategori untuk staf / akun Kas kecil: hanya 4 kategori, urut sesuai `KATEGORI_KAS_KECIL`. */
@@ -50,9 +60,9 @@ export function kategoriKasKecil(kategori: readonly Kategori[]): Kategori[] {
   return KATEGORI_KAS_KECIL.map((n) => ada.get(kunci(n))).filter((k): k is Kategori => Boolean(k));
 }
 
-/** Kategori yang boleh dipilih di form manual Kas & transaksi: sesuai jenis, tanpa kategori sistem. */
+/** Kategori yang boleh dipilih di form manual Kas & transaksi: sesuai jenis, tanpa kategori sistem & marketplace. */
 export function kategoriManual(kategori: readonly Kategori[], jenis: "masuk" | "keluar"): Kategori[] {
-  return kategori.filter((k) => k.jenis === jenisKategori(jenis) && !isKategoriSistem(k));
+  return kategori.filter((k) => k.jenis === jenisKategori(jenis) && !isKategoriSistem(k) && !isKategoriMarketplace(k));
 }
 
 /**

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import type { TableColumnsType } from "antd";
 import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Lencana, Select } from "../../components/ui";
-import { isKategoriSistem, KATEGORI_KAS_KECIL, labelKategori } from "../../lib/kategori";
+import { isKategoriMarketplace, isKategoriSistem, KATEGORI_KAS_KECIL, labelKategori } from "../../lib/kategori";
 import type { AkunKas, Kategori } from "../../lib/types";
 import { useAkun, useAksi, useKategori } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -33,6 +33,8 @@ export default function MasterAkunKategori() {
       render: (_, k) =>
         isKategoriSistem(k) ? (
           <Lencana warna="oranye">sistem (otomatis)</Lencana>
+        ) : isKategoriMarketplace(k) ? (
+          <Lencana warna="oranye">impor file marketplace</Lencana>
         ) : KATEGORI_KAS_KECIL.some((n) => n.toLowerCase() === k.nama.trim().toLowerCase()) && k.jenis === "pengeluaran" ? (
           <Lencana warna="hijau">kas kecil & manual</Lencana>
         ) : (

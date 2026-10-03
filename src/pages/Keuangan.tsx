@@ -76,17 +76,17 @@ export default function Keuangan() {
     <>
       <PageHeader
         judul="Kas & transaksi"
-        sub="Saldo akun kas, transaksi manual, dan transfer antar akun kas"
+        sub="Saldo akun kas dan riwayat uang masuk/keluar. Sebagian besar tercatat otomatis dari Order, Selasa, Gaji, dan Kas kecil."
         aksi={
           <Button variant={form ? "pinggir" : "utama"} onClick={() => setForm(!form)}>
-            {form ? "Tutup formulir" : <><PlusOutlined /> Catat transaksi</>}
+            {form ? "Tutup formulir" : <><PlusOutlined /> Catat manual</>}
           </Button>
         }
       />
       <Row gutter={[16, 16]}>
         {form && (
           <Col xs={24} lg={8}>
-            <Card judul="Transaksi baru">
+            <Card judul="Catat manual" sub="Hanya untuk yang jarang terjadi, mis. pemasukan lain atau prive. Yang lain dicatat dari halamannya masing-masing.">
               <FormTransaksi akun={akun} kategori={katQ.data ?? []} onSukses={() => setForm(false)} />
             </Card>
           </Col>

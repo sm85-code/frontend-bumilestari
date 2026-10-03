@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isKategoriSistem, kategoriKasKecil, kategoriManual, labelKategori, pilihanKategori } from "./kategori";
+import { isKategoriMarketplace, isKategoriSistem, kategoriKasKecil, kategoriManual, labelKategori, pilihanKategori } from "./kategori";
 import type { Kategori } from "./types";
 
 /** Sama dengan DEFAULT_KATEGORI di seeder backend. */
@@ -42,8 +42,8 @@ describe("kategori", () => {
     expect(keluar).toEqual(["Transport", "Packing", "Operasional", "Biaya iklan", "Prive", "Pengeluaran lain"]);
     const masuk = nama(kategoriManual(kategori, "masuk"));
     expect(masuk).not.toContain("Penjualan reseller");
-    // Penjualan marketplace masih manual sampai unggah pencairan (Fase 2) tersedia.
-    expect(masuk).toEqual(["Penjualan marketplace", "Penjualan toko web", "Pemasukan lain"]);
+    // Pemasukan marketplace hanya dari impor file Excel marketplace (nanti), tidak dicatat manual.
+    expect(masuk).toEqual(["Penjualan toko web", "Pemasukan lain"]);
   });
 
   it("pilihanKategori: staf dan pengeluaran akun kas kecil memakai 4 kategori", () => {
@@ -56,6 +56,9 @@ describe("kategori", () => {
   it("isKategoriSistem dan label tampil", () => {
     expect(isKategoriSistem({ nama: "gaji karyawan" })).toBe(true);
     expect(isKategoriSistem({ nama: "Transport" })).toBe(false);
+    expect(isKategoriMarketplace({ nama: "Penjualan Shopee", jenis: "pemasukan" })).toBe(true);
+    expect(isKategoriMarketplace({ nama: "Penjualan marketplace", jenis: "pemasukan" })).toBe(true);
+    expect(isKategoriMarketplace({ nama: "Penjualan toko web", jenis: "pemasukan" })).toBe(false);
     expect(labelKategori("Pengeluaran lain")).toBe("Lainnya");
     expect(labelKategori("Penjualan reseller")).toBe("Penjualan penjual lain");
     expect(labelKategori("Langganan & utilitas")).toBe("Tagihan rutin");
