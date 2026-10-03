@@ -1,21 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
+import { Col, Row, Typography } from "antd";
+import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import type { TableColumnsType } from "antd";
-import { BarisTotal, Card, DataTabel, ErrorBox, Field, Input, Memuat, PageHeader } from "../components/ui";
+import { Angka, BarisTotal, Card, DataTabel, ErrorBox, Field, InputTanggal, Memuat, PageHeader } from "../components/ui";
 import { api, query } from "../lib/api";
 import { hariIni, num, rp, tanggal } from "../lib/format";
 import type { BarisKategori, LaporanUmum } from "../lib/types";
 
 const kolomKategori: TableColumnsType<BarisKategori> = [
   { title: "Kategori", dataIndex: "kategori" },
-  { title: "Transaksi", dataIndex: "jumlah_transaksi", align: "right", width: 100, render: (v: number) => <span className="text-coklat">{v || "—"}</span> },
-  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+  { title: "Transaksi", dataIndex: "jumlah_transaksi", align: "right", width: 100, render: (v: number) => <Typography.Text type="secondary">{v || "—"}</Typography.Text> },
+  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
 ];
 
 function TabelKategori({ judul, baris, total, labelTotal }: { judul: string; baris: BarisKategori[]; total?: string; labelTotal?: string }) {
   return (
-    <Card judul={judul} className="min-w-0">
+    <Card judul={judul}>
       <DataTabel
         kolom={kolomKategori}
         data={baris}
@@ -38,7 +39,7 @@ export default function LaporanUmumPage() {
     enabled: !!dari && !!sampai,
   });
   const d = q.data;
-  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomArus: TableColumnsType<LaporanUmum["arus_kas"][number]> = [
     { title: "Akun", dataIndex: "nama", fixed: "left", width: 150 },
     { title: "Saldo awal", dataIndex: "saldo_awal", align: "right", render: angka },
@@ -46,43 +47,48 @@ export default function LaporanUmumPage() {
     { title: "Keluar", dataIndex: "keluar", align: "right", render: angka },
     { title: "Transfer masuk", dataIndex: "transfer_masuk", align: "right", render: angka },
     { title: "Transfer keluar", dataIndex: "transfer_keluar", align: "right", render: angka },
-    { title: "Saldo akhir", dataIndex: "saldo_akhir", align: "right", render: (v: string) => <b className="tabular-nums whitespace-nowrap">{rp(v)}</b> },
+    { title: "Saldo akhir", dataIndex: "saldo_akhir", align: "right", render: (v: string) => <Typography.Text strong>{angka(v)}</Typography.Text> },
   ];
 
   return (
     <>
-      <PageHeader
-        judul="Laporan umum"
-        aksi={
-          <Link to="/laporan/kas-kecil" className="text-sm font-semibold text-hijau">
-            Laporan kas kecil →
-          </Link>
-        }
-      />
+      <PageHeader judul="Laporan umum" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
       <Card>
-        <div className="grid max-w-md grid-cols-2 gap-3">
-          <Field label="Dari">
-            <Input type="date" value={dari} onChange={(e) => setDari(e.target.value)} />
-          </Field>
-          <Field label="Sampai">
-            <Input type="date" value={sampai} onChange={(e) => setSampai(e.target.value)} />
-          </Field>
-        </div>
+        <Row gutter={16}>
+          <Col xs={12} md={6}>
+            <Field label="Dari">
+              <InputTanggal value={dari} onChange={setDari} />
+            </Field>
+          </Col>
+          <Col xs={12} md={6}>
+            <Field label="Sampai">
+              <InputTanggal value={sampai} onChange={setSampai} />
+            </Field>
+          </Col>
+        </Row>
       </Card>
 
       {q.isLoading && <Memuat />}
       <ErrorBox error={q.error} />
       {d && (
         <>
-          <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-            <TabelKategori judul="Pemasukan" baris={d.pemasukan} total={d.total_pemasukan} labelTotal="Total pemasukan" />
-            <TabelKategori judul="Biaya" baris={d.biaya} total={d.total_biaya} labelTotal="Total biaya" />
-          </div>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={12}>
+              <TabelKategori judul="Pemasukan" baris={d.pemasukan} total={d.total_pemasukan} labelTotal="Total pemasukan" />
+            </Col>
+            <Col xs={24} lg={12}>
+              <TabelKategori judul="Biaya" baris={d.biaya} total={d.total_biaya} labelTotal="Total biaya" />
+            </Col>
+          </Row>
           <Card>
-            <div className="flex items-baseline justify-between text-base font-bold">
-              <span>Laba bersih</span>
-              <span className={num(d.laba_bersih) < 0 ? "text-red-600" : "text-hijau"}>{rp(d.laba_bersih)}</span>
-            </div>
+            <Row justify="space-between" align="middle">
+              <Typography.Title level={5} style={{ margin: 0 }}>
+                Laba bersih
+              </Typography.Title>
+              <Typography.Title level={4} type={num(d.laba_bersih) < 0 ? "danger" : "success"} style={{ margin: 0 }}>
+                <Angka>{rp(d.laba_bersih)}</Angka>
+              </Typography.Title>
+            </Row>
           </Card>
           {d.di_luar_laba.length > 0 && <TabelKategori judul="Di luar laba (prive, bagi hasil)" baris={d.di_luar_laba} />}
 

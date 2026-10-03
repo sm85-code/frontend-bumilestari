@@ -1,7 +1,8 @@
+import { Col, Row, Typography } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { TableColumnsType } from "antd";
-import { Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Kosong, Select, TombolLink } from "../../components/ui";
+import { AksiForm, Angka, Button, Card, DataTabel, Dialog, ErrorBox, Field, Formulir, Input, Kosong, Select, TombolLink } from "../../components/ui";
 import { api, query } from "../../lib/api";
 import { useAksi, usePelanggan, useProduk } from "../../lib/data";
 import { useFields } from "../../lib/form";
@@ -13,10 +14,8 @@ function Form({ produk, pelangganId, awal, onSelesai }: { produk: Produk; pelang
   const angka = (v?: string) => (v ? String(Math.round(num(v))) : "");
   const { f, bind } = useFields({ harga: angka(awal?.harga), cat: angka(awal?.harga_cat_jasa), biasa: angka(awal?.harga_packing_biasa), kayu: angka(awal?.harga_packing_kayu) });
   return (
-    <form
-      className="space-y-3"
-      onSubmit={(e) => {
-        e.preventDefault();
+    <Formulir
+      onKirim={() => {
         aksi.mutate(
           {
             path: "/harga-grosir",
@@ -30,28 +29,37 @@ function Form({ produk, pelangganId, awal, onSelesai }: { produk: Produk; pelang
         );
       }}
     >
-      <p className="text-sm text-stone-600">
+      <Typography.Paragraph type="secondary">
         {produk.sku} · {produk.nama} {produk.ukuran}. Semua harga per unit; cat/jasa mengikuti ukuran barang. Biaya proses pesanan flat (diatur di Profil).
-      </p>
-      <div className="grid gap-3 md:grid-cols-2">
+      </Typography.Paragraph>
+      <Row gutter={16}>
+<Col xs={24} md={12}>
         <Field label="Harga barang (Rp)">
           <Input inputMode="numeric" required {...bind("harga")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Cat dan jasa (Rp)" hint="0 untuk produk non kayu">
           <Input inputMode="numeric" {...bind("cat")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Packing biasa (Rp)">
           <Input inputMode="numeric" {...bind("biasa")} />
         </Field>
+</Col>
+<Col xs={24} md={12}>
         <Field label="Packing kayu (Rp)">
           <Input inputMode="numeric" {...bind("kayu")} />
         </Field>
-      </div>
-      <ErrorBox error={aksi.error} />
-      <Button type="submit" disabled={aksi.isPending} className="w-full">
+</Col>
+      </Row>
+      <AksiForm error={aksi.error}>
+        <Button type="submit" disabled={aksi.isPending} penuh>
         Simpan
       </Button>
-    </form>
+      </AksiForm>
+    </Formulir>
   );
 }
 
@@ -69,7 +77,7 @@ export default function MasterHargaGrosir() {
   const harga = new Map((hargaQ.data ?? []).map((h) => [h.produk_id, h]));
   const sel = (ambil: (h: HargaGrosir) => string) => (_: unknown, p: Produk) => {
     const h = harga.get(p.id);
-    return h ? <span className="tabular-nums whitespace-nowrap">{rp(ambil(h))}</span> : "—";
+    return h ? <Angka>{rp(ambil(h))}</Angka> : "—";
   };
   const kolom: TableColumnsType<Produk> = [
     { title: "Produk", fixed: "left", width: 230, render: (_, p) => <>{p.sku} · {p.nama}</> },
@@ -83,17 +91,19 @@ export default function MasterHargaGrosir() {
 
   return (
     <Card judul="Harga grosir per penjual">
-      <div className="mb-3 max-w-xs">
-        <Field label="Penjual">
-          <Select value={pelangganId} onChange={(e) => setPilih(e.target.value)}>
-            {(pelangganQ.data ?? []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nama}
-              </option>
-            ))}
-          </Select>
-        </Field>
-      </div>
+      <Row>
+        <Col xs={24} md={8}>
+          <Field label="Penjual">
+            <Select value={pelangganId} onChange={(e) => setPilih(e.target.value)}>
+              {(pelangganQ.data ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nama}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </Col>
+      </Row>
       <ErrorBox error={hargaQ.error} />
       {!pelangganId ? (
         <Kosong teks="Tambahkan penjual lain dulu." />

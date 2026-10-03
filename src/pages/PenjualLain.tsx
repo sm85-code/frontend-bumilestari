@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import BagikanWA from "../components/BagikanWA";
+import { Col, Flex, Row, Space, Typography } from "antd";
 import type { TableColumnsType } from "antd";
-import { BarisTotal, Button, Card, DataTabel, ErrorBox, Field, Input, Kosong, Lencana, Memuat, PageHeader, TombolLink } from "../components/ui";
+import { Angka, BarisTotal, Button, Card, DataTabel, ErrorBox, Field, InputTanggal, Kosong, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
 import { api, apiUrl, query } from "../lib/api";
 import { peta, usePelanggan, useAksi } from "../lib/data";
 import { hariIni, rp, tanggal } from "../lib/format";
@@ -14,25 +15,27 @@ export default function PenjualLain() {
   const terimaQ = useQuery({ queryKey: ["penerimaan"], queryFn: () => api<PenerimaanReseller[]>("/penerimaan-reseller") });
   const pelanggan = peta(usePelanggan().data);
   const aksi = useAksi();
+  const { konfirmasi, tanya } = useDialog();
 
-  function catatBayar(inv: Invoice) {
-    if (!window.confirm(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama} (${inv.items.length} order)?`)) return;
+  async function catatBayar(inv: Invoice) {
+    if (!(await konfirmasi(`Catat pembayaran ${rp(inv.grand_total)} dari ${inv.kepada.nama} (${inv.items.length} order)?`, { ok: "Catat pembayaran" }))) return;
     aksi.mutate({
       path: "/penerimaan-reseller",
       body: { pelanggan_id: inv.kepada.pelanggan_id, tanggal: hariIni(), order_ids: inv.items.map((i) => i.order_id) },
     });
   }
 
-  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomInvoice: TableColumnsType<Invoice["items"][number]> = [
     {
       title: "Tanggal",
       fixed: "left",
       width: 130,
       render: (_, i) => (
-        <span className="whitespace-nowrap">
-          {tanggal(i.tanggal)} {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
-        </span>
+        <Space size={4} wrap={false}>
+          <Angka>{tanggal(i.tanggal)}</Angka>
+          {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
+        </Space>
       ),
     },
     { title: "Nama barang", dataIndex: "nama_barang" },
@@ -40,10 +43,10 @@ export default function PenjualLain() {
     { title: "Harga barang", dataIndex: "harga_barang", align: "right", render: angka },
     { title: "Jasa pengecatan", dataIndex: "biaya_jasa_pengecatan", align: "right", render: angka },
     { title: "Biaya proses", dataIndex: "biaya_proses", align: "right", render: angka },
-    { title: "Total", dataIndex: "total", align: "right", render: (v: string) => <b className="tabular-nums whitespace-nowrap">{rp(v)}</b> },
+    { title: "Total", dataIndex: "total", align: "right", render: (v: string) => <Typography.Text strong>{angka(v)}</Typography.Text> },
   ];
   const kolomTerima: TableColumnsType<PenerimaanReseller> = [
-    { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Tanggal", dataIndex: "tanggal", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Penjual", dataIndex: "pelanggan_id", render: (v: string) => pelanggan.get(v)?.nama ?? "—" },
     { title: "Jumlah", dataIndex: "total", align: "right", render: angka },
     { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">diterima</Lencana>) },
@@ -54,10 +57,11 @@ export default function PenjualLain() {
         !p.dibatalkan && (
           <TombolLink
             bahaya
-            onClick={() => {
-              const alasan = window.prompt("Alasan membatalkan pembayaran ini?");
-              if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/penerimaan-reseller/${p.id}/batal`, body: { alasan: alasan.trim() } });
-            }}
+            onClick={() =>
+              void tanya("Batalkan pembayaran ini?", { label: "Alasan pembatalan", min: 3, panjang: true, ok: "Batalkan pembayaran" }).then(
+                (alasan) => alasan && aksi.mutate({ path: `/penerimaan-reseller/${p.id}/batal`, body: { alasan } }),
+              )
+            }
           >
             Batalkan
           </TombolLink>
@@ -69,11 +73,13 @@ export default function PenjualLain() {
     <>
       <PageHeader judul="Penjual lain" sub="Invoice mingguan dan pembayaran yang diterima" />
       <Card>
-        <div className="max-w-xs">
-          <Field label="Tanggal acuan" hint="Invoice minggu sebelum Selasa acuan: bertanggal Sabtu, jatuh tempo Selasa">
-            <Input type="date" value={tgl} onChange={(e) => setTgl(e.target.value)} />
-          </Field>
-        </div>
+        <Row>
+          <Col xs={24} md={8}>
+            <Field label="Tanggal acuan" hint="Invoice minggu sebelum Selasa acuan: bertanggal Sabtu, jatuh tempo Selasa">
+              <InputTanggal value={tgl} onChange={setTgl} />
+            </Field>
+          </Col>
+        </Row>
       </Card>
       <ErrorBox error={invQ.error ?? aksi.error} />
       {invQ.isLoading && <Memuat />}
@@ -83,17 +89,17 @@ export default function PenjualLain() {
           key={inv.nomor}
           judul={`${inv.kepada.nama} · ${inv.nomor}`}
           aksi={
-            <span className="flex flex-wrap items-center gap-2">
-              <a className="text-sm font-semibold text-hijau hover:underline" href={apiUrl(`/invoice-reseller/${inv.kepada.pelanggan_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
+            <Space wrap>
+              <a href={apiUrl(`/invoice-reseller/${inv.kepada.pelanggan_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
                 PDF invoice
               </a>
               <BagikanWA jenis="invoice" id={inv.kepada.pelanggan_id} tanggal={tgl} label="Kirim invoice" />
-            </span>
+            </Space>
           }
         >
-          <p className="mb-2 text-xs text-stone-600">
+          <Typography.Paragraph type="secondary">
             {inv.minggu.label} · tanggal invoice {tanggal(inv.tgl_invoice)} · jatuh tempo <b>{tanggal(inv.jatuh_tempo)}</b>
-          </p>
+          </Typography.Paragraph>
           <DataTabel
             kolom={kolomInvoice}
             data={inv.items}
@@ -111,11 +117,11 @@ export default function PenjualLain() {
               />
             )}
           />
-          <div className="mt-3 flex justify-end">
-            <Button disabled={aksi.isPending} onClick={() => catatBayar(inv)}>
+          <Flex justify="flex-end" style={{ marginTop: 16 }}>
+            <Button disabled={aksi.isPending} onClick={() => void catatBayar(inv)}>
               Catat pembayaran diterima
             </Button>
-          </div>
+          </Flex>
         </Card>
       ))}
 

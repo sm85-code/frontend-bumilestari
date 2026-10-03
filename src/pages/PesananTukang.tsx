@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import BagikanWA from "../components/BagikanWA";
-import { Alert } from "antd";
+import { Alert, Col, Flex, Row, Space, Typography } from "antd";
 import type { TableColumnsType } from "antd";
-import { BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox, Field, Input, Kosong, Lencana, Memuat, PageHeader, TombolLink } from "../components/ui";
+import { Angka, BarisTotal, Button, Card, DataTabel, Dialog, ErrorBox, Field, InputTanggal, Kosong, Lencana, Memuat, PageHeader, TombolLink, useDialog } from "../components/ui";
 import { api, apiUrl, query } from "../lib/api";
 import { peta, useAksi, useProduk } from "../lib/data";
 import { hariIni, rp, tanggal } from "../lib/format";
@@ -14,7 +14,7 @@ const kolomRincian: TableColumnsType<RincianPembayaran["items"][number]> = [
   { title: "Barang", dataIndex: "produk_nama" },
   { title: "Pemasok", dataIndex: "pemasok_nama" },
   { title: "Qty", dataIndex: "qty", align: "right", width: 70 },
-  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span> },
+  { title: "Jumlah", dataIndex: "jumlah", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
 ];
 
 function Rincian({ id, onTutup }: { id: string; onTutup: () => void }) {
@@ -25,9 +25,9 @@ function Rincian({ id, onTutup }: { id: string; onTutup: () => void }) {
       <ErrorBox error={q.error} />
       {q.data && (
         <>
-          <p className="mb-2 text-sm text-stone-600">
+          <Typography.Paragraph type="secondary">
             Di laporan keuangan tampil sebagai <b>1 transaksi</b> {rp(q.data.total)}; isinya {q.data.total_qty} barang:
-          </p>
+          </Typography.Paragraph>
           <DataTabel
             kolom={kolomRincian}
             data={q.data.items}
@@ -48,23 +48,25 @@ export default function PesananTukang() {
   const riwayatQ = useQuery({ queryKey: ["pembayaran-pemasok"], queryFn: () => api<PembayaranPemasok[]>("/pembayaran-pemasok") });
   const produk = peta(useProduk().data);
   const aksi = useAksi();
+  const { konfirmasi, tanya } = useDialog();
   const siap = siapQ.data;
 
-  function kirimKeLaporan() {
-    if (!siap || !window.confirm(`Catat pembayaran ${rp(siap.total)} ke laporan keuangan?`)) return;
+  async function kirimKeLaporan() {
+    if (!siap || !(await konfirmasi(`Catat pembayaran ${rp(siap.total)} ke laporan keuangan?`, { ok: "Kirim ke laporan" }))) return;
     aksi.mutate({ path: "/pembayaran-pemasok", body: { tanggal: tgl } });
   }
 
-  const angka = (v: string) => <span className="tabular-nums whitespace-nowrap">{rp(v)}</span>;
+  const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomSiap: TableColumnsType<SiapBayar["pemasok"][number]["items"][number]> = [
     {
       title: "Tanggal selesai",
       fixed: "left",
       width: 150,
       render: (_, i) => (
-        <span className="whitespace-nowrap">
-          {tanggal(i.tgl_diambil)} {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
-        </span>
+        <Space size={4} wrap={false}>
+          <Angka>{tanggal(i.tgl_diambil)}</Angka>
+          {i.terlambat && <Lencana warna="oranye">terlambat</Lencana>}
+        </Space>
       ),
     },
     { title: "Kode pesanan", dataIndex: "no_order", width: 150, render: (v: string) => v || "—" },
@@ -72,7 +74,7 @@ export default function PesananTukang() {
       title: "Barang",
       render: (_, i) => (
         <>
-          {produk.get(i.produk_id)?.nama ?? "—"} <span className="text-coklat">{produk.get(i.produk_id)?.ukuran}</span>
+          {produk.get(i.produk_id)?.nama ?? "—"} <Typography.Text type="secondary">{produk.get(i.produk_id)?.ukuran}</Typography.Text>
         </>
       ),
     },
@@ -80,28 +82,29 @@ export default function PesananTukang() {
     { title: "Jumlah", dataIndex: "jumlah", align: "right", render: angka },
   ];
   const kolomRiwayat: TableColumnsType<PembayaranPemasok> = [
-    { title: "Selasa", dataIndex: "selasa", fixed: "left", width: 110, render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
-    { title: "Tanggal catat", dataIndex: "tanggal", render: (v: string) => <span className="whitespace-nowrap">{tanggal(v)}</span> },
+    { title: "Selasa", dataIndex: "selasa", fixed: "left", width: 110, render: (v: string) => <Angka>{tanggal(v)}</Angka> },
+    { title: "Tanggal catat", dataIndex: "tanggal", render: (v: string) => <Angka>{tanggal(v)}</Angka> },
     { title: "Total", dataIndex: "total", align: "right", render: angka },
     { title: "Status", dataIndex: "dibatalkan", render: (v: boolean) => (v ? <Lencana warna="merah">dibatalkan</Lencana> : <Lencana warna="hijau">tercatat</Lencana>) },
     {
       title: "Aksi",
       width: 170,
       render: (_, p) => (
-        <span className="whitespace-nowrap">
+        <Space size={0}>
           <TombolLink onClick={() => setLihat(p.id)}>Rincian</TombolLink>
           {!p.dibatalkan && (
             <TombolLink
               bahaya
-              onClick={() => {
-                const alasan = window.prompt("Alasan membatalkan pembayaran ini?");
-                if (alasan && alasan.trim().length >= 3) aksi.mutate({ path: `/pembayaran-pemasok/${p.id}/batal`, body: { alasan: alasan.trim() } });
-              }}
+              onClick={() =>
+                void tanya("Batalkan pembayaran ini?", { label: "Alasan pembatalan", min: 3, panjang: true, ok: "Batalkan pembayaran" }).then(
+                  (alasan) => alasan && aksi.mutate({ path: `/pembayaran-pemasok/${p.id}/batal`, body: { alasan } }),
+                )
+              }
             >
               Batalkan
             </TombolLink>
           )}
-        </span>
+        </Space>
       ),
     },
   ];
@@ -110,19 +113,21 @@ export default function PesananTukang() {
     <>
       <PageHeader judul="Pesanan ke tukang" sub="Dibayar sekali tiap Selasa, dicatat sebagai 1 transaksi" />
       <Card>
-        <div className="max-w-xs">
-          <Field label="Tanggal pembayaran" hint="Diambil Senin–Sabtu minggu sebelum Selasa acuan ikut dibayar">
-            <Input type="date" value={tgl} onChange={(e) => setTgl(e.target.value)} />
-          </Field>
-        </div>
+        <Row>
+          <Col xs={24} md={8}>
+            <Field label="Tanggal pembayaran" hint="Diambil Senin–Sabtu minggu sebelum Selasa acuan ikut dibayar">
+              <InputTanggal value={tgl} onChange={setTgl} />
+            </Field>
+          </Col>
+        </Row>
       </Card>
       <ErrorBox error={siapQ.error ?? aksi.error} />
       {siapQ.isLoading && <Memuat />}
       {siap && (
         <>
-          <p className="text-sm text-stone-600">
+          <Typography.Text type="secondary">
             Selasa acuan <b>{tanggal(siap.selasa)}</b> · diambil sampai <b>{tanggal(siap.batas_diambil)}</b> (Sabtu)
-          </p>
+          </Typography.Text>
           {siap.sudah_dicatat_id && (
             <Alert
               type="success"
@@ -139,12 +144,12 @@ export default function PesananTukang() {
               key={g.pemasok_id}
               judul={`${g.nama} · ${g.jenis === "supplier" ? "supplier" : "tukang kayu"}`}
               aksi={
-                <span className="flex flex-wrap items-center gap-2">
-                  <a className="text-sm font-semibold text-hijau hover:underline" href={apiUrl(`/po/${g.pemasok_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
+                <Space wrap>
+                  <a href={apiUrl(`/po/${g.pemasok_id}/pdf${query({ tanggal: tgl })}`)} target="_blank" rel="noreferrer">
                     PDF PO
                   </a>
                   <BagikanWA jenis="po" id={g.pemasok_id} tanggal={tgl} label="Kirim PO" />
-                </span>
+                </Space>
               }
             >
               <DataTabel
@@ -158,13 +163,15 @@ export default function PesananTukang() {
           ))}
           {siap.pemasok.length > 0 && !siap.sudah_dicatat_id && (
             <Card>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-base font-bold">Total dibayar Selasa: {rp(siap.total)}</p>
-                <Button disabled={aksi.isPending} onClick={kirimKeLaporan}>
+              <Flex wrap justify="space-between" align="center" gap="middle">
+                <Typography.Title level={4} style={{ margin: 0 }}>
+                  Total dibayar Selasa: {rp(siap.total)}
+                </Typography.Title>
+                <Button disabled={aksi.isPending} onClick={() => void kirimKeLaporan()}>
                   Kirim ke laporan
                 </Button>
-              </div>
-              <p className="mt-1 text-xs text-stone-500">Dicatat 1 kali per Selasa sebagai 1 transaksi; rincian barang tersimpan di dalamnya.</p>
+              </Flex>
+              <Typography.Text type="secondary">Dicatat 1 kali per Selasa sebagai 1 transaksi; rincian barang tersimpan di dalamnya.</Typography.Text>
             </Card>
           )}
         </>
