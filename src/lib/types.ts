@@ -785,3 +785,78 @@ export interface PlafonLog {
   alasan: string;
   created_at: string;
 }
+
+// Laporan keuangan Fase 2.13 (spesifikasi 9.1-9.3, 9.7)
+export interface BarisNilai {
+  label: string;
+  jumlah: string;
+  rincian: BarisNilai[];
+}
+export interface LabaRugi {
+  periode: string;
+  sementara: boolean;
+  penjualan: BarisNilai[];
+  total_penjualan: string;
+  biaya_marketplace: BarisNilai[];
+  total_biaya_marketplace: string;
+  penjualan_bersih: string;
+  hpp: string;
+  laba_kotor: string;
+  margin_persen: string | null;
+  biaya_operasional: BarisNilai[];
+  total_biaya_operasional: string;
+  pendapatan_lain: BarisNilai[];
+  laba_bersih: string;
+  hpp_dicocokkan: string;
+  belum_cair: { total_penjualan: string; total_perkiraan_cair: string; jumlah_order: number; tgl_kirim_tertua: string | null; perkiraan_laba_jika_cair: string };
+  di_luar_laba: BarisNilai[];
+}
+export interface Neraca {
+  per_tanggal: string;
+  aset_kas: BarisNilai[];
+  piutang_penjual_lain: string;
+  belum_cair: BarisNilai[];
+  total_aset: string;
+  utang_pemasok: BarisNilai[];
+  dana_gaji_belum_dibayar: string;
+  talangan: BarisNilai[];
+  total_kewajiban: string;
+  modal: BarisNilai[];
+  total_modal: string;
+  selisih: string;
+}
+export interface MarginBaris {
+  label: string;
+  qty: number;
+  jumlah_order: number;
+  penjualan: string;
+  potongan: string;
+  hpp: string;
+  laba_kotor: string;
+  margin_persen: string | null;
+}
+export interface HppMargin {
+  periode: string;
+  sementara: boolean;
+  per_produk: MarginBaris[];
+  per_saluran: MarginBaris[];
+  total: MarginBaris;
+}
+export interface RingkasanOwner {
+  periode: string;
+  sementara: boolean;
+  penjualan: string;
+  hpp: string;
+  biaya_iklan: string;
+  biaya_operasional_lain: string;
+  laba_bersih: string;
+  tren: { periode: string; penjualan: string; laba_bersih: string; sementara: boolean }[];
+  total_kas: string;
+  piutang: string;
+  utang: string;
+  modal: string;
+  setoran_modal: string;
+  laba_ditahan: string;
+  bagi_hasil_dibayar: string;
+  bagi_hasil: { periode: string; laba_bersih: string; persen_owner: string; bagian_owner: string; dibayar: boolean; tanggal_bayar: string | null }[];
+}
