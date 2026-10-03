@@ -6,7 +6,7 @@ import { num } from "./format";
 import { LANGKAH_AKTIF, bacaTanda, selasaAcuan, selesaiOtomatis, simpanTanda, statusLangkah, tambahHari, type IdLangkah, type StatusLangkah, type TandaManual } from "./selasa";
 import type { Invoice, PengisianImprest, PiutangPelanggan, SiapBayar, Sisihan, Transfer } from "./types";
 
-/** Data & status semua langkah Rutinitas Selasa untuk Selasa acuan dari `tgl`. Dipakai halaman Selasa dan Beranda. */
+/** Data & status semua langkah Tutup Kas Mingguan untuk Selasa acuan dari `tgl`. Dipakai halaman Tutup Kas Mingguan dan Beranda. */
 export function useSelasa(tgl: string, admin: boolean, aktif = true) {
   const selasa = selasaAcuan(tgl);
   const akunQ = useAkun();

@@ -39,8 +39,8 @@ Menu dikelompokkan; URL tidak berubah.
 
 | Grup | Menu | Rute | Isi |
 |---|---|---|---|
-| Rutin | Beranda | `/` | Kas bisa dipakai vs Dana cadangan, laba bulan ini, bayar tukang Selasa ini, tagihan penjual lain jatuh tempo Selasa ini (dan semua yang belum dibayar), **Yang perlu dikerjakan**, akun kas, order bulan ini + status semua order (sepanjang waktu), kas kecil/iklan, pratinjau bagi hasil |
-| Rutin | Rutinitas Selasa | `/selasa` | Wizard langkah demi langkah (Selesai/Belum/Dilewati): 1 terima bayar penjual lain, 2 pencairan marketplace *(segera hadir)*, 3 tarik saldo ke Kas utama, 4 bayar tukang & supplier, 5 lunasi talangan *(segera hadir)*, 6 sisihkan dana gaji, 7 isi kas kecil & kas iklan (iklan hanya admin) |
+| Mingguan | Beranda | `/` | Kas bisa dipakai vs Dana cadangan, laba bulan ini, bayar tukang Selasa ini, tagihan penjual lain jatuh tempo Selasa ini (dan semua yang belum dibayar), **Yang perlu dikerjakan**, akun kas, order bulan ini + status semua order (sepanjang waktu), kas kecil/iklan, pratinjau bagi hasil |
+| Mingguan | Tutup Kas Mingguan | `/selasa` | Wizard langkah demi langkah, biasanya tiap Selasa (Selesai/Belum/Dilewati): 1 terima bayar penjual lain, 2 pencairan marketplace *(segera hadir)*, 3 tarik saldo ke Kas utama, 4 bayar tukang & supplier, 5 lunasi talangan *(segera hadir)*, 6 sisihkan dana gaji, 7 isi kas kecil & kas iklan (iklan hanya admin) |
 | Penjualan | Order | `/order` | Daftar order, order baru, pindah status (alur kayu/non kayu/polos), batalkan |
 | Penjualan | Tagihan penjual lain | `/penjual-lain` | Invoice mingguan per penjual lain (PDF, WhatsApp), catat pembayaran diterima (tanggal bisa dipilih), riwayat |
 | Pembelian | Bayar tukang & supplier | `/pesanan-tukang` | Siap dibayar per tukang & supplier, **Catat pembayaran** (1 transaksi + rincian), PDF/WhatsApp rekap, riwayat |
@@ -53,7 +53,7 @@ Menu dikelompokkan; URL tidak berubah.
 | Pengaturan | Data master | `/master` | Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna (admin), profil UMKM + proporsi bagi hasil (ubah: admin) |
 | Pengaturan | Profil saya | `/akun` | Data diri, ganti kata sandi (wajib bila masih bawaan) |
 
-Di HP: navigasi bawah Beranda, Order, Selasa, Kas, **Lainnya** (`/lainnya`, berisi menu lengkap per grup).
+Di HP: navigasi bawah Beranda, Order, Tutup kas, Kas, **Lainnya** (`/lainnya`, berisi menu lengkap per grup).
 
 **Menu staf** (peran `staff`): **Kas kecil** (`/kas-kecil`: saldo besar, Catat pengeluaran dengan 4 tombol kategori, 10 catatan
 terakhir, tanpa tombol batal — "Salah catat? Minta admin membatalkan."), **Riwayat bulan ini** (`/laporan/kas-kecil`, bulan
@@ -71,7 +71,7 @@ Diatur di `src/lib/kategori.ts` (nama dicocokkan dengan seeder backend):
 - Transaksi otomatis (`ref_jenis` terisi) dan transfer sisihan dana tidak bisa dibatalkan dari Kas & transaksi; tampil
   "Otomatis dari …" dengan tautan ke halaman asal.
 
-Catatan: aturan di atas baru ditegakkan di frontend; backend menyusul (Fase 1). Status langkah Rutinitas Selasa yang ditandai
+Catatan: aturan di atas baru ditegakkan di frontend; backend menyusul (Fase 1). Status langkah Tutup Kas Mingguan yang ditandai
 manual (Tandai selesai / Lewati) dan tanda "cek fisik kas kecil" di Beranda sementara disimpan di `localStorage` perangkat.
 
 Laporan kas iklan terpisah dikerjakan admin nanti (backend belum membukanya).

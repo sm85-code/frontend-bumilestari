@@ -142,7 +142,7 @@ function TabKaryawan() {
           </Col>
         </Row>
         <Typography.Paragraph type="secondary">
-          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di Rutinitas Selasa.
+          Saldo Dana cadangan: <b>{rp(dana?.saldo)}</b>. Kurang? Isi lewat transfer atau sisihkan di Tutup Kas Mingguan.
         </Typography.Paragraph>
         <ErrorBox error={gajiQ.error ?? aksi.error} />
         <DataTabel

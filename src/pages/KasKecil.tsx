@@ -66,7 +66,7 @@ export default function KasKecil() {
           style={{ marginTop: 12 }}
           type="warning"
           showIcon
-          title={pemilik ? "Saldo kas kecil di bawah 20% plafon. Isi ulang di Rutinitas Selasa." : "Uang kas kecil tinggal sedikit. Kabari admin."}
+          title={pemilik ? "Saldo kas kecil di bawah 20% plafon. Isi ulang di Tutup Kas Mingguan." : "Uang kas kecil tinggal sedikit. Kabari admin."}
         />
       )}
     </Card>
@@ -117,7 +117,7 @@ export default function KasKecil() {
 
   return (
     <>
-      <PageHeader judul="Kas kecil" sub="Pegangan staf, diisi kembali sampai plafon tiap Selasa" />
+      <PageHeader judul="Kas kecil" sub="Pegangan staf, diisi kembali sampai plafon saat Tutup Kas Mingguan (biasanya tiap Selasa)" />
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
           <Flex vertical gap="middle">

@@ -43,7 +43,7 @@ export function periodeSebelum(iso: string): string {
 export function daftarTugas(i: InputTugas): Tugas[] {
   const t: Tugas[] = [];
   if (i.selasaBeres < i.selasaTotal) {
-    t.push({ id: "selasa", teks: `Rutinitas Selasa ${tanggal(i.selasa)}: ${i.selasaBeres} dari ${i.selasaTotal} langkah beres`, ke: "/selasa", penting: true });
+    t.push({ id: "selasa", teks: `Tutup Kas Mingguan (Selasa ${tanggal(i.selasa)}): ${i.selasaBeres} dari ${i.selasaTotal} langkah beres`, ke: "/selasa", penting: true });
   }
   if (i.utangTukang > 0 && !i.tukangSudahDibayar) t.push({ id: "tukang", teks: `Bayar tukang & supplier ${rp(i.utangTukang)}`, ke: "/selasa" });
   if (i.tagihanPenjualLain > 0) t.push({ id: "penjual-lain", teks: `Terima bayar ${i.jumlahInvoice} penjual lain: ${rp(i.tagihanPenjualLain)} jatuh tempo Selasa ini`, ke: "/selasa" });

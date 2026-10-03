@@ -121,7 +121,7 @@ export default function Keuangan() {
             </Card>
             <Card judul="Riwayat transfer antar akun kas">
               <ErrorBox error={transferQ.error ?? aksi.error} />
-              <DataTabel kolom={kolomTransfer} data={transferQ.data ?? []} rowKey="id" minLebar={760} kosong="Belum ada transfer. Tarik saldo dan isi ulang kas dicatat dari Rutinitas Selasa." />
+              <DataTabel kolom={kolomTransfer} data={transferQ.data ?? []} rowKey="id" minLebar={760} kosong="Belum ada transfer. Tarik saldo dan isi ulang kas dicatat dari Tutup Kas Mingguan." />
             </Card>
           </Flex>
         </Col>

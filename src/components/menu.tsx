@@ -35,10 +35,10 @@ export interface GrupMenu {
  */
 export const MENU_PEMILIK: GrupMenu[] = [
   {
-    grup: "Rutin",
+    grup: "Mingguan",
     item: [
       { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
-      { ke: "/selasa", label: "Rutinitas Selasa", ikon: <CalendarOutlined /> },
+      { ke: "/selasa", label: "Tutup Kas Mingguan", ikon: <CalendarOutlined /> },
     ],
   },
   {
@@ -78,7 +78,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
 export const MENU_BAWAH_PEMILIK: ItemMenu[] = [
   { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
   { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
-  { ke: "/selasa", label: "Selasa", ikon: <CalendarOutlined /> },
+  { ke: "/selasa", label: "Tutup kas", ikon: <CalendarOutlined /> },
   { ke: "/keuangan", label: "Kas", ikon: <WalletOutlined /> },
   { ke: "/lainnya", label: "Lainnya", ikon: <AppstoreOutlined /> },
 ];

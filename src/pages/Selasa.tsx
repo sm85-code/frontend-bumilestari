@@ -148,7 +148,7 @@ function LangkahBayarTukang({ d, tgl }: { d: DataSelasa; tgl: string }) {
     <Flex vertical gap="small" align="flex-start" style={{ width: "100%" }}>
       <ErrorBox error={d.siapQ.error ?? aksi.error} />
       {d.siapQ.isLoading && <Memuat />}
-      {siap?.sudah_dicatat_id && <Alert type="success" showIcon title="Pembayaran tukang & supplier Selasa ini sudah dicatat." />}
+      {siap?.sudah_dicatat_id && <Alert type="success" showIcon title="Pembayaran tukang & supplier minggu ini sudah dicatat." />}
       {siap && !siap.sudah_dicatat_id && siap.pemasok.length === 0 && <Kosong teks={`Tidak ada yang perlu dibayar. Barang yang diambil sampai ${tanggal(siap.batas_diambil)} sudah lunas.`} />}
       {siap && !siap.sudah_dicatat_id && siap.pemasok.length > 0 && (
         <>
@@ -166,7 +166,7 @@ function LangkahBayarTukang({ d, tgl }: { d: DataSelasa; tgl: string }) {
           >
             Catat pembayaran {rp(siap.total)}
           </Button>
-          <Typography.Text type="secondary">Saat ini satu pembayaran untuk semua tukang & supplier per Selasa.</Typography.Text>
+          <Typography.Text type="secondary">Saat ini satu pembayaran untuk semua tukang & supplier per minggu.</Typography.Text>
         </>
       )}
       <Link to="/pesanan-tukang">Rincian, PDF rekap & kirim rekap di Bayar tukang & supplier →</Link>
@@ -331,11 +331,11 @@ export default function Selasa() {
   return (
     <>
       <PageHeader
-        judul="Rutinitas Selasa"
-        sub={`Selasa ${tanggalHari(d.selasa)} · ${d.selesai} dari ${d.total} langkah selesai`}
+        judul="Tutup Kas Mingguan"
+        sub={`Minggu dengan Selasa ${tanggalHari(d.selasa)} (biasanya tiap Selasa) · ${d.selesai} dari ${d.total} langkah selesai`}
         aksi={
           <div style={{ width: 200 }}>
-            <Field label="Tanggal pencatatan" hint="Bawaan: Selasa yang sedang dikerjakan">
+            <Field label="Tanggal pencatatan" hint="Bawaan: Selasa minggu ini">
               <InputTanggal value={tgl} onChange={setTgl} />
             </Field>
           </div>
@@ -344,7 +344,7 @@ export default function Selasa() {
       <Card>
         <Flex vertical gap="small" style={{ marginBottom: 16 }}>
           <Progress nilai={d.beres} maks={d.total} />
-          {d.beres === d.total && <Alert type="success" showIcon title="Selasa ini selesai. Terima kasih!" />}
+          {d.beres === d.total && <Alert type="success" showIcon title="Tutup kas minggu ini selesai. Terima kasih!" />}
         </Flex>
         <Steps
           orientation="vertical"

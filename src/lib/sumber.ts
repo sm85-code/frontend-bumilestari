@@ -14,7 +14,7 @@ const SUMBER: Record<string, Sumber> = {
   gaji: { label: "Gaji & tagihan rutin", ke: "/gaji" },
   tagihan: { label: "Gaji & tagihan rutin", ke: "/gaji" },
   bagi_hasil: { label: "Bagi hasil", ke: "/bagi-hasil" },
-  sisihan: { label: "Rutinitas Selasa", ke: "/selasa" },
+  sisihan: { label: "Tutup Kas Mingguan", ke: "/selasa" },
 };
 
 /** Halaman asal transaksi otomatis, atau null bila transaksi manual. ref_jenis yang belum dikenal tetap dianggap otomatis. */
@@ -31,7 +31,7 @@ export const LABEL_JENIS_TRANSFER: Record<string, string> = {
   sisihan_dana: "Sisihan gaji",
 };
 
-/** Transfer sisihan gaji hanya boleh dibatalkan dari Rutinitas Selasa (bersama provisi biaya gajinya). */
+/** Transfer sisihan gaji hanya boleh dibatalkan dari Tutup Kas Mingguan (bersama provisi biaya gajinya). */
 export function sumberTransfer(t: { jenis: string }): Sumber | null {
   return t.jenis === "sisihan_dana" ? SUMBER.sisihan : null;
 }

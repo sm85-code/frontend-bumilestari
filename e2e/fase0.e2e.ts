@@ -109,7 +109,7 @@ test("beranda: kas bisa dipakai terpisah dari dana cadangan, tagihan Selasa ini,
   await expect(page.getByText("Status semua order (sepanjang waktu)")).toBeVisible();
 
   const tugas = page.locator(".ant-card", { hasText: "Yang perlu dikerjakan" });
-  await expect(tugas.locator('[data-tugas="selasa"]')).toContainText("Rutinitas Selasa");
+  await expect(tugas.locator('[data-tugas="selasa"]')).toContainText("Tutup Kas Mingguan");
   await expect(tugas.locator('[data-tugas="tukang"]')).toContainText("Bayar tukang & supplier Rp500.000");
   await expect(tugas.locator('[data-tugas="penjual-lain"]')).toContainText("Rp945.000 jatuh tempo Selasa ini");
   await expect(tugas.locator('[data-tugas="kas-iklan"]')).toContainText("di bawah 20% plafon");
@@ -117,10 +117,10 @@ test("beranda: kas bisa dipakai terpisah dari dana cadangan, tagihan Selasa ini,
   await expect(page).toHaveURL(/\/selasa$/);
 });
 
-test("rutinitas selasa: wizard langkah demi langkah dengan status", async ({ page }) => {
+test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ page }) => {
   const panggilan = await pasangApiTiruan(page);
   await page.goto("/selasa");
-  await expect(page.getByRole("heading", { name: "Rutinitas Selasa" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tutup Kas Mingguan" })).toBeVisible();
   await expect(page.getByText(/dari 5 langkah selesai/)).toBeVisible();
   // Langkah tanpa backend: tampil "Segera hadir", tidak bisa dikerjakan.
   await expect(page.getByText("Segera hadir", { exact: true })).toHaveCount(2);

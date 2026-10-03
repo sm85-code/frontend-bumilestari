@@ -9,11 +9,11 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
 
   if (!hp(info.project.name)) {
     const samping = page.locator('aside[aria-label="Menu samping"]');
-    for (const grup of ["Rutin", "Penjualan", "Pembelian", "Uang", "Laporan", "Pengaturan"]) {
+    for (const grup of ["Mingguan", "Penjualan", "Pembelian", "Uang", "Laporan", "Pengaturan"]) {
       await expect(samping.locator(".ant-menu-item-group-title", { hasText: new RegExp(`^${grup}$`) })).toBeVisible();
     }
     const menu: [string, string][] = [
-      ["Rutinitas Selasa", "/selasa"], ["Order", "/order"], ["Tagihan penjual lain", "/penjual-lain"], ["Bayar tukang & supplier", "/pesanan-tukang"],
+      ["Tutup Kas Mingguan", "/selasa"], ["Order", "/order"], ["Tagihan penjual lain", "/penjual-lain"], ["Bayar tukang & supplier", "/pesanan-tukang"],
       ["Kas & transaksi", "/keuangan"], ["Gaji & tagihan rutin", "/gaji"], ["Bagi hasil", "/bagi-hasil"],
       ["Laba rugi", "/laporan"], ["Data master", "/master"], ["Profil saya", "/akun"], ["Beranda", "/"],
     ];
@@ -28,7 +28,7 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
     await expect(page).toHaveURL(urlAkhir("/laporan/kas-kecil"));
   } else {
     const nav = page.getByRole("navigation", { name: "Navigasi utama" });
-    for (const [label, path] of [["Order", "/order"], ["Selasa", "/selasa"], ["Kas", "/keuangan"], ["Lainnya", "/lainnya"], ["Beranda", "/"]]) {
+    for (const [label, path] of [["Order", "/order"], ["Tutup kas", "/selasa"], ["Kas", "/keuangan"], ["Lainnya", "/lainnya"], ["Beranda", "/"]]) {
       await nav.getByRole("button", { name: new RegExp(`${label}$`) }).click();
       await expect(page).toHaveURL(urlAkhir(path));
     }

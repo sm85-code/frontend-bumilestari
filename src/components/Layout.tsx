@@ -50,7 +50,7 @@ export default function Layout() {
   const aktif = kunciAktif(pemilik ? semuaItem(MENU_PEMILIK) : MENU_STAF, pathname);
   // Halaman yang tidak ada di navigasi bawah (mis. /gaji) menyorot "Lainnya".
   const aktifBawah = kunciAktif(menuBawah, pathname).length ? kunciAktif(menuBawah, pathname) : pemilik ? ["/lainnya"] : [];
-  // Menu samping: admin/owner dikelompokkan (Rutin, Penjualan, Pembelian, Uang, Laporan, Pengaturan); staf 3 menu.
+  // Menu samping: admin/owner dikelompokkan (Mingguan, Penjualan, Pembelian, Uang, Laporan, Pengaturan); staf 3 menu.
   const itemSamping = pemilik
     ? MENU_PEMILIK.map((g) => ({
         type: "group" as const,
