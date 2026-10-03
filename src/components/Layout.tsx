@@ -14,10 +14,11 @@ import {
   UserOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
-import { Button, Flex, Layout as ALayout, Menu, Typography, theme } from "antd";
+import { Button, Flex, Menu, Typography } from "antd";
 import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { isPemilik, useAuth } from "../auth/AuthContext";
+import { WARNA } from "../theme";
 
 interface ItemMenu {
   ke: string;
@@ -82,10 +83,10 @@ function useLaptop(): boolean {
 
 function Merek({ nama, peran, ukuran }: { nama?: string; peran?: string; ukuran: number }) {
   return (
-    <Flex align="center" gap="small" style={{ minWidth: 0 }}>
+    <Flex align="center" gap={12} style={{ minWidth: 0 }}>
       <img src="/logo.png" alt="" width={ukuran} height={ukuran} />
       <div style={{ minWidth: 0 }}>
-        <Typography.Text strong type="success" ellipsis style={{ display: "block" }}>
+        <Typography.Text strong ellipsis style={{ display: "block", fontSize: 16, color: WARNA.hijau }}>
           Bumi Lestari
         </Typography.Text>
         <Typography.Text type="secondary" ellipsis style={{ display: "block", fontSize: 12 }}>
@@ -97,14 +98,13 @@ function Merek({ nama, peran, ukuran }: { nama?: string; peran?: string; ukuran:
 }
 
 /**
- * Laptop (>= 768px): Sider (menu samping) + konten.
- * HP: header + navigasi bawah.
+ * Laptop (>= 768px): sidebar putih melayang + konten.
+ * HP: header kapsul di atas dan navigasi bawah melayang.
  */
 export default function Layout() {
   const { user, keluar } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { token } = theme.useToken();
   const laptop = useLaptop();
   const pemilik = isPemilik(user?.role);
   const menu = pemilik ? MENU_PEMILIK : MENU_STAF; // menu samping (laptop)
@@ -112,67 +112,105 @@ export default function Layout() {
   const aktif = kunciAktif(menu, pathname);
   const aktifBawah = kunciAktif(menuBawah, pathname);
 
-  return (
-    <ALayout style={{ minHeight: "100vh" }}>
-      {laptop && (
-        <ALayout.Sider width={248} theme="light" style={{ position: "sticky", top: 0, height: "100vh", overflow: "auto" }}>
-          <Flex vertical style={{ height: "100%" }}>
-            <div style={{ padding: 16 }}>
-              <Merek nama={user?.nama} peran={user?.role} ukuran={44} />
-            </div>
-            <Menu
-              mode="inline"
-              style={{ flex: 1, borderInlineEnd: 0 }}
-              selectedKeys={aktif}
-              onClick={({ key }) => navigate(key)}
-              items={menu.map((m) => ({ key: m.ke, icon: m.ikon, label: m.label }))}
-            />
-            <div style={{ padding: 16 }}>
-              <Button block icon={<LogoutOutlined />} onClick={() => void keluar()}>
-                Keluar
-              </Button>
-            </div>
-          </Flex>
-        </ALayout.Sider>
-      )}
-
-      <ALayout>
-        {!laptop && (
-          <ALayout.Header style={{ position: "sticky", top: 0, zIndex: 20, paddingInline: 16, height: "auto", lineHeight: "normal", paddingBlock: 8, background: token.colorBgContainer, borderBottom: `1px solid ${token.colorBorderSecondary}` }}>
-            <Merek nama={user?.nama} peran={user?.role} ukuran={40} />
-          </ALayout.Header>
-        )}
-        <ALayout.Content style={{ padding: laptop ? 24 : 12, paddingBottom: laptop ? 24 : 84 }}>
-          <Flex vertical gap="middle" style={{ maxWidth: 1200, margin: "0 auto" }}>
+  if (laptop) {
+    return (
+      <div style={{ minHeight: "100vh", background: WARNA.latar, padding: 16, display: "flex", gap: 20, alignItems: "flex-start" }}>
+        <aside
+          aria-label="Menu samping"
+          style={{
+            width: 252,
+            flex: "0 0 252px",
+            position: "sticky",
+            top: 16,
+            height: "calc(100vh - 32px)",
+            background: WARNA.kartu,
+            borderRadius: 28,
+            boxShadow: "0 1px 2px rgba(20,24,28,0.03), 0 8px 28px rgba(20,24,28,0.04)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ padding: "22px 20px 12px" }}>
+            <Merek nama={user?.nama} peran={user?.role} ukuran={46} />
+          </div>
+          <Menu
+            mode="inline"
+            style={{ flex: 1, borderInlineEnd: 0, padding: "4px 12px", overflowY: "auto", background: "transparent" }}
+            selectedKeys={aktif}
+            onClick={({ key }) => navigate(key)}
+            items={menu.map((m) => ({ key: m.ke, icon: m.ikon, label: m.label }))}
+          />
+          <div style={{ padding: 16 }}>
+            <Button block icon={<LogoutOutlined />} onClick={() => void keluar()}>
+              Keluar
+            </Button>
+          </div>
+        </aside>
+        <main style={{ flex: 1, minWidth: 0 }}>
+          <Flex vertical gap={20} style={{ maxWidth: 1360, margin: "0 auto", padding: "8px 8px 24px" }}>
             <Outlet />
           </Flex>
-        </ALayout.Content>
-      </ALayout>
+        </main>
+      </div>
+    );
+  }
 
-      {!laptop && (
-        <nav
-          aria-label="Navigasi utama"
-          style={{ position: "fixed", insetInline: 0, bottom: 0, zIndex: 20, background: token.colorBgContainer, borderTop: `1px solid ${token.colorBorderSecondary}`, paddingBottom: "env(safe-area-inset-bottom)" }}
-        >
-          <Flex>
-            {menuBawah.map((m) => {
-              const on = aktifBawah.includes(m.ke);
-              return (
-                <Button
-                  key={m.ke}
-                  type="text"
-                  onClick={() => navigate(m.ke)}
-                  aria-current={on ? "page" : undefined}
-                  style={{ flex: 1, height: 56, display: "flex", flexDirection: "column", gap: 2, padding: 4, color: on ? token.colorPrimary : token.colorTextSecondary, fontWeight: on ? 600 : 400, fontSize: 12 }}
-                >
-                  <span style={{ fontSize: 20, lineHeight: 1 }}>{m.ikon}</span>
-                  {m.label}
-                </Button>
-              );
-            })}
-          </Flex>
-        </nav>
-      )}
-    </ALayout>
+  return (
+    <div style={{ minHeight: "100vh", background: WARNA.latar }}>
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 20,
+          padding: "10px 12px 6px",
+          paddingTop: "max(10px, env(safe-area-inset-top))",
+          background: `linear-gradient(${WARNA.latar} 70%, transparent)`,
+        }}
+      >
+        <div style={{ background: WARNA.kartu, borderRadius: 999, padding: "8px 16px", boxShadow: "0 1px 2px rgba(20,24,28,0.04), 0 6px 20px rgba(20,24,28,0.05)" }}>
+          <Merek nama={user?.nama} peran={user?.role} ukuran={38} />
+        </div>
+      </header>
+      <main style={{ padding: "8px 12px 104px" }}>
+        <Flex vertical gap={16}>
+          <Outlet />
+        </Flex>
+      </main>
+      <nav
+        aria-label="Navigasi utama"
+        style={{ position: "fixed", insetInline: 12, bottom: "max(12px, env(safe-area-inset-bottom))", zIndex: 20, background: WARNA.kartu, borderRadius: 28, padding: 6, boxShadow: "0 4px 24px rgba(20,24,28,0.12)" }}
+      >
+        <Flex>
+          {menuBawah.map((m) => {
+            const on = aktifBawah.includes(m.ke);
+            return (
+              <Button
+                key={m.ke}
+                type="text"
+                onClick={() => navigate(m.ke)}
+                aria-current={on ? "page" : undefined}
+                style={{
+                  flex: 1,
+                  height: 54,
+                  borderRadius: 22,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  padding: 4,
+                  fontSize: 11,
+                  fontWeight: on ? 700 : 500,
+                  background: on ? WARNA.hijauMuda : "transparent",
+                  color: on ? WARNA.hijau : WARNA.redup,
+                }}
+              >
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{m.ikon}</span>
+                {m.label}
+              </Button>
+            );
+          })}
+        </Flex>
+      </nav>
+    </div>
   );
 }

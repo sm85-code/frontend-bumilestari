@@ -1,15 +1,24 @@
 import type { ThemeConfig } from "antd";
 
-/** Warna diambil dari logo Bumi Lestari: hijau daun, oranye matahari, coklat gunung. Selebihnya default Ant Design. */
+/** Warna dari logo Bumi Lestari: hijau daun, oranye matahari, coklat gunung. */
 export const WARNA = {
   hijau: "#386c20",
+  hijauTua: "#2b5418",
+  hijauMuda: "#eaf2e5",
+  hijauMudaHover: "#dbe8d3",
+  hijauGaris: "#b7cfa9",
   oranye: "#fda800",
   coklat: "#655e54",
+  latar: "#eceef0",
+  kartu: "#ffffff",
+  teks: "#15191c",
+  redup: "#7a828b",
+  garis: "#eef0f2",
 };
 
-/** Hijau logo cukup gelap; turunan otomatis antd untuk latar jadi abu-abu kehijauan. Tentukan versi mudanya agar jelas terbaca. */
-const HIJAU_MUDA = { bg: "#eaf2e5", bgHover: "#dbe8d3", border: "#b7cfa9" };
+export const FONT = '"Plus Jakarta Sans Variable", "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
+/** Gaya "bento": latar abu muda, kartu putih sangat bulat tanpa garis tepi, kapsul untuk tombol dan label. */
 export const tema: ThemeConfig = {
   token: {
     colorPrimary: WARNA.hijau,
@@ -17,14 +26,70 @@ export const tema: ThemeConfig = {
     colorSuccess: WARNA.hijau,
     colorWarning: WARNA.oranye,
     colorInfo: WARNA.hijau,
-    colorPrimaryBg: HIJAU_MUDA.bg,
-    colorPrimaryBgHover: HIJAU_MUDA.bgHover,
-    colorPrimaryBorder: HIJAU_MUDA.border,
-    colorSuccessBg: HIJAU_MUDA.bg,
-    colorSuccessBgHover: HIJAU_MUDA.bgHover,
-    colorSuccessBorder: HIJAU_MUDA.border,
-    colorInfoBg: HIJAU_MUDA.bg,
-    colorInfoBgHover: HIJAU_MUDA.bgHover,
-    colorInfoBorder: HIJAU_MUDA.border,
+    colorPrimaryBg: WARNA.hijauMuda,
+    colorPrimaryBgHover: WARNA.hijauMudaHover,
+    colorPrimaryBorder: WARNA.hijauGaris,
+    colorSuccessBg: WARNA.hijauMuda,
+    colorSuccessBgHover: WARNA.hijauMudaHover,
+    colorSuccessBorder: WARNA.hijauGaris,
+    colorInfoBg: WARNA.hijauMuda,
+    colorInfoBgHover: WARNA.hijauMudaHover,
+    colorInfoBorder: WARNA.hijauGaris,
+    colorBgLayout: WARNA.latar,
+    colorBgContainer: WARNA.kartu,
+    colorText: WARNA.teks,
+    colorTextHeading: WARNA.teks,
+    colorTextSecondary: WARNA.redup,
+    colorTextTertiary: "#9aa1a9",
+    colorBorder: "#e3e6e9",
+    colorBorderSecondary: WARNA.garis,
+    fontFamily: FONT,
+    fontSize: 14,
+    borderRadius: 12,
+    borderRadiusLG: 20,
+    borderRadiusSM: 8,
+    controlHeight: 42,
+    boxShadowTertiary: "0 1px 2px rgba(20,24,28,0.03), 0 8px 28px rgba(20,24,28,0.04)",
+  },
+  components: {
+    Card: { borderRadiusLG: 28, bodyPadding: 24, headerPadding: 24 },
+    Button: {
+      borderRadius: 999,
+      borderRadiusLG: 999,
+      borderRadiusSM: 999,
+      fontWeight: 600,
+      primaryShadow: "none",
+      defaultShadow: "none",
+      dangerShadow: "none",
+      paddingInline: 20,
+    },
+    Menu: {
+      itemBorderRadius: 16,
+      itemHeight: 46,
+      itemMarginInline: 0,
+      itemMarginBlock: 4,
+      itemSelectedBg: WARNA.hijauMuda,
+      itemSelectedColor: WARNA.hijau,
+      itemColor: "#3b4249",
+      iconSize: 18,
+      activeBarBorderWidth: 0,
+    },
+    Table: {
+      headerBg: "transparent",
+      headerColor: WARNA.redup,
+      headerSplitColor: "transparent",
+      headerBorderRadius: 12,
+      borderColor: WARNA.garis,
+      rowHoverBg: "#f6f8f5",
+      cellPaddingBlock: 14,
+      cellPaddingInline: 14,
+      fontWeightStrong: 700,
+    },
+    Tag: { borderRadiusSM: 999 },
+    Segmented: { trackBg: "#f1f2f4", itemSelectedBg: WARNA.hijau, itemSelectedColor: "#ffffff", borderRadius: 999, borderRadiusSM: 999, borderRadiusLG: 999 },
+    Modal: { borderRadiusLG: 28 },
+    Steps: { iconSize: 30 },
+    Statistic: { titleFontSize: 13, contentFontSize: 28 },
+    Tabs: { titleFontSize: 14, horizontalMargin: "0 0 16px 0" },
   },
 };
