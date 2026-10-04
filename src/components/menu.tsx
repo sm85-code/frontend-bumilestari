@@ -53,6 +53,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
       { ke: "/laporan", label: "Laba rugi", ikon: <BarChartOutlined /> },
       { ke: "/laporan/belum-cair", label: "Belum cair", ikon: <HourglassOutlined /> },
       { ke: "/kiriman", label: "Kirim ke laporan", ikon: <SendOutlined /> },
+      { ke: "/laporan/kas-kecil", label: "Riwayat kas kecil", ikon: <AccountBookOutlined /> },
     ] },
   { grup: "Pengaturan", item: [
       { ke: "/pengaturan", label: "Pengaturan", ikon: <AppstoreOutlined /> },
