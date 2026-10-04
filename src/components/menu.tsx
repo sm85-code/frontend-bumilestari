@@ -5,7 +5,6 @@ import {
   CalendarOutlined,
   CloudDownloadOutlined,
   DatabaseOutlined,
-  FileTextOutlined,
   HistoryOutlined,
   HomeOutlined,
   InboxOutlined,
@@ -19,7 +18,6 @@ import {
   ToolOutlined,
   UserOutlined,
   WalletOutlined,
-  DashboardOutlined,
 } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
