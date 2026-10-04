@@ -19,6 +19,9 @@ export default function PencairanErpPage() {
   const tarik = useMutation({
     mutationFn: () => api<{ saluran: { saluran: string; baris: number; catatan?: string }[] }>("/pencairan/erp/tarik?hari=15", { method: "POST" }),
   });
+  const order = useMutation({
+    mutationFn: () => api<{ order: number }>("/pencairan/erp/order?hari=30", { method: "POST" }),
+  });
 
   if (toko.isLoading || saluran.isLoading) return <Memuat />;
   const masuk = (toko.data ?? []).filter((t) => t.masuk);
@@ -38,8 +41,10 @@ export default function PencairanErpPage() {
           </div>
         ))}
       </Card>
-      <Card judul="Tarik pencairan">
-        <Button disabled={tarik.isPending} onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik 15 hari"}</Button>
+      <Card judul="Tarik dari ERP">
+        <Button disabled={order.isPending} onClick={() => order.mutate()}>{order.isPending ? "Menarik order…" : "Tarik order"}</Button>
+        {order.data && <p>{order.data.order} order baru. Baris yang nomornya sama tidak lagi menunggu.</p>}
+        <Button disabled={tarik.isPending} onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik pencairan 15 hari"}</Button>
         {tarik.data && <ul>{tarik.data.saluran.map((s) => <li key={s.saluran}>{s.saluran}: {s.baris} baris{s.catatan ? ` (${s.catatan})` : ""}</li>)}</ul>}
       </Card>
     </>
