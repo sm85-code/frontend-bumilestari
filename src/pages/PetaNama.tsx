@@ -13,7 +13,7 @@ export default function PetaNamaPage() {
   const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/order/belum-peta") });
   const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
   const simpan = useMutation({
-    mutationFn: (body: { nama: string; produk_id: string }) => api("/order/peta", { method: "POST", body }),
+    mutationFn: (body: { nama: string; produk_id: string }) => api<{ order: number; jenis: string }>("/order/peta", { method: "POST", body }),
     onSuccess: (r: { order: number; jenis: string }) => {
       message.success(`${r.order} order dipetakan${r.jenis === "kayu" ? "" : ", tanpa cat"}`);
       void qc.invalidateQueries({ queryKey: ["belum-peta"] });
