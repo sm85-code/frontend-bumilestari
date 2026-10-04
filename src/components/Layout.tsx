@@ -147,7 +147,7 @@ export default function Layout() {
                   flexDirection: "column",
                   gap: 2,
                   padding: 4,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: on ? 700 : 500,
                   background: on ? WARNA.hijauMuda : "transparent",
                   color: on ? WARNA.hijau : WARNA.redup,
