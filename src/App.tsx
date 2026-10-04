@@ -23,6 +23,8 @@ const PencairanErpPage = lazy(() => import("./pages/PencairanErp"));
 const KasIklanPage = lazy(() => import("./pages/KasIklan"));
 const Master = lazy(() => import("./pages/Master"));
 const OrderPage = lazy(() => import("./pages/Order"));
+const ProduksiPage = lazy(() => import("./pages/Produksi"));
+const PengaturanPage = lazy(() => import("./pages/Pengaturan"));
 const PenjualLain = lazy(() => import("./pages/PenjualLain"));
 const PesananTukang = lazy(() => import("./pages/PesananTukang"));
 const Selasa = lazy(() => import("./pages/Selasa"));
@@ -168,6 +170,8 @@ export default function App() {
             </WajibGantiPassword>
           }
         />
+        <Route path="/produksi" element={<WajibGantiPassword><HanyaPemilik><ProduksiPage /></HanyaPemilik></WajibGantiPassword>} />
+        <Route path="/pengaturan" element={<WajibGantiPassword><HanyaPemilik><PengaturanPage /></HanyaPemilik></WajibGantiPassword>} />
         <Route
           path="/pencairan"
           element={

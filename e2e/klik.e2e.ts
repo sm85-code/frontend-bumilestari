@@ -9,13 +9,13 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
 
   if (!hp(info.project.name)) {
     const samping = page.locator('aside[aria-label="Menu samping"]');
-    for (const grup of ["Mingguan", "Penjualan", "Pembelian", "Uang", "Laporan", "Pengaturan"]) {
+    for (const grup of ["Dashboard", "Order", "Produksi", "Keuangan", "Pengaturan"]) {
       await expect(samping.locator(".ant-menu-item-group-title", { hasText: new RegExp(`^${grup}$`) })).toBeVisible();
     }
     const menu: [string, string][] = [
-      ["Tutup Kas Mingguan", "/selasa"], ["Order", "/order"], ["Tagihan penjual lain", "/penjual-lain"], ["Bayar tukang & supplier", "/pesanan-tukang"],
-      ["Kas & transaksi", "/keuangan"], ["Gaji & tagihan rutin", "/gaji"], ["Bagi hasil", "/bagi-hasil"],
-      ["Laba rugi", "/laporan"], ["Kirim ke laporan keuangan", "/kiriman"], ["Tutup buku", "/laporan/tutup-buku"], ["Belum cair", "/laporan/belum-cair"], ["Data master", "/master"], ["Profil saya", "/akun"], ["Beranda", "/"],
+      ["Tutup kas Selasa", "/selasa"], ["Order", "/order"], ["Order reseller", "/penjual-lain"], ["Tukang & supplier", "/pesanan-tukang"],
+      ["Kas operasional", "/keuangan"], ["Gaji", "/gaji"], ["Bagi hasil", "/bagi-hasil"],
+      ["Laba rugi", "/laporan"], ["Kirim ke laporan", "/kiriman"], ["Tutup buku", "/laporan/tutup-buku"], ["Belum cair", "/laporan/belum-cair"], ["Katalog & saluran", "/master"], ["Profil", "/akun"], ["Dashboard", "/"],
     ];
     for (const [label, path] of menu) {
       await samping.locator(".ant-menu-item", { hasText: new RegExp(`^${label}$`) }).click();
@@ -28,14 +28,10 @@ test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", asy
     await expect(page).toHaveURL(urlAkhir("/laporan/kas-kecil"));
   } else {
     const nav = page.getByRole("navigation", { name: "Navigasi utama" });
-    for (const [label, path] of [["Order", "/order"], ["Tutup kas", "/selasa"], ["Kas", "/keuangan"], ["Lainnya", "/lainnya"], ["Beranda", "/"]]) {
+    for (const [label, path] of [["Order", "/order"], ["Produksi", "/produksi"], ["Keuangan", "/keuangan"], ["Pengaturan", "/pengaturan"], ["Dashboard", "/"]]) {
       await nav.getByRole("button", { name: new RegExp(`${label}$`) }).click();
       await expect(page).toHaveURL(urlAkhir(path));
     }
-    await nav.getByRole("button", { name: "Lainnya" }).click();
-    await expect(page.getByText("Pengaturan", { exact: true })).toBeVisible();
-    await page.getByText("Gaji & tagihan rutin").click();
-    await expect(page).toHaveURL(urlAkhir("/gaji"));
   }
 });
 
