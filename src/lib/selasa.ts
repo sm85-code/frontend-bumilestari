@@ -18,7 +18,7 @@ export function tambahHari(iso: string, hari: number): string {
 }
 
 export type IdLangkah = "terima" | "pencairan" | "tarik" | "bayar_tukang" | "talangan" | "sisihan" | "isi_kas" | "kirim";
-export type StatusLangkah = "selesai" | "belum" | "dilewati";
+export type StatusLangkah = "selesai" | "belum" | "dilewati" | "belum_waktunya";
 
 export interface Langkah {
   id: IdLangkah;
@@ -100,7 +100,14 @@ export function selesaiOtomatis(d: DataSelasa): Partial<Record<IdLangkah, boolea
 
 export type TandaManual = Partial<Record<IdLangkah, Exclude<StatusLangkah, "belum">>>;
 
-export function statusLangkah(id: IdLangkah, otomatis: Partial<Record<IdLangkah, boolean>>, tanda: TandaManual): StatusLangkah {
+export function statusLangkah(
+  id: IdLangkah,
+  otomatis: Partial<Record<IdLangkah, boolean>>,
+  tanda: TandaManual,
+  belumTiba = false,
+): StatusLangkah {
+  // Selasa yang belum tiba: antrean kosong bukan berarti pekerjaan minggu itu sudah dikerjakan.
+  if (belumTiba) return "belum_waktunya";
   if (otomatis[id]) return "selesai";
   return tanda[id] ?? "belum";
 }
