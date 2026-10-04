@@ -4,7 +4,7 @@ import { api, query } from "./api";
 import { useAkun } from "./data";
 import { useDraf } from "./kiriman";
 import { useTalangan } from "./talangan";
-import { num } from "./format";
+import { hariIni, num } from "./format";
 import { LANGKAH_AKTIF, bacaTanda, selasaAcuan, selesaiOtomatis, simpanTanda, statusLangkah, tambahHari, type IdLangkah, type StatusLangkah, type TandaManual } from "./selasa";
 import type { Invoice, PengisianImprest, PiutangPelanggan, SiapBayar, Sisihan, Transfer } from "./types";
 
@@ -46,9 +46,10 @@ export function useSelasa(tgl: string, admin: boolean, aktif = true) {
       }),
     [selasa, akunQ.data, invoiceQ.data, transferQ.data, siapQ.data, sisihanQ.data, kasKecilQ.data, kasIklanQ.data, kasIklanQ.isError, admin, drafQ.data, talanganQ.data],
   );
-  const status = Object.fromEntries(LANGKAH_AKTIF.map((l) => [l.id, statusLangkah(l.id, otomatis, tanda)])) as Record<IdLangkah, StatusLangkah>;
+  const belumTiba = selasa > hariIni();
+  const status = Object.fromEntries(LANGKAH_AKTIF.map((l) => [l.id, statusLangkah(l.id, otomatis, tanda, belumTiba)])) as Record<IdLangkah, StatusLangkah>;
   const selesai = LANGKAH_AKTIF.filter((l) => status[l.id] === "selesai").length;
-  const beres = LANGKAH_AKTIF.filter((l) => status[l.id] !== "belum").length;
+  const beres = LANGKAH_AKTIF.filter((l) => status[l.id] === "selesai" || status[l.id] === "dilewati").length;
 
   return {
     selasa,
@@ -66,6 +67,7 @@ export function useSelasa(tgl: string, admin: boolean, aktif = true) {
     status,
     selesai,
     beres,
+    belumTiba,
     total: LANGKAH_AKTIF.length,
     tagihanSelasaIni: (invoiceQ.data ?? []).reduce((t, i) => t + num(i.grand_total), 0),
     semuaBelumDibayar: (piutangQ.data ?? []).reduce((t, p) => t + num(p.subtotal), 0),

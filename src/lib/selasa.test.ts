@@ -53,4 +53,10 @@ describe("selasa", () => {
     expect(statusLangkah("tarik", { tarik: false }, { tarik: "dilewati" })).toBe("dilewati");
     expect(statusLangkah("tarik", {}, {})).toBe("belum");
   });
+
+  it("Selasa yang belum tiba tidak dihitung selesai meski antrean kosong", () => {
+    expect(statusLangkah("tarik", { tarik: true }, { tarik: "selesai" }, true)).toBe("belum_waktunya");
+    expect(statusLangkah("pencairan", {}, {}, true)).toBe("belum_waktunya");
+    expect(statusLangkah("tarik", { tarik: true }, {}, false)).toBe("selesai");
+  });
 });

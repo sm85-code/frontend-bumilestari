@@ -19,6 +19,7 @@ const LABEL_STATUS: Record<StatusLangkah, ReactNode> = {
   selesai: <Lencana warna="hijau">Selesai</Lencana>,
   belum: <Lencana warna="oranye">Belum</Lencana>,
   dilewati: <Lencana>Dilewati</Lencana>,
+  belum_waktunya: <Lencana>Belum waktunya</Lencana>,
 };
 
 /* ---------- Langkah 1: terima bayar penjual lain ---------- */
@@ -357,7 +358,7 @@ export default function Selasa() {
   const d = useSelasa(tgl, admin, pemilik);
   const [pilih, setPilih] = useState<IdLangkah | null>(null);
   // Bawaan: langkah pertama yang belum dikerjakan.
-  const aktif = pilih ?? LANGKAH_AKTIF.find((l) => d.status[l.id] === "belum")?.id ?? LANGKAH_AKTIF[LANGKAH_AKTIF.length - 1].id;
+  const aktif = pilih ?? LANGKAH_AKTIF.find((l) => d.status[l.id] === "belum" || d.status[l.id] === "belum_waktunya")?.id ?? LANGKAH_AKTIF[LANGKAH_AKTIF.length - 1].id;
   const posisi = LANGKAH_AKTIF.findIndex((l) => l.id === aktif);
 
   if (!pemilik) return null;
@@ -390,9 +391,12 @@ export default function Selasa() {
     return (
       <Flex vertical gap="middle" style={{ width: "100%", paddingBottom: 8 }}>
         {isi[id]}
+        {d.belumTiba && (
+          <Alert type="info" showIcon title="Selasa ini belum tiba. Langkah belum dihitung selesai, meskipun antreannya kosong." />
+        )}
         <Flex gap="small" wrap justify="space-between" style={{ borderTop: "1px solid var(--ant-color-split)", paddingTop: 12 }}>
           <Flex gap="small" wrap>
-            {!otomatis && st === "belum" && (
+            {!d.belumTiba && !otomatis && st === "belum" && (
               <>
                 <Button variant="pinggir" onClick={() => d.tandai(id, "selesai")}>
                   Tandai selesai
@@ -402,7 +406,7 @@ export default function Selasa() {
                 </Button>
               </>
             )}
-            {!otomatis && st !== "belum" && (
+            {!d.belumTiba && !otomatis && st !== "belum" && (
               <Button variant="pinggir" onClick={() => d.tandai(id, null)}>
                 Tandai belum
               </Button>
@@ -425,7 +429,11 @@ export default function Selasa() {
     <>
       <PageHeader
         judul="Tutup Kas Mingguan"
-        sub={`Minggu dengan Selasa ${tanggalHari(d.selasa)} (biasanya tiap Selasa) · ${d.selesai} dari ${d.total} langkah selesai`}
+        sub={
+          d.belumTiba
+            ? `Minggu dengan Selasa ${tanggalHari(d.selasa)} belum tiba · langkah belum dihitung selesai`
+            : `Minggu dengan Selasa ${tanggalHari(d.selasa)} (biasanya tiap Selasa) · ${d.selesai} dari ${d.total} langkah selesai`
+        }
         aksi={
           <div style={{ width: 200 }}>
             <Field label="Tanggal pencatatan" hint="Bawaan: Selasa minggu ini">
