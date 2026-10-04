@@ -5,7 +5,6 @@ import {
   CalendarOutlined,
   CloudDownloadOutlined,
   DatabaseOutlined,
-  FileTextOutlined,
   HistoryOutlined,
   HomeOutlined,
   InboxOutlined,
@@ -19,7 +18,6 @@ import {
   ToolOutlined,
   UserOutlined,
   WalletOutlined,
-  DashboardOutlined,
 } from "@ant-design/icons";
 import type { ReactNode } from "react";
 
@@ -42,59 +40,36 @@ export interface GrupMenu {
  * belum ada, jadi belum masuk menu.
  */
 export const MENU_PEMILIK: GrupMenu[] = [
-  {
-    grup: "Mingguan",
-    item: [
-      { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
-      { ke: "/selasa", label: "Tutup Kas Mingguan", ikon: <CalendarOutlined /> },
-    ],
-  },
-  {
-    grup: "Penjualan",
-    item: [
-      { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
-      { ke: "/penjual-lain", label: "Tagihan penjual lain", ikon: <ShopOutlined /> },
-    ],
-  },
-  { grup: "Pembelian", item: [{ ke: "/pesanan-tukang", label: "Bayar tukang & supplier", ikon: <ToolOutlined /> }] },
-  {
-    grup: "Uang",
-    item: [
-      { ke: "/keuangan", label: "Kas & transaksi", ikon: <WalletOutlined /> },
-      { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
-      { ke: "/kas-iklan", label: "Kas iklan", ikon: <SoundOutlined />, admin: true },
+  { grup: "Dashboard", item: [{ ke: "/", label: "Dashboard", ikon: <HomeOutlined /> }, { ke: "/selasa", label: "Tutup kas Selasa", ikon: <CalendarOutlined /> }] },
+  { grup: "Order", item: [{ ke: "/order", label: "Order", ikon: <InboxOutlined /> }, { ke: "/penjual-lain", label: "Order reseller", ikon: <ShopOutlined /> }, { ke: "/pencairan/erp", label: "Tarik dari ERP", ikon: <CloudDownloadOutlined /> }] },
+  { grup: "Produksi", item: [{ ke: "/produksi", label: "Produksi", ikon: <ToolOutlined /> }, { ke: "/pesanan-tukang", label: "Tukang & supplier", ikon: <ToolOutlined /> }] },
+  { grup: "Keuangan", item: [
       { ke: "/pencairan", label: "Pencairan", ikon: <CloudDownloadOutlined /> },
-      { ke: "/gaji", label: "Gaji & tagihan rutin", ikon: <TeamOutlined /> },
+      { ke: "/keuangan", label: "Kas operasional", ikon: <WalletOutlined /> },
+      { ke: "/kas-kecil", label: "Kas kecil", ikon: <AccountBookOutlined /> },
+      { ke: "/kas-iklan", label: "Iklan", ikon: <SoundOutlined />, admin: true },
+      { ke: "/gaji", label: "Gaji", ikon: <TeamOutlined /> },
       { ke: "/bagi-hasil", label: "Bagi hasil", ikon: <PieChartOutlined /> },
-    ],
-  },
-  {
-    grup: "Laporan",
-    item: [
-      { ke: "/ringkasan", label: "Ringkasan", ikon: <DashboardOutlined /> },
       { ke: "/laporan", label: "Laba rugi", ikon: <BarChartOutlined /> },
-      { ke: "/laporan/kas-kecil", label: "Kas kecil", ikon: <FileTextOutlined /> },
       { ke: "/laporan/belum-cair", label: "Belum cair", ikon: <HourglassOutlined /> },
-      { ke: "/kiriman", label: "Kirim ke laporan keuangan", ikon: <SendOutlined /> },
+      { ke: "/kiriman", label: "Kirim ke laporan", ikon: <SendOutlined /> },
+      { ke: "/laporan/kas-kecil", label: "Riwayat kas kecil", ikon: <AccountBookOutlined /> },
+    ] },
+  { grup: "Pengaturan", item: [
+      { ke: "/pengaturan", label: "Pengaturan", ikon: <AppstoreOutlined /> },
+      { ke: "/master", label: "Katalog & saluran", ikon: <DatabaseOutlined /> },
       { ke: "/laporan/tutup-buku", label: "Tutup buku", ikon: <LockOutlined /> },
-    ],
-  },
-  {
-    grup: "Pengaturan",
-    item: [
-      { ke: "/master", label: "Data master", ikon: <DatabaseOutlined /> },
-      { ke: "/akun", label: "Profil saya", ikon: <UserOutlined /> },
-    ],
-  },
+      { ke: "/akun", label: "Profil", ikon: <UserOutlined /> },
+    ] },
 ];
 
 /** Navigasi bawah (HP) admin/owner; sisanya lewat halaman "Lainnya". */
 export const MENU_BAWAH_PEMILIK: ItemMenu[] = [
-  { ke: "/", label: "Beranda", ikon: <HomeOutlined /> },
+  { ke: "/", label: "Dashboard", ikon: <HomeOutlined /> },
   { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
-  { ke: "/selasa", label: "Tutup kas", ikon: <CalendarOutlined /> },
-  { ke: "/keuangan", label: "Kas", ikon: <WalletOutlined /> },
-  { ke: "/lainnya", label: "Lainnya", ikon: <AppstoreOutlined /> },
+  { ke: "/produksi", label: "Produksi", ikon: <ToolOutlined /> },
+  { ke: "/keuangan", label: "Keuangan", ikon: <WalletOutlined /> },
+  { ke: "/pengaturan", label: "Pengaturan", ikon: <AppstoreOutlined /> },
 ];
 
 /** Menu staf (Bagian 5.2): hanya tiga. */
