@@ -2,7 +2,8 @@ import { Alert, Checkbox, Col, Form, Row } from "antd";
 import IsianKolomTambahan from "./IsianKolomTambahan";
 import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, Select, Teks } from "./ui";
-import { useAksi, usePemasok } from "../lib/data";
+import { useAksi, usePemasok, useSaluran } from "../lib/data";
+import { salurCair } from "../lib/order";
 import { useFields } from "../lib/form";
 import { bersihkanAngka, num } from "../lib/format";
 import type { Order, Produk, NilaiKolom } from "../lib/types";
@@ -16,6 +17,7 @@ const angka = (v: string) => String(Math.round(num(v)));
 export default function FormUbahOrder({ order, produk, onSelesai }: { order: Order; produk?: Produk; onSelesai: () => void }) {
   const [kt, setKt] = useState<Record<string, NilaiKolom>>(order.kolom_tambahan ?? {});
   const pemasokQ = usePemasok();
+  const ikutFile = salurCair((useSaluran().data ?? []).find((s) => s.id === order.saluran_id));
   const aksi = useAksi<Order>();
   const kayu = produk?.jenis_produk !== "non_kayu";
   // Sudah masuk pembayaran (tukang/penjual lain): backend menolak perubahan selain nama pembeli, warna, catatan.
@@ -113,13 +115,13 @@ export default function FormUbahOrder({ order, produk, onSelesai }: { order: Ord
           </>
         )}
         <Col xs={24} md={12}>
-          <Field label="Biaya ke tukang & supplier (Rp)">
+          <Field label="Harga beli (Rp)" hint="Harga barang + jasa tukang/supplier (total yang dibayar untuk 1 barang siap jual)">
             <Input inputMode="numeric" {...bind("biaya_pokok")} disabled={kunci} />
           </Field>
         </Col>
         <Col xs={24} md={12}>
-          <Field label="Harga barang per unit (Rp)">
-            <Input inputMode="numeric" {...bind("harga_satuan")} disabled={kunci} />
+          <Field label={ikutFile ? "Harga barang per unit (opsional)" : "Harga barang per unit (Rp)"} hint={ikutFile ? "Harga mengikuti file penghasilan" : undefined}>
+            <Input aria-label="Harga barang per unit" inputMode="numeric" {...bind("harga_satuan")} disabled={kunci} />
           </Field>
         </Col>
         <Col xs={24} md={12}>

@@ -105,7 +105,7 @@ test("master data: semua tab bisa dibuka", async ({ page }, info) => {
   test.skip(hp(info.project.name), "Di HP tab yang tidak muat berpindah ke menu '…' (perilaku bawaan antd).");
   await pasangApiTiruan(page);
   await page.goto("/master");
-  for (const nama of ["Tukang & supplier", "Penjual lain", "Harga grosir", "Saluran", "Akun kas & kategori", "Pengguna", "Profil UMKM", "Produk"]) {
+  for (const nama of ["Tukang", "Supplier", "Penjual lain", "Harga grosir", "Saluran", "Akun kas & kategori", "Pengguna", "Profil UMKM", "Produk"]) {
     const tab = page.getByRole("tab", { name: nama });
     await tab.click();
     await expect(tab).toHaveAttribute("aria-selected", "true");

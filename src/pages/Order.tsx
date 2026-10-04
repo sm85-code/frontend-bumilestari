@@ -106,12 +106,18 @@ export default function OrderPage() {
       title: "Total",
       align: "right",
       width: 165,
-      render: (_, o) => (
-        <>
-          <Typography.Text strong><Angka>{rp(o.total_penjualan)}</Angka></Typography.Text>
-          {redup(`biaya ${rp(o.biaya_pokok)} · laba ${rp(o.laba_kotor)}`)}
-        </>
-      ),
+      render: (_, o) =>
+        Number(o.total_penjualan) === 0 && salurCair(saluran.get(o.saluran_id)) ? (
+          <>
+            <Typography.Text type="secondary">Mengikuti file penghasilan</Typography.Text>
+            {redup(`harga beli ${rp(o.biaya_pokok)}`)}
+          </>
+        ) : (
+          <>
+            <Typography.Text strong><Angka>{rp(o.total_penjualan)}</Angka></Typography.Text>
+            {redup(`harga beli ${rp(o.biaya_pokok)} · margin ${rp(o.laba_kotor)}${Number(o.biaya_proses) ? ` · +proses ${rp(o.biaya_proses)}` : ""}`)}
+          </>
+        ),
     },
     {
       title: "Status dan aksi",

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Col, Flex, Row, Typography } from "antd";
+import { Checkbox, Col, Flex, Row, Typography } from "antd";
 import type { TableColumnsType } from "antd";
 import { useState } from "react";
 import KirimKeLaporan from "../components/KirimKeLaporan";
@@ -14,6 +14,8 @@ import type { BarisStandar, BelumCair, MasalahBaris, PencairanBaris, PencairanUn
  * Pencairan marketplace & iPaymu (spesifikasi 8.3, Fase 2.4/2.5). File "Penghasilan Saya" dibaca memakai format aktif
  * saluran, dicocokkan ke order (kode pesanan), lalu disimpan sebagai draf. Pembukuan (penjualan, potongan, status cair
  * order) terjadi saat "Kirim ke laporan". Baris yang tidak ditemukan disimpan menunggu dan dicocokkan ulang nanti.
+ * "Catat manual" (semua saluran marketplace & Toko web) untuk masa transisi atau bila file belum ada: masuk tabel
+ * pencairan yang sama sebagai draf; impor file berikutnya melewati kode pesanan yang sudah dicatat manual.
  */
 export default function PencairanPage() {
   const saluranQ = useSaluran();
@@ -38,13 +40,31 @@ export default function PencairanPage() {
           </Select>
         }
       >
-        {!saluran ? null : saluran.jenis === "web" ? <FormManual key={saluran.id} saluran={saluran} /> : <UnggahFile key={saluran.id} saluran={saluran} />}
+        {saluran && <CatatPencairan key={saluran.id} saluran={saluran} />}
       </Card>
       <Card judul="Kirim ke laporan">
         <KirimKeLaporan sumber="pencairan" tanpaTautan />
       </Card>
       <Riwayat saluran={pilihan} />
     </>
+  );
+}
+
+function CatatPencairan({ saluran }: { saluran: Saluran }) {
+  const [mode, setMode] = useState<"file" | "manual">(saluran.jenis === "web" ? "manual" : "file");
+  return (
+    <Flex vertical gap="middle" style={{ width: "100%" }}>
+      <Flex gap="small" wrap align="center">
+        <Button kecil variant={mode === "file" ? "utama" : "pinggir"} onClick={() => setMode("file")}>
+          Impor file
+        </Button>
+        <Button kecil variant={mode === "manual" ? "utama" : "pinggir"} onClick={() => setMode("manual")}>
+          Catat manual
+        </Button>
+        <Typography.Text type="secondary">Catat manual: untuk masa transisi atau bila file belum ada</Typography.Text>
+      </Flex>
+      {mode === "file" ? <UnggahFile saluran={saluran} /> : <FormManual saluran={saluran} />}
+    </Flex>
   );
 }
 
@@ -56,14 +76,16 @@ function UnggahFile({ saluran }: { saluran: Saluran }) {
   const [file, setFile] = useState<File | null>(null);
   const [kunci, setKunci] = useState(0);
   const [hasil, setHasil] = useState<PratinjauPencairan | null>(null);
+  const [gantiManual, setGantiManual] = useState(false);
   const pratinjau = useMutation({
     mutationFn: (f: File) => unggah<PratinjauPencairan>("/pencairan/pratinjau", formulir({ saluran_id: saluran.id, file: f })),
     onSuccess: setHasil,
   });
   const simpan = useMutation({
-    mutationFn: (f: File) => unggah<PencairanUnggahan>("/pencairan", formulir({ saluran_id: saluran.id, file: f })),
+    mutationFn: (f: File) => unggah<PencairanUnggahan>("/pencairan", formulir({ saluran_id: saluran.id, file: f, ganti_manual: gantiManual ? "true" : null })),
     onSuccess: () => {
       setHasil(null);
+      setGantiManual(false);
       setFile(null);
       setKunci((k) => k + 1);
       void qc.invalidateQueries();
@@ -92,6 +114,7 @@ function UnggahFile({ saluran }: { saluran: Saluran }) {
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             setHasil(null);
+            setGantiManual(false);
           }}
         />
         <Button variant="pinggir" disabled={!file || pratinjau.isPending} onClick={() => file && pratinjau.mutate(file)}>
@@ -114,8 +137,23 @@ function UnggahFile({ saluran }: { saluran: Saluran }) {
           {hasil.neto && <Typography.Text type="warning">File ini hanya berisi jumlah bersih; penjualan dicatat sebesar uang yang cair (mode neto).</Typography.Text>}
           <TabelBaris baris={hasil.baris} />
           <DaftarMasalah masalah={hasil.masalah} />
+          {(hasil.sudah_manual ?? 0) > 0 && (
+            <Flex vertical gap={4} data-sudah-manual>
+              <Typography.Text type="warning">
+                {hasil.sudah_manual} baris sudah dicatat manual dan dilewati agar tidak terhitung dua kali.
+              </Typography.Text>
+              {(hasil.manual_bisa_diganti ?? 0) > 0 && (
+                <Checkbox checked={gantiManual} onChange={(e) => setGantiManual(e.target.checked)}>
+                  Ganti {hasil.manual_bisa_diganti} entri manual yang masih draf dengan isi file ini
+                </Checkbox>
+              )}
+            </Flex>
+          )}
           <Flex gap="small" align="center" wrap>
-            <Button disabled={simpan.isPending || hasil.jumlah_disimpan === 0} onClick={() => file && simpan.mutate(file)}>
+            <Button
+              disabled={simpan.isPending || (hasil.jumlah_disimpan === 0 && !(gantiManual && (hasil.manual_bisa_diganti ?? 0) > 0))}
+              onClick={() => file && simpan.mutate(file)}
+            >
               Simpan pencairan
             </Button>
             <Typography.Text type="secondary">
@@ -142,7 +180,7 @@ function TabelBaris({ baris }: { baris: BarisStandar[] }) {
       render: (_, b) => (
         <Flex vertical>
           <span>
-            <Lencana warna={WARNA_KELOMPOK[b.kelompok]}>{LABEL_KELOMPOK[b.kelompok]}</Lencana>
+            {b.dicatat_manual ? <Lencana warna="abu">Sudah dicatat manual</Lencana> : <Lencana warna={WARNA_KELOMPOK[b.kelompok]}>{LABEL_KELOMPOK[b.kelompok]}</Lencana>}
             {b.jenis_baris === "retur" && <Lencana warna="merah">Retur</Lencana>}
           </span>
           {b.alasan && (
@@ -178,43 +216,66 @@ function DaftarMasalah({ masalah }: { masalah: MasalahBaris[] }) {
 
 function FormManual({ saluran }: { saluran: Saluran }) {
   const aksi = useAksi();
+  const web = saluran.jenis === "web";
   const [kode, setKode] = useState("");
   const [tgl, setTgl] = useState(hariIni());
   const [harga, setHarga] = useState("");
   const [potongan, setPotongan] = useState("");
+  const [cair, setCair] = useState("");
+  const hitung = Number(bersihkanAngka(harga) || 0) - Number(bersihkanAngka(potongan) || 0);
   const kirim = () =>
     aksi.mutate(
-      { path: "/pencairan/manual", body: { saluran_id: saluran.id, kode_pesanan: kode.trim(), tanggal_cair: tgl, harga_jual: bersihkanAngka(harga), potongan: bersihkanAngka(potongan) || "0" } },
+      {
+        path: "/pencairan/manual",
+        body: {
+          saluran_id: saluran.id, kode_pesanan: kode.trim(), tanggal_cair: tgl, harga_jual: bersihkanAngka(harga),
+          potongan: bersihkanAngka(potongan) || "0", jumlah_cair: bersihkanAngka(cair) || null,
+        },
+      },
       {
         onSuccess: () => {
           setKode("");
           setHarga("");
           setPotongan("");
+          setCair("");
         },
       },
     );
   return (
     <Formulir onKirim={kirim} disabled={aksi.isPending}>
-      <Typography.Paragraph type="secondary">{saluran.nama} dicatat manual per order: harga jual, potongan iPaymu, tanggal cair.</Typography.Paragraph>
+      <Typography.Paragraph type="secondary">
+        {saluran.nama} dicatat manual per order (bruto: harga jual dan potongan biaya terpisah). Masuk sebagai draf, lalu Kirim ke laporan. Bila nanti file penghasilan diimpor,
+        order yang sudah dicatat manual dilewati.
+      </Typography.Paragraph>
       <Row gutter={16}>
-        <Col xs={24} md={6}>
-          <Field label="Nomor order">
-            <Input aria-label="Nomor order" required value={kode} onChange={(e) => setKode(e.target.value)} />
+        <Col xs={24} md={8}>
+          <Field label="Saluran">
+            <Input aria-label="Saluran manual" value={saluran.nama} disabled />
           </Field>
         </Col>
-        <Col xs={24} md={6}>
+        <Col xs={24} md={8}>
+          <Field label="Kode pesanan">
+            <Input aria-label="Kode pesanan" required value={kode} onChange={(e) => setKode(e.target.value)} />
+          </Field>
+        </Col>
+        <Col xs={24} md={8}>
           <Field label="Tanggal cair">
             <InputTanggal value={tgl} onChange={setTgl} />
           </Field>
         </Col>
-        <Col xs={12} md={6}>
+        <Col xs={12} md={8}>
           <Field label="Harga jual (Rp)">
             <Input aria-label="Harga jual" inputMode="numeric" required value={harga} onChange={(e) => setHarga(e.target.value)} />
           </Field>
         </Col>
-        <Col xs={12} md={6}>
-          <Field label="Potongan iPaymu (Rp)">
-            <Input aria-label="Potongan iPaymu" inputMode="numeric" value={potongan} onChange={(e) => setPotongan(e.target.value)} />
+        <Col xs={12} md={8}>
+          <Field label={web ? "Potongan iPaymu (Rp)" : "Potongan biaya (Rp)"} hint="Admin, layanan, ongkir, dll.">
+            <Input aria-label="Potongan biaya" inputMode="numeric" value={potongan} onChange={(e) => setPotongan(e.target.value)} />
+          </Field>
+        </Col>
+        <Col xs={24} md={8}>
+          <Field label="Jumlah cair (Rp)" hint={`Kosong = harga jual − potongan (${rp(hitung)})`}>
+            <Input aria-label="Jumlah cair" inputMode="numeric" value={cair} onChange={(e) => setCair(e.target.value)} />
           </Field>
         </Col>
       </Row>
@@ -242,7 +303,15 @@ function Riwayat({ saluran }: { saluran: Saluran[] }) {
   const kolom: TableColumnsType<PencairanUnggahan> = [
     { title: "Tanggal", dataIndex: "tanggal", render: (v: string) => tanggal(v) },
     { title: "Saluran", dataIndex: "saluran_id", render: (v: string) => nama.get(v) ?? "-" },
-    { title: "File", dataIndex: "nama_file" },
+    {
+      title: "File",
+      dataIndex: "nama_file",
+      render: (v: string, u) => (
+        <>
+          {v} {u.sumber_sistem === "manual" && <Lencana>Manual</Lencana>}
+        </>
+      ),
+    },
     { title: "Baris", dataIndex: "jumlah_baris", align: "right" },
     { title: "Total cair", dataIndex: "total", align: "right", render: (v: string) => <Angka>{rp(v)}</Angka> },
     {

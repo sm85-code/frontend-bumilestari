@@ -1,13 +1,19 @@
 import { Checkbox, Col, Form, Row } from "antd";
 import IsianKolomTambahan from "./IsianKolomTambahan";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AksiForm, Button, Field, Formulir, Input, InputTanggal, Select, Teks } from "./ui";
 import { useAksi, usePelanggan, usePemasok, useProduk, useSaluran } from "../lib/data";
 import { useFields } from "../lib/form";
-import { bersihkanAngka, hariIni } from "../lib/format";
-import type { Order, NilaiKolom } from "../lib/types";
+import { api, query } from "../lib/api";
+import { bersihkanAngka, hariIni, rp } from "../lib/format";
+import { salurCair } from "../lib/order";
+import type { HargaGrosir, Order, NilaiKolom } from "../lib/types";
 
-/** Form order baru. Harga dikosongkan = otomatis (harga grosir penjual lain atau harga katalog). */
+/**
+ * Form order baru. Harga dikosongkan = otomatis: harga grosir penjual lain > harga acuan produk.
+ * Marketplace/Toko web: harga boleh kosong, uangnya mengikuti file penghasilan saat pencairan.
+ */
 export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
   const produkQ = useProduk();
   const pemasokQ = usePemasok();
@@ -25,6 +31,25 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
   const saluranPilih = saluran.find((s) => s.id === (f.saluran_id || saluran[0]?.id));
   const produkPilih = produk.find((p) => p.id === (f.produk_id || produk[0]?.id));
   const reseller = saluranPilih?.jenis === "reseller";
+  const ikutFile = salurCair(saluranPilih);
+  const grosirQ = useQuery({
+    queryKey: ["harga-grosir", f.pelanggan_id],
+    queryFn: () => api<HargaGrosir[]>(`/harga-grosir${query({ pelanggan_id: f.pelanggan_id })}`),
+    enabled: reseller && !!f.pelanggan_id,
+  });
+  const grosir = reseller ? grosirQ.data?.find((g) => g.produk_id === produkPilih?.id) : undefined;
+  const acuan = produkPilih?.harga_jual ? produkPilih.harga_jual : null;
+  // Penjual lain tanpa harga grosir & tanpa harga acuan: harga wajib diisi (backend juga menolak).
+  const hargaWajib = reseller && !!f.pelanggan_id && grosirQ.isSuccess && !grosir && !acuan;
+  const hintHarga = ikutFile
+    ? "Harga mengikuti file penghasilan"
+    : grosir
+      ? `Kosong = harga grosir ${rp(grosir.harga)}`
+      : hargaWajib
+        ? "Belum ada harga grosir untuk penjual lain ini: isi harganya"
+        : acuan
+          ? `Kosong = harga acuan ${rp(acuan)}`
+          : "Kosong = otomatis";
   const pemasokCocok = useMemo(
     () => (pemasokQ.data ?? []).filter((p) => p.jenis === (produkPilih?.jenis_produk === "non_kayu" ? "supplier" : "tukang_kayu")),
     [pemasokQ.data, produkPilih],
@@ -156,13 +181,19 @@ export default function FormOrder({ onSelesai }: { onSelesai: () => void }) {
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Biaya ke tukang & supplier (Rp)" hint="Kosong = biaya katalog">
+        <Field label="Harga beli (Rp)" hint="Harga barang + jasa tukang/supplier (total yang dibayar untuk 1 barang siap jual). Kosong = harga beli di katalog">
           <Input inputMode="numeric" {...bind("biaya_pokok")} />
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Harga barang per unit (Rp)" hint="Kosong = otomatis">
-          <Input inputMode="numeric" {...bind("harga_satuan")} />
+        <Field label={ikutFile ? "Harga barang per unit (opsional)" : "Harga barang per unit (Rp)"} hint={hintHarga}>
+          <Input
+            aria-label="Harga barang per unit"
+            inputMode="numeric"
+            required={hargaWajib}
+            placeholder={grosir ? String(Math.round(Number(grosir.harga))) : ikutFile ? "Boleh kosong" : undefined}
+            {...bind("harga_satuan")}
+          />
         </Field>
 </Col>
         {!reseller && (

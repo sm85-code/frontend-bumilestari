@@ -12,7 +12,7 @@ import MasterProduk from "./master/Produk";
 import MasterProfil from "./master/Profil";
 import MasterSaluran from "./master/Saluran";
 
-type Tab = "produk" | "pemasok" | "pelanggan" | "harga" | "saluran" | "akun" | "pengguna" | "profil";
+type Tab = "produk" | "tukang" | "supplier" | "pelanggan" | "harga" | "saluran" | "akun" | "pengguna" | "profil";
 
 export default function Master() {
   const { user } = useAuth();
@@ -20,7 +20,8 @@ export default function Master() {
   const admin = user?.role === "admin";
   const daftar: { id: Tab; label: string }[] = [
     { id: "produk", label: "Produk" },
-    { id: "pemasok", label: "Tukang & supplier" },
+    { id: "tukang", label: "Tukang" },
+    { id: "supplier", label: "Supplier" },
     { id: "pelanggan", label: "Penjual lain" },
     { id: "harga", label: "Harga grosir" },
     { id: "saluran", label: "Saluran" },
@@ -32,12 +33,13 @@ export default function Master() {
     <>
       <PageHeader
         judul="Data master"
-        sub="Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna, dan profil usaha"
+        sub="Produk, tukang, supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna, dan profil usaha"
         aksi={admin ? <Link to="/master/kolom">Kolom & label →</Link> : undefined}
       />
       <Tabs daftar={daftar} aktif={tab} onPilih={setTab} />
       {tab === "produk" && <MasterProduk />}
-      {tab === "pemasok" && <MasterPemasok />}
+      {tab === "tukang" && <MasterPemasok key="tukang" jenis="tukang_kayu" />}
+      {tab === "supplier" && <MasterPemasok key="supplier" jenis="supplier" />}
       {tab === "pelanggan" && <MasterPelanggan />}
       {tab === "harga" && <MasterHargaGrosir />}
       {tab === "saluran" && <MasterSaluran />}
