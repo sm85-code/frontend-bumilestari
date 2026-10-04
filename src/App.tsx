@@ -19,6 +19,7 @@ const KirimanPage = lazy(() => import("./pages/Kiriman"));
 const TutupBukuPage = lazy(() => import("./pages/TutupBuku"));
 const BelumCairPage = lazy(() => import("./pages/BelumCair"));
 const PencairanPage = lazy(() => import("./pages/Pencairan"));
+const PencairanErpPage = lazy(() => import("./pages/PencairanErp"));
 const KasIklanPage = lazy(() => import("./pages/KasIklan"));
 const Master = lazy(() => import("./pages/Master"));
 const OrderPage = lazy(() => import("./pages/Order"));
@@ -154,6 +155,16 @@ export default function App() {
               <HanyaAdmin>
                 <KolomTambahanPage />
               </HanyaAdmin>
+            </WajibGantiPassword>
+          }
+        />
+        <Route
+          path="/pencairan/erp"
+          element={
+            <WajibGantiPassword>
+              <HanyaPemilik>
+                <PencairanErpPage />
+              </HanyaPemilik>
             </WajibGantiPassword>
           }
         />

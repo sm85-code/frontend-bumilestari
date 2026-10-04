@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Col, Flex, Row, Typography } from "antd";
 import type { TableColumnsType } from "antd";
@@ -24,7 +25,7 @@ export default function PencairanPage() {
   if (saluranQ.isLoading) return <Memuat />;
   return (
     <>
-      <PageHeader judul="Pencairan" sub="Catat uang yang cair dari marketplace dan iPaymu. Order baru dianggap cair setelah dikirim ke laporan." />
+      <PageHeader judul="Pencairan" sub="Shopee ditarik dari ERP. Toko web dan marketplace lain tetap manual." aksi={<Link to="/pencairan/erp">Dari ERP</Link>} />
       <ErrorBox error={saluranQ.error} />
       <Card
         judul="Catat pencairan"
