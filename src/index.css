@@ -105,3 +105,26 @@ body {
     font-size: 14px;
   }
 }
+
+/* Tabel tetap satu baris; layar sempit menggulir ke samping, tidak memecah kata. */
+.ant-table-wrapper .ant-table-thead > tr > th,
+.ant-table-wrapper .ant-table-tbody > tr > td {
+  white-space: nowrap;
+  word-break: keep-all;
+}
+.ant-table-wrapper .ant-table-cell-fix-left {
+  background: #fff;
+}
+
+@media (max-width: 767px) {
+  .ant-tabs {
+    position: sticky;
+    top: 68px;
+    z-index: 15;
+    background: #eceef0;
+    padding-top: 4px;
+  }
+  .ant-tabs-nav {
+    margin-bottom: 12px !important;
+  }
+}

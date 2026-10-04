@@ -114,7 +114,7 @@ export default function Layout() {
           zIndex: 20,
           padding: "10px 12px 6px",
           paddingTop: "max(10px, env(safe-area-inset-top))",
-          background: `linear-gradient(${WARNA.latar} 70%, transparent)`,
+          background: WARNA.latar,
         }}
       >
         <div style={{ background: WARNA.kartu, borderRadius: 999, padding: "8px 16px", boxShadow: "0 1px 2px rgba(20,24,28,0.04), 0 6px 20px rgba(20,24,28,0.05)" }}>
