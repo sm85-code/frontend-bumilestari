@@ -66,7 +66,7 @@ function TabKaryawan() {
   const angka = (v: string) => <Angka>{rp(v)}</Angka>;
   const kolomKaryawan: TableColumnsType<Karyawan> = [
     { title: "Nama", dataIndex: "nama", fixed: "left", width: 160 },
-    { title: "Peran", dataIndex: "peran", render: (v: string) => <Typography.Text type="secondary">{PERAN[v] ?? v}</Typography.Text> },
+    { title: "Peran", dataIndex: "peran", width: 200, render: (v: string) => <Typography.Text type="secondary">{PERAN[v] ?? v}</Typography.Text> },
     { title: "Gaji / bulan", dataIndex: "gaji_bulanan", align: "right", render: angka },
     {
       title: "Aksi",
@@ -111,7 +111,7 @@ function TabKaryawan() {
   return (
     <>
       <Card judul="Karyawan tetap" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Karyawan</Button>}>
-        <DataTabel kolom={kolomKaryawan} data={karyawanQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada karyawan." />
+        <DataTabel kolom={kolomKaryawan} data={karyawanQ.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada karyawan." />
       </Card>
 
       <Card judul="Gaji bulanan (dibayar tanggal 1 bulan berikutnya, dari Dana cadangan)">
