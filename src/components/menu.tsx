@@ -41,7 +41,7 @@ export interface GrupMenu {
  */
 export const MENU_PEMILIK: GrupMenu[] = [
   { grup: "Dashboard", item: [{ ke: "/", label: "Dashboard", ikon: <HomeOutlined /> }, { ke: "/selasa", label: "Tutup kas Selasa", ikon: <CalendarOutlined /> }] },
-  { grup: "Order", item: [{ ke: "/order", label: "Order", ikon: <InboxOutlined /> }, { ke: "/penjual-lain", label: "Order reseller", ikon: <ShopOutlined /> }, { ke: "/pencairan/erp", label: "Tarik dari ERP", ikon: <CloudDownloadOutlined /> }] },
+  { grup: "Order", item: [{ ke: "/order", label: "Order", ikon: <InboxOutlined /> }, { ke: "/order/peta", label: "Petakan barang", ikon: <InboxOutlined /> }, { ke: "/penjual-lain", label: "Order reseller", ikon: <ShopOutlined /> }, { ke: "/pencairan/erp", label: "Tarik dari ERP", ikon: <CloudDownloadOutlined /> }] },
   { grup: "Produksi", item: [{ ke: "/produksi", label: "Produksi", ikon: <ToolOutlined /> }, { ke: "/pesanan-tukang", label: "Tukang & supplier", ikon: <ToolOutlined /> }] },
   { grup: "Keuangan", item: [
       { ke: "/pencairan", label: "Pencairan", ikon: <CloudDownloadOutlined /> },
@@ -66,7 +66,7 @@ export const MENU_PEMILIK: GrupMenu[] = [
 /** Navigasi bawah (HP) admin/owner; sisanya lewat halaman "Lainnya". */
 export const MENU_BAWAH_PEMILIK: ItemMenu[] = [
   { ke: "/", label: "Dashboard", ikon: <HomeOutlined /> },
-  { ke: "/order", label: "Order", ikon: <InboxOutlined /> },
+  { ke: "/order", label: "Order", ikon: <InboxOutlined /> }, { ke: "/order/peta", label: "Petakan barang", ikon: <InboxOutlined /> },
   { ke: "/produksi", label: "Produksi", ikon: <ToolOutlined /> },
   { ke: "/keuangan", label: "Keuangan", ikon: <WalletOutlined /> },
   { ke: "/pengaturan", label: "Pengaturan", ikon: <AppstoreOutlined /> },
