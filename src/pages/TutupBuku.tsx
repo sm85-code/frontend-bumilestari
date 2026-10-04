@@ -169,7 +169,7 @@ export default function TutupBukuPage() {
         </Row>
       )}
       <Card judul="Riwayat tutup buku">
-        <DataTabel kolom={kolom} data={daftar.data ?? []} rowKey="id" minLebar={560} kosong="Belum ada bulan yang ditutup." />
+        <DataTabel kolom={kolom} data={daftar.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada bulan yang ditutup." />
       </Card>
     </>
   );

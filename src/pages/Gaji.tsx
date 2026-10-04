@@ -149,7 +149,7 @@ function TabKaryawan() {
           kolom={kolomGaji}
           data={gajiQ.data ?? []}
           rowKey="id"
-          minLebar={560}
+          minLebar={720}
           kosong="Belum ada gaji untuk periode ini. Tekan 'Siapkan gaji'."
           ringkasan={gajiQ.data?.length ? () => <BarisTotal sel={[{ isi: "Total" }, { isi: rp(gajiQ.data!.reduce((t, g) => t + num(g.jumlah), 0)), kanan: true }, { isi: "", span: 3 }]} /> : undefined}
         />
@@ -223,7 +223,7 @@ function TabLangganan() {
     <>
       <Card judul="Daftar tagihan rutin" aksi={<Button kecil onClick={() => setBaru(true)}><PlusOutlined /> Tagihan rutin</Button>}>
         <Typography.Paragraph type="secondary">Dibayar langsung saat tagihan datang (biasanya minggu ke-4); tidak dicicil. Nominal di sini hanya perkiraan.</Typography.Paragraph>
-        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={460} kosong="Belum ada tagihan rutin (listrik, air, wifi, …). Tekan '+ Tagihan rutin'." />
+        <DataTabel kolom={kolomLangganan} data={langgananQ.data ?? []} rowKey="id" minLebar={680} kosong="Belum ada tagihan rutin (listrik, air, wifi, …). Tekan '+ Tagihan rutin'." />
       </Card>
 
       <Card judul="Bayar tagihan rutin">
@@ -248,7 +248,7 @@ function TabLangganan() {
           </Col>
         </Row>
         <ErrorBox error={tagihanQ.error ?? aksi.error} />
-        <DataTabel kolom={kolomTagihan} data={tagihanQ.data ?? []} rowKey="id" minLebar={500} kosong="Belum ada tagihan dibayar untuk periode ini." />
+        <DataTabel kolom={kolomTagihan} data={tagihanQ.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada tagihan dibayar untuk periode ini." />
       </Card>
 
       {baru && (

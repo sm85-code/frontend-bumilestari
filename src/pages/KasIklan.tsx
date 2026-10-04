@@ -168,7 +168,7 @@ function Pengaturan({ platform }: { platform: PlatformIklan[] }) {
           </Button>
         </Field>
       </Flex>
-      <DataTabel kolom={kolom} data={platform} rowKey="id" minLebar={480} kosong="Belum ada platform" />
+      <DataTabel kolom={kolom} data={platform} rowKey="id" minLebar={680} kosong="Belum ada platform" />
       <Flex gap="small" wrap align="flex-end" style={{ marginTop: 12 }}>
         <Field label="Platform baru">
           <Input aria-label="Nama platform" value={nama} onChange={(e) => setNama(e.target.value)} />

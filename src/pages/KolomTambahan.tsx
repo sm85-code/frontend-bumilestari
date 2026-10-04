@@ -210,7 +210,7 @@ export default function KolomTambahanPage() {
         <Typography.Paragraph type="secondary">Kolom yang sudah berisi data hanya bisa dinonaktifkan. Owner tidak melihat kolom tambahan.</Typography.Paragraph>
       </Card>
       <Card judul="Label kolom inti" sub="Fungsi dan aturan kolom inti tetap dari aplikasi. Dokumen resmi (invoice, rekap) selalu memakai label bawaan.">
-        <DataTabel kolom={kolomInti} data={inti} rowKey="kunci" minLebar={560} />
+        <DataTabel kolom={kolomInti} data={inti} rowKey="kunci" minLebar={720} />
       </Card>
       {form && (
         <Dialog judul={form === "baru" ? "Tambah kolom" : `Ubah kolom ${form.label}`} onTutup={() => setForm(null)}>

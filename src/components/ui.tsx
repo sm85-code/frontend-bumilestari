@@ -349,7 +349,7 @@ export function DataTabel<T extends object>({
   kolom,
   data,
   rowKey,
-  minLebar = 640,
+  minLebar = 720,
   ringkasan,
   kosong = "Belum ada data",
 }: {

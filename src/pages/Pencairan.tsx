@@ -317,7 +317,7 @@ function Rincian({ u, onTutup }: { u: PencairanUnggahan; onTutup: () => void }) 
   return (
     <Dialog judul={`Rincian ${u.nama_file}`} onTutup={onTutup}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data?.baris ?? []} rowKey="id" minLebar={420} kosong="Tidak ada baris" />}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data?.baris ?? []} rowKey="id" minLebar={680} kosong="Tidak ada baris" />}
     </Dialog>
   );
 }

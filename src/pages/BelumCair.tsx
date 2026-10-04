@@ -47,7 +47,7 @@ export default function BelumCairPage() {
             <Card key={g.saluran_id} judul={`${g.nama}: ${g.jumlah_order} order, perkiraan cair ${rp(g.total_perkiraan_cair)}`}>
               <div data-saluran={g.nama}>
                 <Typography.Paragraph type="secondary">Dikirim paling lama {g.tgl_kirim_tertua ? tanggal(g.tgl_kirim_tertua) : "—"}</Typography.Paragraph>
-                <DataTabel kolom={kolom} data={g.order} rowKey="order_id" minLebar={560} />
+                <DataTabel kolom={kolom} data={g.order} rowKey="order_id" minLebar={720} />
               </div>
             </Card>
           ))}

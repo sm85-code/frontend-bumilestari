@@ -120,5 +120,5 @@ export default function DaftarTransaksi({
       ),
     });
 
-  return <DataTabel kolom={kolom} data={data ?? []} rowKey="id" minLebar={bolehBatal || staf ? 680 : 520} kosong={kosong} />;
+  return <DataTabel kolom={kolom} data={data ?? []} rowKey="id" minLebar={bolehBatal || staf ? 760 : 680} kosong={kosong} />;
 }

@@ -111,7 +111,7 @@ export default function LaporanKasKecilPage() {
               kolom={kolomMinggu}
               data={d.per_minggu}
               rowKey="minggu_ke"
-              minLebar={560}
+              minLebar={720}
               ringkasan={() => (
                 <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(d.total_pemakaian), kanan: true }, { isi: rp(d.total_pengisian), kanan: true }, { isi: rp(d.saldo_akhir), kanan: true }]} />
               )}
@@ -119,7 +119,7 @@ export default function LaporanKasKecilPage() {
           </Card>
 
           <Card judul="Rincian pengeluaran">
-            <DataTabel kolom={kolomRincian} data={d.transaksi} rowKey={(t) => `${t.tanggal}-${t.kategori}-${t.jumlah}-${t.keterangan}`} minLebar={500} kosong="Belum ada pengeluaran bulan ini." />
+            <DataTabel kolom={kolomRincian} data={d.transaksi} rowKey={(t) => `${t.tanggal}-${t.kategori}-${t.jumlah}-${t.keterangan}`} minLebar={720} kosong="Belum ada pengeluaran bulan ini." />
           </Card>
         </>
       )}

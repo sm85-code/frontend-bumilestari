@@ -147,7 +147,7 @@ export default function PenjualLain() {
         <div style={{ marginBottom: 12 }}>
           <KirimKeLaporan sumber="penerimaan_reseller" />
         </div>
-        <DataTabel kolom={kolomTerima} data={terimaQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran diterima dari penjual lain." />
+        <DataTabel kolom={kolomTerima} data={terimaQ.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada pembayaran diterima dari penjual lain." />
       </Card>
     </>
   );
