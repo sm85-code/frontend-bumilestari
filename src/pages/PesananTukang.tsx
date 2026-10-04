@@ -34,7 +34,7 @@ function Rincian({ id, onTutup }: { id: string; onTutup: () => void }) {
             kolom={kolomRincian}
             data={q.data.items}
             rowKey="order_id"
-            minLebar={520}
+            minLebar={720}
             ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 3 }, { isi: q.data.total_qty, kanan: true }, { isi: rp(q.data.total), kanan: true }]} />}
           />
         </>
@@ -199,7 +199,7 @@ export default function PesananTukang() {
         <div style={{ marginBottom: 12 }}>
           <KirimKeLaporan sumber="pembayaran_pemasok" />
         </div>
-        <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={520} kosong="Belum ada pembayaran ke tukang & supplier." />
+        <DataTabel kolom={kolomRiwayat} data={riwayatQ.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada pembayaran ke tukang & supplier." />
       </Card>
       {lihat && <Rincian id={lihat} onTutup={() => setLihat(null)} />}
     </>

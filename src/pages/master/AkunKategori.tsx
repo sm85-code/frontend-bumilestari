@@ -47,14 +47,14 @@ export default function MasterAkunKategori() {
     <>
       <Card judul="Akun kas & plafon" aksi={<Button kecil onClick={() => setDialog("akun")}><PlusOutlined /> Akun kas</Button>}>
         <ErrorBox error={akunQ.error} />
-        <DataTabel kolom={kolomAkun} data={akunQ.data ?? []} rowKey="id" minLebar={460} />
+        <DataTabel kolom={kolomAkun} data={akunQ.data ?? []} rowKey="id" minLebar={680} />
       </Card>
       <Card judul="Kategori transaksi" aksi={<Button kecil onClick={() => setDialog("kategori")}><PlusOutlined /> Kategori</Button>}>
         <ErrorBox error={kategoriQ.error} />
         <Typography.Paragraph type="secondary">
           Kategori <b>sistem</b> hanya dipakai transaksi otomatis (bayar tukang & supplier, penerimaan penjual lain, gaji, tagihan rutin, bagi hasil) dan tidak muncul di form manual. Staf hanya melihat Transport, Packing, Operasional, Lainnya.
         </Typography.Paragraph>
-        <DataTabel kolom={kolomKategori} data={kategoriQ.data ?? []} rowKey="id" minLebar={420} />
+        <DataTabel kolom={kolomKategori} data={kategoriQ.data ?? []} rowKey="id" minLebar={680} />
       </Card>
 
       {dialog === "akun" && (

@@ -197,7 +197,7 @@ function LangkahBayarTukang({ d, tgl }: { d: DataSelasa; tgl: string }) {
             Barang yang diambil sampai {tanggal(siap.batas_diambil)} dan belum dibayar. Bayar per tukang, atau semua sekaligus. Uang keluar dari Kas utama.
           </Typography.Text>
           <div style={{ width: "100%" }}>
-            <DataTabel kolom={kolom} data={siap.pemasok} rowKey="pemasok_id" minLebar={420} ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(siap.total), kanan: true }, { isi: "" }]} />} />
+            <DataTabel kolom={kolom} data={siap.pemasok} rowKey="pemasok_id" minLebar={680} ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(siap.total), kanan: true }, { isi: "" }]} />} />
           </div>
           <Button disabled={aksi.isPending} onClick={() => void bayar()}>
             Bayar semua {rp(siap.total)}
@@ -337,7 +337,7 @@ function LangkahKirim({ d }: { d: DataSelasa }) {
       {isi.length > 0 && (
         <>
           <div style={{ width: "100%" }}>
-            <DataTabel kolom={kolomDraf} data={isi} rowKey="sumber" minLebar={420} ringkasan={() => <BarisTotal sel={[{ isi: "Total" }, { isi: String(r.jumlah), kanan: true }, { isi: "" }, { isi: rp(r.total), kanan: true }]} />} />
+            <DataTabel kolom={kolomDraf} data={isi} rowKey="sumber" minLebar={680} ringkasan={() => <BarisTotal sel={[{ isi: "Total" }, { isi: String(r.jumlah), kanan: true }, { isi: "" }, { isi: rp(r.total), kanan: true }]} />} />
           </div>
           <Button disabled={aksi.isPending} onClick={() => void kirimSemua()}>
             Kirim semua ke laporan keuangan

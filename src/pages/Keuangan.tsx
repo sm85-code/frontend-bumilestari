@@ -128,7 +128,7 @@ export default function Keuangan() {
                 kolom={kolomAkun}
                 data={akun}
                 rowKey="id"
-                minLebar={360}
+                minLebar={640}
                 ringkasan={() => <BarisTotal sel={[{ isi: "Total", span: 2 }, { isi: rp(total), kanan: true }]} />}
               />
             </Card>

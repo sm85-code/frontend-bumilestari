@@ -77,7 +77,7 @@ export default function MasterSaluran() {
   return (
     <Card judul="Saluran penjualan" aksi={<Button kecil onClick={() => setForm("baru")}><PlusOutlined /> Saluran</Button>}>
       <ErrorBox error={q.error ?? aksi.error} />
-      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={560} kosong="Belum ada saluran." />}
+      {q.isLoading ? <Memuat /> : <DataTabel kolom={kolom} data={q.data ?? []} rowKey="id" minLebar={720} kosong="Belum ada saluran." />}
       {form && (
         <Dialog judul={form === "baru" ? "Saluran baru" : `Ubah ${form.nama}`} onTutup={() => setForm(null)}>
           <Form awal={form === "baru" ? undefined : form} onSelesai={() => setForm(null)} />
