@@ -40,12 +40,16 @@ import {
 
 export function PageHeader({ judul, sub, aksi }: { judul: ReactNode; sub?: ReactNode; aksi?: ReactNode }) {
   return (
-    <Flex justify="space-between" align="flex-end" wrap gap="middle" style={{ paddingBlock: 4 }}>
-      <div style={{ minWidth: 0 }}>
-        <Typography.Title level={2} style={{ margin: 0, fontWeight: 600, letterSpacing: "-0.02em" }}>
+    <Flex justify="space-between" align="flex-end" wrap gap="middle" className="page-header" style={{ paddingBlock: 4 }}>
+      <div style={{ minWidth: 0, flex: "1 1 240px" }}>
+        <Typography.Title level={2} className="page-title" style={{ margin: 0, fontWeight: 650, letterSpacing: "-0.025em" }}>
           {judul}
         </Typography.Title>
-        {sub && <Typography.Text type="secondary">{sub}</Typography.Text>}
+        {sub && (
+          <Typography.Text type="secondary" className="page-sub">
+            {sub}
+          </Typography.Text>
+        )}
       </div>
       {aksi && <Space wrap>{aksi}</Space>}
     </Flex>
@@ -78,17 +82,17 @@ export function TautanBulat({ ke, terang }: { ke: string; terang?: boolean }) {
 /** Kartu putih sangat bulat. `sub` = keterangan kecil di bawah judul; `aksi` = tombol di kanan judul. */
 export function Card({ judul, sub, aksi, children }: { judul?: string; sub?: ReactNode; aksi?: ReactNode; children: ReactNode }) {
   return (
-    <ACard variant="borderless" styles={{ body: { padding: 24 } }} style={{ boxShadow: "var(--ant-box-shadow-tertiary)" }}>
+    <ACard variant="borderless" className="kartu" style={{ boxShadow: "var(--ant-box-shadow-tertiary)" }}>
       {(judul || aksi) && (
         <Flex justify="space-between" align="flex-start" gap="small" wrap style={{ marginBottom: 16 }}>
           <div style={{ minWidth: 0 }}>
             {judul && (
-              <Typography.Title level={5} style={{ margin: 0, fontWeight: 700 }}>
+              <Typography.Title level={5} className="kartu-judul" style={{ margin: 0, fontWeight: 650 }}>
                 {judul}
               </Typography.Title>
             )}
             {sub && (
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              <Typography.Text type="secondary" className="kartu-sub">
                 {sub}
               </Typography.Text>
             )}
@@ -126,11 +130,11 @@ export function Stat({
       styles={{ body: { padding: 22, display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%", gap: 14 } }}
     >
       <Flex justify="space-between" align="flex-start" gap="small">
-        <Typography.Text style={{ fontSize: 13, color: hero ? "rgba(255,255,255,0.8)" : token.colorTextSecondary }}>{label}</Typography.Text>
+        <Typography.Text className="stat-label" style={{ color: hero ? "rgba(255,255,255,0.8)" : token.colorTextSecondary }}>{label}</Typography.Text>
         {ke && <TautanBulat ke={ke} terang={hero} />}
       </Flex>
       <div>
-        <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15, color: w, fontVariantNumeric: "tabular-nums" }}>{nilai}</div>
+        <div className="stat-nilai" style={{ fontWeight: 650, letterSpacing: "-0.03em", lineHeight: 1.15, color: w, fontVariantNumeric: "tabular-nums" }}>{nilai}</div>
         {sub && (
           <Tag variant="filled" color={hero ? undefined : "success"} style={{ marginTop: 10, marginInlineEnd: 0, ...(hero ? { background: "rgba(255,255,255,0.18)", color: "#fff" } : {}) }}>
             {sub}
