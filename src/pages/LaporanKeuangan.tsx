@@ -39,6 +39,9 @@ function TabLabaRugi({ periode }: { periode: string }) {
         <Typography.Text strong>Penjualan cair (bruto)</Typography.Text>
         <DaftarBaris data={d.penjualan} />
         <Baris kiri="Total penjualan" kanan={rp(d.total_penjualan)} tebal />
+        {Number(d.pendapatan_biaya_proses || 0) !== 0 && (
+          <Baris kiri="termasuk pendapatan biaya proses (penjual lain, di luar margin produk)" kanan={rp(d.pendapatan_biaya_proses || 0)} />
+        )}
         <Typography.Text strong>(−) Biaya marketplace</Typography.Text>
         <DaftarBaris data={d.biaya_marketplace} />
         <Baris kiri="Penjualan bersih" kanan={rp(d.penjualan_bersih)} tebal />
@@ -115,7 +118,11 @@ function TabNeraca() {
             <Col xs={24} lg={12}>
               <Card judul="Kewajiban">
                 <Typography.Text strong>Utang ke tukang & supplier</Typography.Text>
-                <DaftarBaris data={d.utang_pemasok} kosong="Tidak ada" />
+                {(d.utang_per_jenis?.length ?? 0) > 0 ? (
+                  <DaftarBaris data={d.utang_per_jenis ?? []} kosong="Tidak ada" />
+                ) : (
+                  <DaftarBaris data={d.utang_pemasok} kosong="Tidak ada" />
+                )}
                 <Baris kiri="Dana gaji disisihkan, belum dibayar" kanan={rp(d.dana_gaji_belum_dibayar)} />
                 <Typography.Text strong>Talangan</Typography.Text>
                 <DaftarBaris data={d.talangan} kosong="Tidak ada" />
@@ -141,12 +148,15 @@ function TabNeraca() {
 const angka = (v: string) => <Angka>{rp(v)}</Angka>;
 const kolomMargin = (judul: string): TableColumnsType<MarginBaris> => [
   { title: judul, dataIndex: "label", fixed: "left", width: 180 },
-  { title: "Qty", dataIndex: "qty", align: "right" },
+  { title: "Order", dataIndex: "jumlah_order", align: "right", width: 72 },
+  { title: "Qty", dataIndex: "qty", align: "right", width: 64 },
   { title: "Penjualan", dataIndex: "penjualan", align: "right", render: angka },
-  { title: "Potongan", dataIndex: "potongan", align: "right", render: angka },
   { title: "HPP", dataIndex: "hpp", align: "right", render: angka },
-  { title: "Laba kotor", dataIndex: "laba_kotor", align: "right", render: angka },
+  { title: "Margin kotor", dataIndex: "margin_kotor", align: "right", render: (v: string | undefined, row) => angka(v ?? row.laba_kotor) },
+  { title: "Potongan", dataIndex: "potongan", align: "right", render: angka },
+  { title: "Margin bersih", dataIndex: "laba_kotor", align: "right", render: angka },
   { title: "Margin", dataIndex: "margin_persen", align: "right", render: (v: string | null) => persen(v) },
+  { title: "Biaya proses", dataIndex: "biaya_proses", align: "right", render: (v: string | undefined) => angka(v ?? "0") },
 ];
 
 function TabMargin({ periode }: { periode: string }) {
@@ -157,8 +167,14 @@ function TabMargin({ periode }: { periode: string }) {
   return (
     <div data-margin>
       <LabelSementara sementara={d.sementara} />
-      <Typography.Paragraph type="secondary">Dihitung dari order yang penjualannya diakui di bulan ini: marketplace & Toko web saat cair, penjual lain saat dibayar.</Typography.Paragraph>
-      <Card judul={`Total: ${d.total.jumlah_order} order, laba kotor ${rp(d.total.laba_kotor)} · margin ${persen(d.total.margin_persen)}`}>
+      <Typography.Paragraph type="secondary">
+        Per saluran (satu baris per toko). Marketplace dan Toko web diakui saat cair, penjual lain saat dibayar.
+        Margin kotor = penjualan produk − harga beli. Margin bersih = margin kotor − potongan marketplace. Biaya proses penjual lain di luar margin produk.
+      </Typography.Paragraph>
+      <Card judul={`Total: ${d.total.jumlah_order} order, margin bersih ${rp(d.total.laba_kotor)} · ${persen(d.total.margin_persen)}`}>
+        {Number(d.pendapatan_biaya_proses || 0) !== 0 && (
+          <Baris kiri="Pendapatan biaya proses (tidak masuk margin)" kanan={rp(d.pendapatan_biaya_proses || 0)} />
+        )}
         <Typography.Text strong>Per saluran</Typography.Text>
         <DataTabel kolom={kolomMargin("Saluran")} data={d.per_saluran} rowKey="label" minLebar={720} />
         <Typography.Text strong>Per produk</Typography.Text>
@@ -174,7 +190,7 @@ export default function LaporanKeuanganPage() {
   const [periode, setPeriode] = useState(() => periodeSebelum(hariIni()));
   return (
     <>
-      <PageHeader judul="Laporan keuangan" sub="Laba rugi, neraca, HPP & margin" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
+      <PageHeader judul="Laporan keuangan" sub="Per toko: laba rugi, neraca, margin kotor & bersih" aksi={<Link to="/laporan/kas-kecil">Laporan kas kecil →</Link>} />
       <Tabs
         daftar={[
           { id: "laba", label: "Laba rugi" },

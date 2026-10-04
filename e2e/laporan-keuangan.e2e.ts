@@ -9,6 +9,7 @@ test("laporan keuangan: laba rugi, neraca, HPP & margin, arus kas", async ({ pag
   const lr = page.locator("[data-laba-rugi]");
   await expect(lr).toContainText("Sementara — bulan belum ditutup");
   await expect(lr).toContainText("Shopee");
+  await expect(lr).toContainText("pendapatan biaya proses");
   await expect(lr).toContainText("Biaya admin");
   await expect(lr).toContainText("margin 62,5%");
   await expect(page.locator("[data-laba-bersih]")).toContainText("Rp970.000");
@@ -16,12 +17,15 @@ test("laporan keuangan: laba rugi, neraca, HPP & margin, arus kas", async ({ pag
 
   await page.getByRole("tab", { name: "Neraca" }).click();
   await expect(page.locator("[data-neraca]")).toContainText("Neraca tidak seimbang: selisih Rp25.000");
+  await expect(page.locator("[data-neraca]")).toContainText("Tukang");
   await expect(page.locator("[data-neraca]")).toContainText("Pak Budi");
   await expect(page.locator("[data-selisih]")).toContainText("Rp25.000");
 
   await page.getByRole("tab", { name: "HPP & margin" }).click();
   await expect(page.locator("[data-margin]")).toContainText("Partisi");
   await expect(page.locator("[data-margin]")).toContainText("31,2%");
+  await expect(page.locator("[data-margin]")).toContainText("Margin bersih");
+  await expect(page.locator("[data-margin]")).toContainText("Biaya proses");
 
   await page.getByRole("tab", { name: "Arus kas & kategori" }).click();
   await expect(page.getByText("Sampai", { exact: true })).toBeVisible();
