@@ -42,7 +42,7 @@ function TabLabaRugi({ periode }: { periode: string }) {
         <Typography.Text strong>(−) Biaya marketplace</Typography.Text>
         <DaftarBaris data={d.biaya_marketplace} />
         <Baris kiri="Penjualan bersih" kanan={rp(d.penjualan_bersih)} tebal />
-        <Baris kiri="(−) HPP (biaya tukang & supplier)" kanan={rp(d.hpp)} />
+        <Baris kiri="(−) Harga beli (barang + jasa tukang/supplier)" kanan={rp(d.hpp)} />
         <Baris kiri={`Laba kotor · margin ${persen(d.margin_persen)}`} kanan={rp(d.laba_kotor)} tebal />
         <Typography.Text strong>(−) Biaya operasional</Typography.Text>
         <DaftarBaris data={d.biaya_operasional} />
@@ -115,7 +115,7 @@ function TabNeraca() {
             <Col xs={24} lg={12}>
               <Card judul="Kewajiban">
                 <Typography.Text strong>Utang ke tukang & supplier</Typography.Text>
-                <DaftarBaris data={d.utang_pemasok} kosong="Tidak ada" />
+                <DaftarBaris data={d.utang_per_jenis?.length ? d.utang_per_jenis : d.utang_pemasok} kosong="Tidak ada" />
                 <Baris kiri="Dana gaji disisihkan, belum dibayar" kanan={rp(d.dana_gaji_belum_dibayar)} />
                 <Typography.Text strong>Talangan</Typography.Text>
                 <DaftarBaris data={d.talangan} kosong="Tidak ada" />
@@ -142,11 +142,13 @@ const angka = (v: string) => <Angka>{rp(v)}</Angka>;
 const kolomMargin = (judul: string): TableColumnsType<MarginBaris> => [
   { title: judul, dataIndex: "label", fixed: "left", width: 180 },
   { title: "Qty", dataIndex: "qty", align: "right" },
-  { title: "Penjualan", dataIndex: "penjualan", align: "right", render: angka },
-  { title: "Potongan", dataIndex: "potongan", align: "right", render: angka },
-  { title: "HPP", dataIndex: "hpp", align: "right", render: angka },
-  { title: "Laba kotor", dataIndex: "laba_kotor", align: "right", render: angka },
-  { title: "Margin", dataIndex: "margin_persen", align: "right", render: (v: string | null) => persen(v) },
+  { title: "Penjualan produk", dataIndex: "penjualan", align: "right", render: angka },
+  { title: "Harga beli", dataIndex: "hpp", align: "right", render: angka },
+  { title: "Margin kotor", align: "right", render: (_, b) => angka(b.margin_kotor ?? String(Number(b.penjualan) - Number(b.hpp))) },
+  { title: "% kotor", align: "right", render: (_, b) => persen(b.margin_kotor_persen ?? null) },
+  { title: "Potongan marketplace", dataIndex: "potongan", align: "right", render: angka },
+  { title: "Margin bersih saluran", dataIndex: "laba_kotor", align: "right", render: angka },
+  { title: "% bersih", dataIndex: "margin_persen", align: "right", render: (v: string | null) => persen(v) },
 ];
 
 function TabMargin({ periode }: { periode: string }) {
@@ -157,12 +159,21 @@ function TabMargin({ periode }: { periode: string }) {
   return (
     <div data-margin>
       <LabelSementara sementara={d.sementara} />
-      <Typography.Paragraph type="secondary">Dihitung dari order yang penjualannya diakui di bulan ini: marketplace & Toko web saat cair, penjual lain saat dibayar.</Typography.Paragraph>
-      <Card judul={`Total: ${d.total.jumlah_order} order, laba kotor ${rp(d.total.laba_kotor)} · margin ${persen(d.total.margin_persen)}`}>
+      <Typography.Paragraph type="secondary">
+        Dihitung dari order yang penjualannya diakui di bulan ini: marketplace & Toko web saat cair, penjual lain saat dibayar. Penjualan produk = barang + cat/jasa + packing
+        (marketplace: harga jual dari file penghasilan bila ada). Margin kotor = penjualan produk − harga beli. Margin bersih saluran = margin kotor − potongan marketplace.
+        Biaya proses penjual lain tidak termasuk margin produk.
+      </Typography.Paragraph>
+      <Card
+        judul={`Total: ${d.total.jumlah_order} order · margin kotor ${rp(d.total.margin_kotor ?? String(Number(d.total.penjualan) - Number(d.total.hpp)))} · margin bersih saluran ${rp(d.total.laba_kotor)} (${persen(d.total.margin_persen)})`}
+      >
         <Typography.Text strong>Per saluran</Typography.Text>
-        <DataTabel kolom={kolomMargin("Saluran")} data={d.per_saluran} rowKey="label" minLebar={720} />
+        <DataTabel kolom={kolomMargin("Saluran")} data={d.per_saluran} rowKey="label" minLebar={980} />
         <Typography.Text strong>Per produk</Typography.Text>
-        <DataTabel kolom={kolomMargin("Produk")} data={d.per_produk} rowKey="label" minLebar={720} />
+        <DataTabel kolom={kolomMargin("Produk")} data={d.per_produk} rowKey="label" minLebar={980} />
+        <div data-biaya-proses>
+          <Baris kiri="Pendapatan biaya proses (penjual lain, di luar margin produk)" kanan={rp(d.pendapatan_biaya_proses ?? "0")} />
+        </div>
       </Card>
     </div>
   );

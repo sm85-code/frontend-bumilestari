@@ -15,12 +15,12 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
   const aksi = useAksi();
   const { f, bind } = useFields({
     sku: awal?.sku ?? "", nama: awal?.nama ?? "", jenis_produk: awal?.jenis_produk ?? "kayu", ukuran: awal?.ukuran ?? "",
-    harga_jual: awal ? String(Math.round(num(awal.harga_jual))) : "", biaya: awal ? String(Math.round(num(awal.biaya_pokok_default))) : "",
+    harga_jual: awal?.harga_jual ? String(Math.round(num(awal.harga_jual))) : "", biaya: awal ? String(Math.round(num(awal.biaya_pokok_default))) : "",
   });
   return (
     <Formulir
       onKirim={() => {
-        const umum = { kolom_tambahan: kt, nama: f.nama.trim(), ukuran: f.ukuran.trim(), harga_jual: bersihkanAngka(f.harga_jual) || "0", biaya_pokok_default: bersihkanAngka(f.biaya) || "0" };
+        const umum = { kolom_tambahan: kt, nama: f.nama.trim(), ukuran: f.ukuran.trim(), harga_jual: bersihkanAngka(f.harga_jual) || null, biaya_pokok_default: bersihkanAngka(f.biaya) || "0" };
         aksi.mutate(
           awal ? { path: `/produk/${awal.id}`, method: "PATCH", body: umum } : { path: "/produk", body: { ...umum, sku: f.sku.trim(), jenis_produk: f.jenis_produk } },
           { onSuccess: onSelesai },
@@ -30,7 +30,7 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
       <Row gutter={16}>
 <Col xs={24} md={12}>
         <Field label="SKU">
-          <Input required disabled={!!awal} {...bind("sku")} />
+          <Input aria-label="SKU" required disabled={!!awal} {...bind("sku")} />
         </Field>
 </Col>
 <Col xs={24} md={12}>
@@ -43,7 +43,7 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
 </Col>
 <Col xs={24} md={12}>
         <Field label="Nama barang" hint="Varian ditulis di nama, mis. [2 rak]">
-          <Input required {...bind("nama")} />
+          <Input aria-label="Nama barang" required {...bind("nama")} />
         </Field>
 </Col>
 <Col xs={24} md={12}>
@@ -52,12 +52,12 @@ function Form({ awal, onSelesai }: { awal?: Produk; onSelesai: () => void }) {
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Harga jual (Rp)">
-          <Input inputMode="numeric" required {...bind("harga_jual")} />
+        <Field label="Harga acuan (opsional)" hint="Untuk marketplace, harga final mengikuti file penghasilan.">
+          <Input aria-label="Harga acuan" inputMode="numeric" placeholder="Boleh kosong" {...bind("harga_jual")} />
         </Field>
 </Col>
 <Col xs={24} md={12}>
-        <Field label="Biaya ke tukang & supplier (Rp)" hint="Bahan + jasa (kayu) atau harga beli (non kayu)">
+        <Field label="Harga beli (Rp)" hint="Harga barang + jasa tukang/supplier (total yang dibayar untuk 1 barang siap jual)">
           <Input inputMode="numeric" {...bind("biaya")} />
         </Field>
 </Col>
@@ -84,8 +84,8 @@ export default function MasterProduk() {
     { title: "Nama", dataIndex: "nama" },
     { title: "Jenis", dataIndex: "jenis_produk", render: (v: string) => (v === "kayu" ? <Lencana warna="hijau">Kayu</Lencana> : <Lencana>Non kayu</Lencana>) },
     { title: "Ukuran", dataIndex: "ukuran", render: (v: string) => v || "—" },
-    { title: "Harga jual", dataIndex: "harga_jual", align: "right", render: angka },
-    { title: "Biaya tukang & supplier", dataIndex: "biaya_pokok_default", align: "right", render: angka },
+    { title: "Harga acuan", dataIndex: "harga_jual", align: "right", render: (v: string | null) => (v === null || v === "" ? "—" : angka(v)) },
+    { title: "Harga beli", dataIndex: "biaya_pokok_default", align: "right", render: angka },
     {
       title: "Aksi",
       width: 170,

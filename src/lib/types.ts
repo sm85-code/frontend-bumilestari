@@ -230,7 +230,8 @@ export interface Produk {
   nama: string;
   jenis_produk: "kayu" | "non_kayu";
   ukuran: string;
-  harga_jual: string;
+  /** Harga acuan (opsional). Marketplace: harga final mengikuti file penghasilan. */
+  harga_jual: string | null;
   biaya_pokok_default: string;
   aktif: boolean;
 }
@@ -316,7 +317,10 @@ export interface Order {
   tgl_retur?: string | null;
   alasan_retur?: string | null;
   kembali_stok?: boolean;
+  /** (barang + cat/jasa + packing) x qty: dasar margin produk, tanpa biaya proses. */
+  pendapatan_produk?: string;
   total_penjualan: string;
+  /** Margin produk: pendapatan produk − potongan − harga beli (biaya proses tidak termasuk). */
   laba_kotor: string;
   /** Sudah masuk pembayaran tukang / penerimaan penjual lain (draf maupun terkirim): harga & batal terkunci. */
   dibayar_tukang?: boolean;
@@ -664,6 +668,10 @@ export interface BarisStandar {
   perkiraan_cair: string | null;
   selisih: string;
   alasan: string;
+  /** Kode pesanan ini sudah dicatat lewat Catat manual: dilewati kecuali entri manual diganti. */
+  dicatat_manual?: boolean;
+  manual_unggahan_id?: string | null;
+  manual_bisa_diganti?: boolean;
 }
 
 export interface UjiFormat {
@@ -688,6 +696,8 @@ export interface PratinjauPencairan {
   jumlah_disimpan: number;
   total_dibukukan: string;
   neto: boolean;
+  sudah_manual?: number;
+  manual_bisa_diganti?: number;
 }
 
 export interface PencairanBaris {
@@ -724,6 +734,8 @@ export interface PencairanUnggahan {
   status_kirim: StatusKirim;
   kiriman_id: string | null;
   diunggah_oleh: string;
+  /** "manual" = Catat manual; kosong = impor file. */
+  sumber_sistem?: string | null;
   dibatalkan: boolean;
   alasan_batal: string | null;
   created_at: string;
@@ -815,6 +827,8 @@ export interface LabaRugi {
   pendapatan_lain: BarisNilai[];
   laba_bersih: string;
   hpp_dicocokkan: string;
+  /** Bagian penjualan penjual lain dari biaya proses (sudah termasuk total penjualan, tampil sebagai baris sendiri). */
+  pendapatan_biaya_proses?: string;
   belum_cair: { total_penjualan: string; total_perkiraan_cair: string; jumlah_order: number; tgl_kirim_tertua: string | null; perkiraan_laba_jika_cair: string };
   di_luar_laba: BarisNilai[];
 }
@@ -825,6 +839,8 @@ export interface Neraca {
   belum_cair: BarisNilai[];
   total_aset: string;
   utang_pemasok: BarisNilai[];
+  /** Utang dikelompokkan Tukang / Supplier (rincian per nama). */
+  utang_per_jenis?: BarisNilai[];
   dana_gaji_belum_dibayar: string;
   talangan: BarisNilai[];
   total_kewajiban: string;
@@ -841,6 +857,11 @@ export interface MarginBaris {
   hpp: string;
   laba_kotor: string;
   margin_persen: string | null;
+  /** Biaya proses penjual lain: di luar margin produk. */
+  biaya_proses?: string;
+  /** Penjualan produk − harga beli. (`laba_kotor` = margin bersih saluran: margin kotor − potongan marketplace.) */
+  margin_kotor?: string;
+  margin_kotor_persen?: string | null;
 }
 export interface HppMargin {
   periode: string;
@@ -848,6 +869,7 @@ export interface HppMargin {
   per_produk: MarginBaris[];
   per_saluran: MarginBaris[];
   total: MarginBaris;
+  pendapatan_biaya_proses?: string;
 }
 export interface RingkasanOwner {
   periode: string;

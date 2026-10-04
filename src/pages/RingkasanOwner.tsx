@@ -23,7 +23,7 @@ export default function RingkasanOwnerPage() {
             <Col xs={24} lg={12}>
               <Card judul={`Untung rugi ${bulanTahun(d.periode)}`}>
                 <Baris kiri="Penjualan" kanan={rp(d.penjualan)} />
-                <Baris kiri="Biaya barang (tukang & supplier)" kanan={rp(d.hpp)} />
+                <Baris kiri="Harga beli (tukang & supplier)" kanan={rp(d.hpp)} />
                 <Baris kiri="Biaya iklan" kanan={rp(d.biaya_iklan)} />
                 <Baris kiri="Biaya lainnya" kanan={rp(d.biaya_operasional_lain)} />
                 <Baris kiri="Laba bersih" kanan={rp(d.laba_bersih)} tebal />
