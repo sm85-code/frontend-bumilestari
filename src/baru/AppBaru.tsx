@@ -69,8 +69,6 @@ function Dashboard() {
 
 function OrderBaru() {
   const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
-  const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
   return (
     <Bingkai anak={
       <>
@@ -78,8 +76,6 @@ function OrderBaru() {
         <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
         <ul className="mt-4 divide-y rounded-2xl bg-white">
           {(order.data ?? []).slice(0, 40).map((o) => {
-            const p = peta.get(o.produk_id);
-            const belum = p?.sku === "ERP-BELUM";
             return (
               <li key={o.id} className="px-4 py-3 text-sm">
                 <span className="font-medium">{o.nama_barang || o.catatan || "Tanpa nama produk"}</span>
@@ -114,7 +110,7 @@ function Peta() {
               <span className="text-stone-500">{b.jumlah} order</span>
               <select className="rounded-lg border px-2 py-1" value={pilih[b.nama] ?? ""} onChange={(e) => setPilih((s) => ({ ...s, [b.nama]: e.target.value }))}>
                 <option value="">Pilih jenis</option>
-                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.jenis_produk === "kayu" ? "kayu" : "non-kayu"}</option>)}
+                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.kayu ? "kayu" : "non-kayu"}</option>)}
               </select>
               <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, jenis_id: pilih[b.nama] })}>Simpan</button>
             </li>
@@ -127,10 +123,8 @@ function Peta() {
 
 function Produksi() {
   const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
-  const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
-  const kayu = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "kayu" && o.butuh_cat);
-  const non = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "non_kayu");
+  const kayu = (order.data ?? []).filter((o) => o.kayu);
+  const non = (order.data ?? []).filter((o) => o.jenis && !o.kayu);
   return (
     <Bingkai anak={
       <>
