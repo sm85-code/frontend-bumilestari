@@ -14,7 +14,7 @@ const menu = [
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ];
 
-type Order = { id: string; no_order: string; nama_barang?: string; varian?: string; qty?: number; keterangan?: string; tgl_pesan?: string; status_peta?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string; sumber?: string };
+type Order = { id: string; no_order: string; nama_barang?: string; varian?: string; qty?: number; keterangan?: string; tgl_pesan?: string; status_peta?: string; jenis_pesanan?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string; sumber?: string };
 type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number; produk_id?: string };
 type Belum = { nama: string; jumlah: number };
 
@@ -87,6 +87,9 @@ function OrderBaru() {
   const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
   const pihak = useQuery({ queryKey: ["pihak"], queryFn: () => api<{ reseller: { kode: string; nama: string }[] }>("/baru/pihak") });
   const [form, setForm] = useState<"reseller" | "manual" | null>(null);
+  const [kelola, setKelola] = useState<Order | null>(null);
+  const [cari, setCari] = useState("");
+  const katalog = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const [isi, setIsi] = useState({ tgl_pesan: "", toko: "", nama_barang: "", varian: "", qty: "1", keterangan: "" });
   const baris = order.data ?? [];
   const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=30", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["order"] }) });
@@ -110,7 +113,6 @@ function OrderBaru() {
       <>
         <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
         <div className="mb-3 flex flex-wrap gap-2">
-          <a className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" href="/order/peta">Kelola Pesanan</a>
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik Pesanan dari ERP"}</button>
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("reseller")}>Input Pesanan Reseller</button>
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("manual")}>Input Pesanan Manual</button>
@@ -137,27 +139,54 @@ function OrderBaru() {
           <table className="min-w-[920px] w-full text-left text-sm">
             <thead className="bg-stone-100 text-stone-700">
               <tr>
-                {["Jenis Pesanan", "Tgl Pesanan", "Nama Toko/Reseller", "Nama Produk", "Varian", "Qty", "Status Pemetaan", "Sumber Pesanan", "Keterangan"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
+                {["No.", "Jenis Pesanan", "Tgl Pesanan", "Nama Toko/Reseller", "Nama Produk", "Varian", "Qty", "Status Pemetaan", "Sumber Pesanan", "Keterangan"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
               </tr>
             </thead>
             <tbody>
-              {baris.map((o) => (
+              {baris.map((o, i) => (
                 <tr key={o.id} className="border-t">
-                  <td className="px-3 py-2">{o.jenis ? (o.kayu ? "Kayu" : "Non-kayu") : "Belum diketahui"}</td>
+                  <td className="px-3 py-2">{i + 1}</td>
+                  <td className="px-3 py-2">
+                    <select className="rounded-lg border px-2 py-1" value={o.jenis_pesanan || ""} onChange={(e) => api(`/baru/order/${o.id}/jenis`, { method: "PATCH", body: { jenis_pesanan: e.target.value } }).then(() => qc.invalidateQueries({ queryKey: ["order"] }))}>
+                      <option value="">Pilih</option>
+                      <option>Kayu</option>
+                      <option>Non-Kayu</option>
+                    </select>
+                  </td>
                   <td className="px-3 py-2">{o.tgl_pesan || "-"}</td>
                   <td className="px-3 py-2">{o.toko || o.pembeli || "-"}</td>
                   <td className="px-3 py-2">{o.nama_barang || o.catatan || "-"}</td>
                   <td className="px-3 py-2">{o.varian || "-"}</td>
                   <td className="px-3 py-2">{o.qty ?? 1}</td>
-                  <td className="px-3 py-2">{o.status_peta || (o.jenis ? "Sudah" : "Belum")}</td>
+                  <td className="px-3 py-2">
+                    <div>{o.status_peta || (o.jenis ? "Sudah" : "Belum")}</div>
+                    {o.jenis_pesanan ? <button className="mt-1 rounded-lg bg-emerald-800 px-2 py-1 text-white" onClick={() => { setKelola(o); setCari(""); }}>Kelola Pesanan</button> : null}
+                  </td>
                   <td className="px-3 py-2">{sumberLabel(o.sumber)}</td>
                   <td className="px-3 py-2">{o.keterangan || o.no_order || "-"}</td>
                 </tr>
               ))}
-              {baris.length === 0 ? <tr><td className="px-3 py-4 text-stone-500" colSpan={9}>Belum ada order.</td></tr> : null}
+              {baris.length === 0 ? <tr><td className="px-3 py-4 text-stone-500" colSpan={10}>Belum ada order.</td></tr> : null}
             </tbody>
           </table>
         </div>
+        {kelola ? (
+          <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 p-3 md:items-center" onClick={() => setKelola(null)}>
+            <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+              <h2 className="font-medium">Kelola Pesanan</h2>
+              <p className="mt-1 text-sm text-stone-600">{kelola.nama_barang} · {kelola.jenis_pesanan}</p>
+              <input className="mt-3 w-full rounded-lg border px-2 py-1" placeholder="Cari produk" value={cari} onChange={(e) => setCari(e.target.value)} />
+              <div className="mt-2 max-h-64 overflow-auto rounded-lg border">
+                {(katalog.data ?? []).filter((p) => (kelola.jenis_pesanan === "Kayu" ? p.kayu : !p.kayu) && `${p.nama} ${p.ukuran}`.toLowerCase().includes(cari.toLowerCase())).map((p) => (
+                  <button key={p.id} className="block w-full px-2 py-1 text-left hover:bg-emerald-50" onClick={() => api("/baru/peta", { method: "POST", body: { nama: kelola.nama_barang, jenis_id: p.id } }).then(() => { setKelola(null); void qc.invalidateQueries({ queryKey: ["order"] }); })}>
+                    {p.nama} · {p.ukuran}
+                  </button>
+                ))}
+              </div>
+              <button className="mt-3 rounded-lg border px-3 py-1" onClick={() => setKelola(null)}>Tutup</button>
+            </div>
+          </div>
+        ) : null}
       </>
     } />
   );
