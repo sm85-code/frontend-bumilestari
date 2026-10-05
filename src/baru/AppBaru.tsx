@@ -187,6 +187,7 @@ function Pengaturan() {
   };
   const simpanProduk = useMutation({ mutationFn: () => api("/baru/produk", { method: "POST", body: { nama, kayu } }), onSuccess: () => { setNama(""); segar(); } });
   const impor = useMutation({ mutationFn: () => api<{produk:number;nilai:number}>("/baru/impor", { method: "POST" }), onSuccess: () => segar() });
+  const cat = useMutation({ mutationFn: () => api<{nilai:number}>("/baru/cat", { method: "POST" }), onSuccess: () => segar() });
   const simpanVarian = useMutation({ mutationFn: (produkId: string) => api("/baru/varian", { method: "POST", body: { produk_id: produkId, nama: sumbu[produkId] } }), onSuccess: () => segar() });
   const simpanNilai = useMutation({
     mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId], harga_tukang: angka(hargaTukang[varianId] ?? ""), custom: Boolean(custom[varianId]) } }),
@@ -203,6 +204,8 @@ function Pengaturan() {
         <Judul judul="Pengaturan" sub="Produk diketik sekali. Harga tukang dalam rupiah. Cat tidak ikut di sini." />
         <button className="mb-4 rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => impor.mutate()}>{impor.isPending ? "Mengisi…" : "Isi katalog dari daftar harga"}</button>
         {impor.data ? <p className="mb-3 text-sm">{impor.data.produk} produk, {impor.data.nilai} harga tukang masuk.</p> : null}
+        <button className="mb-4 ml-2 rounded-lg border px-3 py-2 text-sm" onClick={() => cat.mutate()}>{cat.isPending ? "Memasang…" : "Pasang tarif cat partisi"}</button>
+        {cat.data ? <p className="mb-3 text-sm">{cat.data.nilai} ukuran dapat tarif cat. Packing kayu belum ikut.</p> : null}
         <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpanProduk.mutate(); }}>
           <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama produk" value={nama} onChange={(e) => setNama(e.target.value)} required />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
