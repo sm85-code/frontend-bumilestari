@@ -88,15 +88,26 @@ function OrderBaru() {
   const pihak = useQuery({ queryKey: ["pihak"], queryFn: () => api<{ reseller: { kode: string; nama: string }[] }>("/baru/pihak") });
   const [form, setForm] = useState<"reseller" | "manual" | null>(null);
   const [kelola, setKelola] = useState<Order | null>(null);
-  const [urut, setUrut] = useState("belum");
+  const [pilih, setPilih] = useState<string[]>([]);
+  const [saring, setSaring] = useState("semua");
+  const [toko, setToko] = useState("");
+  const [kolom, setKolom] = useState("tgl");
+  const [arah, setArah] = useState(1);
+  const [edit, setEdit] = useState<Order | null>(null);
   const [cari, setCari] = useState("");
   const katalog = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const [isi, setIsi] = useState({ tgl_pesan: "", toko: "", nama_barang: "", varian: "", qty: "1", keterangan: "" });
-  const baris = [...(order.data ?? [])].sort((a, b) => {
-    if (urut === "belum") return Number(Boolean(a.jenis)) - Number(Boolean(b.jenis));
-    if (urut === "tanggal") return (b.tgl_pesan || "").localeCompare(a.tgl_pesan || "");
-    return (a.toko || "").localeCompare(b.toko || "");
+  const tokoAda = [...new Set((order.data ?? []).map((o) => o.toko || "").filter(Boolean))];
+  const baris = [...(order.data ?? [])].filter((o) => {
+    if (saring === "belum") return !o.jenis;
+    if (saring === "sudah") return Boolean(o.jenis);
+    if (saring === "toko") return !toko || o.toko === toko;
+    return true;
+  }).sort((a, b) => {
+    const nilai = (o: Order) => kolom === "tgl" ? o.tgl_pesan || "" : kolom === "toko" ? o.toko || "" : kolom === "produk" ? o.nama_barang || "" : kolom === "kode" ? o.no_order || "" : kolom === "qty" ? String(o.qty ?? 1) : o.sumber || "";
+    return nilai(a).localeCompare(nilai(b)) * arah;
   });
+  function urutkan(nama: string) { setKolom(nama); setArah(kolom === nama ? arah * -1 : 1); }
   const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=15", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["order"] }) });
   const simpan = useMutation({
     mutationFn: () => api("/baru/order", { method: "POST", body: { ...isi, qty: Number(isi.qty || 1), sumber: form === "reseller" ? "reseller" : "manual" } }),
@@ -123,11 +134,16 @@ function OrderBaru() {
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("manual")}>Input Pesanan Manual</button>
           <label className="rounded-lg border px-3 py-2 text-sm">Import Pesanan dari Excel<input className="hidden" type="file" accept=".csv,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void impor(f); }} /></label>
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={templatePesanan}>Download Template</button>
-          <select className="rounded-lg border px-3 py-2 text-sm" value={urut} onChange={(e) => setUrut(e.target.value)}>
-            <option value="belum">Sortir: belum dipetakan dulu</option>
-            <option value="tanggal">Sortir: tanggal terbaru</option>
-            <option value="toko">Sortir: toko</option>
+          <select className="rounded-lg border px-3 py-2 text-sm" value={saring} onChange={(e) => setSaring(e.target.value)}>
+            <option value="semua">Semua</option>
+            <option value="toko">Toko</option>
+            <option value="belum">Belum dipetakan</option>
+            <option value="sudah">Sudah dipetakan</option>
           </select>
+          {saring === "toko" ? <select className="rounded-lg border px-3 py-2 text-sm" value={toko} onChange={(e) => setToko(e.target.value)}><option value="">Semua toko</option>{tokoAda.map((n) => <option key={n}>{n}</option>)}</select> : null}
+          {pilih.length ? <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => api("/baru/order/massal", { method: "POST", body: { aksi: "hapus", id: pilih } }).then(() => { setPilih([]); void qc.invalidateQueries({ queryKey: ["order"] }); })}>Hapus dipilih</button> : null}
+          {pilih.length ? <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => api("/baru/order/massal", { method: "POST", body: { aksi: "jenis", jenis_pesanan: "Kayu", id: pilih } }).then(() => qc.invalidateQueries({ queryKey: ["order"] }))}>Jadikan Kayu</button> : null}
+          {pilih.length ? <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => api("/baru/order/massal", { method: "POST", body: { aksi: "jenis", jenis_pesanan: "Non-Kayu", id: pilih } }).then(() => qc.invalidateQueries({ queryKey: ["order"] }))}>Jadikan Non-Kayu</button> : null}
         </div>
         {form ? (
           <form className="mb-3 grid gap-2 rounded-2xl bg-white p-3 text-sm md:grid-cols-3" onSubmit={(e) => { e.preventDefault(); simpan.mutate(); }}>
@@ -149,12 +165,14 @@ function OrderBaru() {
           <table className="min-w-[920px] w-full text-left text-sm">
             <thead className="bg-stone-100 text-stone-700">
               <tr>
-                {["No.", "Jenis Pesanan", "Tgl Pesanan", "Nama Toko/Reseller", "Nama Produk", "Varian", "Qty", "Status Pemetaan", "Sumber Pesanan", "Keterangan"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
+                <th className="px-3 py-2"><input type="checkbox" checked={baris.length > 0 && pilih.length === baris.length} onChange={(e) => setPilih(e.target.checked ? baris.map((o) => o.id) : [])} /></th>
+                {[["No.", ""], ["Jenis Pesanan", "jenis"], ["Tgl Pesanan", "tgl"], ["Kode Pesanan", "kode"], ["Nama Toko/Reseller", "toko"], ["Nama Produk", "produk"], ["Varian", "varian"], ["Qty", "qty"], ["Status Pemetaan", "status"], ["Sumber Pesanan", "sumber"], ["", ""]].map(([h, k]) => <th key={h || "aksi"} className="px-3 py-2 font-medium">{k ? <button onClick={() => urutkan(k)}>{h}</button> : h}</th>)}
               </tr>
             </thead>
             <tbody>
               {baris.map((o, i) => (
                 <tr key={o.id} className="border-t">
+                  <td className="px-3 py-2"><input type="checkbox" checked={pilih.includes(o.id)} onChange={(e) => setPilih(e.target.checked ? [...pilih, o.id] : pilih.filter((id) => id !== o.id))} /></td>
                   <td className="px-3 py-2">{i + 1}</td>
                   <td className="px-3 py-2">
                     <select className="rounded-lg border px-2 py-1" value={o.jenis_pesanan || ""} onChange={(e) => api(`/baru/order/${o.id}/jenis`, { method: "PATCH", body: { jenis_pesanan: e.target.value } }).then(() => qc.invalidateQueries({ queryKey: ["order"] }))}>
@@ -164,6 +182,7 @@ function OrderBaru() {
                     </select>
                   </td>
                   <td className="px-3 py-2">{o.tgl_pesan || "-"}</td>
+                  <td className="px-3 py-2">{o.no_order || "-"}</td>
                   <td className="px-3 py-2">{o.toko || o.pembeli || "-"}</td>
                   <td className="px-3 py-2">{o.nama_barang || o.catatan || "-"}</td>
                   <td className="px-3 py-2">{o.varian || "-"}</td>
@@ -173,13 +192,14 @@ function OrderBaru() {
                     {o.jenis_pesanan ? <button className="mt-1 rounded-lg bg-emerald-800 px-2 py-1 text-white" onClick={() => { setKelola(o); setCari(""); }}>Kelola Pesanan</button> : null}
                   </td>
                   <td className="px-3 py-2">{sumberLabel(o.sumber)}</td>
-                  <td className="px-3 py-2">{o.keterangan || o.no_order || "-"}</td>
+                  <td className="px-3 py-2">{o.sumber !== "erp" ? <><button className="mr-2" onClick={() => setEdit(o)}>Ubah</button><button className="text-red-700" onClick={() => api(`/baru/order/${o.id}`, { method: "DELETE" }).then(() => qc.invalidateQueries({ queryKey: ["order"] }))}>Hapus</button></> : null}</td>
                 </tr>
               ))}
-              {baris.length === 0 ? <tr><td className="px-3 py-4 text-stone-500" colSpan={10}>Belum ada order.</td></tr> : null}
+              {baris.length === 0 ? <tr><td className="px-3 py-4 text-stone-500" colSpan={12}>Belum ada order.</td></tr> : null}
             </tbody>
           </table>
         </div>
+        {edit ? <form className="mb-3 grid gap-2 rounded-2xl bg-white p-3 text-sm md:grid-cols-3" onSubmit={(e) => { e.preventDefault(); api(`/baru/order/${edit.id}`, { method: "PATCH", body: edit }).then(() => { setEdit(null); void qc.invalidateQueries({ queryKey: ["order"] }); }); }}><input className="rounded-lg border px-2 py-1" value={edit.no_order} onChange={(e) => setEdit({ ...edit, no_order: e.target.value })} /><input className="rounded-lg border px-2 py-1" value={edit.tgl_pesan || ""} onChange={(e) => setEdit({ ...edit, tgl_pesan: e.target.value })} /><input className="rounded-lg border px-2 py-1" value={edit.toko || ""} onChange={(e) => setEdit({ ...edit, toko: e.target.value })} /><input className="rounded-lg border px-2 py-1" value={edit.nama_barang || ""} onChange={(e) => setEdit({ ...edit, nama_barang: e.target.value })} /><input className="rounded-lg border px-2 py-1" value={edit.varian || ""} onChange={(e) => setEdit({ ...edit, varian: e.target.value })} /><button className="rounded-lg bg-emerald-800 px-3 py-2 text-white">Simpan ubah</button></form> : null}
         {kelola ? (
           <div className="fixed inset-0 z-20 flex items-end justify-center bg-black/40 p-3 md:items-center" onClick={() => setKelola(null)}>
             <div className="max-h-[80vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
