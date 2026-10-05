@@ -95,8 +95,8 @@ function Pengaturan() {
 }
 
 export default function AppBaru() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
+  const { user, memuat } = useAuth();
+  if (memuat) return null;
   if (!user) return <Routes><Route path="*" element={<Masuk />} /></Routes>;
   return (
     <Routes>
