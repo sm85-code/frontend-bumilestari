@@ -15,7 +15,7 @@ const menu = [
 ];
 
 type Order = { id: string; no_order: string; nama_barang?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string };
-type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number };
+type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number; produk_id?: string };
 type Belum = { nama: string; jumlah: number };
 
 function Bingkai({ anak }: { anak: React.ReactNode }) {
@@ -153,6 +153,17 @@ function Keuangan() {
   );
 }
 
+function rupiah(n: number) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n || 0);
+}
+function angka(teks: string) {
+  return Number(teks.replace(/\D/g, "") || 0);
+}
+function tulisRupiah(teks: string) {
+  const n = angka(teks);
+  return n ? new Intl.NumberFormat("id-ID").format(n) : "";
+}
+
 type Varian = { id: string; nama: string; nilai: { id: string; nilai: string; harga_tukang?: number; custom?: boolean }[] };
 type ProdukInduk = { id: string; nama: string; kayu: boolean; varian: Varian[] };
 
@@ -164,50 +175,78 @@ function Pengaturan() {
   const [nilai, setNilai] = useState<Record<string, string>>({});
   const [hargaTukang, setHargaTukang] = useState<Record<string, string>>({});
   const [custom, setCustom] = useState<Record<string, boolean>>({});
+  const [ubah, setUbah] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [draftHarga, setDraftHarga] = useState("");
   const produk = useQuery({ queryKey: ["produk-induk"], queryFn: () => api<ProdukInduk[]>("/baru/produk") });
   const jenis = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
-  const segar = () => { void qc.invalidateQueries({ queryKey: ["produk-induk"] }); void qc.invalidateQueries({ queryKey: ["produk"] }); };
-  const simpanProduk = useMutation({
-    mutationFn: () => api("/baru/produk", { method: "POST", body: { nama, kayu } }),
-    onSuccess: () => { setNama(""); segar(); },
-  });
-  const simpanVarian = useMutation({
-    mutationFn: (produkId: string) => api("/baru/varian", { method: "POST", body: { produk_id: produkId, nama: sumbu[produkId] } }),
-    onSuccess: () => segar(),
-  });
+  const segar = () => {
+    void qc.invalidateQueries({ queryKey: ["produk-induk"] });
+    void qc.invalidateQueries({ queryKey: ["produk"] });
+    void qc.invalidateQueries({ queryKey: ["jenis"] });
+  };
+  const simpanProduk = useMutation({ mutationFn: () => api("/baru/produk", { method: "POST", body: { nama, kayu } }), onSuccess: () => { setNama(""); segar(); } });
+  const simpanVarian = useMutation({ mutationFn: (produkId: string) => api("/baru/varian", { method: "POST", body: { produk_id: produkId, nama: sumbu[produkId] } }), onSuccess: () => segar() });
   const simpanNilai = useMutation({
-    mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId], harga_tukang: Number(hargaTukang[varianId] || 0), custom: Boolean(custom[varianId]) } }),
+    mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId], harga_tukang: angka(hargaTukang[varianId] ?? ""), custom: Boolean(custom[varianId]) } }),
     onSuccess: () => segar(),
+  });
+  const hapus = useMutation({ mutationFn: (path: string) => api(path, { method: "DELETE" }), onSuccess: () => segar() });
+  const simpanUbah = useMutation({
+    mutationFn: (id: string) => api(`/baru/nilai/${id}`, { method: "PATCH", body: { nilai: draft, harga_tukang: angka(draftHarga), custom: draft === "custom" } }),
+    onSuccess: () => { setUbah(null); segar(); },
   });
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Pengaturan" sub="Produk diketik sekali. Varian dan nilainya ditambah di bawahnya." />
+        <Judul judul="Pengaturan" sub="Produk diketik sekali. Harga dalam rupiah, pemisah ribuan." />
         <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpanProduk.mutate(); }}>
           <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama produk" value={nama} onChange={(e) => setNama(e.target.value)} required />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
           <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" type="submit">Simpan produk</button>
         </form>
         <ul className="mb-4 divide-y rounded-2xl bg-white">
-          {(jenis.data ?? []).map((j) => (
-            <li key={j.id} className="px-4 py-3 text-sm">{j.nama} · {j.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {j.ukuran}</li>
+          {(jenis.data ?? []).filter((j) => !j.produk_id).map((j) => (
+            <li key={j.id} className="flex items-center justify-between px-4 py-3 text-sm">
+              <span>{j.nama} · {j.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {j.ukuran}</span>
+              <button className="text-red-700" onClick={() => hapus.mutate(`/baru/jenis/${j.id}`)}>Hapus</button>
+            </li>
           ))}
         </ul>
         <ul className="space-y-3">
           {(produk.data ?? []).map((p) => (
             <li key={p.id} className="rounded-2xl bg-white p-4 text-sm">
-              <p className="font-medium">{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"}</p>
+              <div className="flex items-center justify-between">
+                <p className="font-medium">{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"}</p>
+                <button className="text-red-700" onClick={() => hapus.mutate(`/baru/produk/${p.id}`)}>Hapus</button>
+              </div>
               <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); simpanVarian.mutate(p.id); }}>
                 <input className="rounded-lg border px-3 py-1" placeholder="Nama varian, misalnya ukuran" value={sumbu[p.id] ?? ""} onChange={(e) => setSumbu((s) => ({ ...s, [p.id]: e.target.value }))} required />
                 <button className="rounded-lg border px-3 py-1" type="submit">Tambah varian</button>
               </form>
               {p.varian.map((v) => (
                 <div key={v.id} className="mt-3">
-                  <p className="text-stone-600">{v.nama}</p>
-                  <p>{v.nilai.map((n) => `${n.nilai}${n.custom ? " (custom)" : n.harga_tukang ? ` · tukang ${n.harga_tukang}` : ""}`).join(", ") || "Belum ada nilai"}</p>
-                  <form className="mt-1 flex gap-2" onSubmit={(e) => { e.preventDefault(); simpanNilai.mutate(v.id); }}>
+                  <div className="flex items-center justify-between text-stone-600"><span>{v.nama}</span><button className="text-red-700" onClick={() => hapus.mutate(`/baru/varian/${v.id}`)}>Hapus varian</button></div>
+                  <ul className="mt-1 space-y-1">
+                    {v.nilai.map((n) => (
+                      <li key={n.id} className="flex flex-wrap items-center gap-2">
+                        {ubah === n.id ? (
+                          <>
+                            <input className="rounded-lg border px-2 py-1" value={draft} onChange={(e) => setDraft(e.target.value)} />
+                            <input className="rounded-lg border px-2 py-1" inputMode="numeric" value={draftHarga} onChange={(e) => setDraftHarga(tulisRupiah(e.target.value))} />
+                            <button className="rounded-lg border px-2 py-1" onClick={() => simpanUbah.mutate(n.id)}>Simpan</button>
+                          </>
+                        ) : (
+                          <span>{n.nilai} · {n.custom ? "custom, harga di order" : rupiah(n.harga_tukang ?? 0)}</span>
+                        )}
+                        <button className="text-emerald-800" onClick={() => { setUbah(n.id); setDraft(n.nilai); setDraftHarga(n.harga_tukang ? tulisRupiah(String(n.harga_tukang)) : ""); }}>Ubah</button>
+                        <button className="text-red-700" onClick={() => hapus.mutate(`/baru/nilai/${n.id}`)}>Hapus</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <form className="mt-1 flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); simpanNilai.mutate(v.id); }}>
                     <input className="rounded-lg border px-3 py-1" placeholder="Nilai, misalnya 50 x 20 x 200" value={nilai[v.id] ?? ""} onChange={(e) => setNilai((s) => ({ ...s, [v.id]: e.target.value }))} required />
-                    <input className="rounded-lg border px-3 py-1" placeholder="Harga tukang" inputMode="numeric" value={hargaTukang[v.id] ?? ""} disabled={Boolean(custom[v.id])} onChange={(e) => setHargaTukang((s) => ({ ...s, [v.id]: e.target.value }))} />
+                    <input className="rounded-lg border px-3 py-1" placeholder="Harga tukang" inputMode="numeric" value={hargaTukang[v.id] ?? ""} disabled={Boolean(custom[v.id])} onChange={(e) => setHargaTukang((s) => ({ ...s, [v.id]: tulisRupiah(e.target.value) }))} />
                     <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(custom[v.id])} onChange={(e) => setCustom((s) => ({ ...s, [v.id]: e.target.checked }))} /> Custom</label>
                     <button className="rounded-lg border px-3 py-1" type="submit">Tambah nilai</button>
                   </form>
