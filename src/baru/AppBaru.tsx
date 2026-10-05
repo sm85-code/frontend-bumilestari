@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Hammer, Landmark, LayoutDashboard, Settings } from "lucide-react";
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { api } from "../lib/api";
 import Masuk from "../pages/Masuk";
@@ -12,6 +13,10 @@ const menu = [
   { ke: "/keuangan", label: "Keuangan", ikon: Landmark },
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ];
+
+type Order = { id: string; no_order: string; catatan: string; nama_pembeli: string; produk_id: string; status: string; butuh_cat: boolean };
+type Produk = { id: string; nama: string; sku: string; jenis_produk: string; ukuran: string };
+type Belum = { nama: string; jumlah: number };
 
 function Bingkai({ anak }: { anak: React.ReactNode }) {
   const { user, keluar } = useAuth();
@@ -41,39 +46,77 @@ function Bingkai({ anak }: { anak: React.ReactNode }) {
   );
 }
 
+function Judul({ judul, sub }: { judul: string; sub: string }) {
+  return <header className="mb-4"><h1 className="text-2xl font-semibold">{judul}</h1><p className="mt-1 text-sm text-stone-600">{sub}</p></header>;
+}
+
 function Dashboard() {
+  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/order/belum-peta") });
+  const n = (belum.data ?? []).reduce((a, b) => a + b.jumlah, 0);
   return (
     <Bingkai anak={
       <>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="mt-1 text-sm text-stone-600">Senin–Sabtu dihitung. Cut-off Selasa. Laba kotor dulu, gaji di minggu keempat, bagi hasil 40/60 setelah gaji.</p>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <Kotak judul="Belum dipetakan" isi="Order ERP yang namanya belum jadi jenis katalog." />
-          <Kotak judul="Kayu" isi="Tukang, lalu karyawan cat." />
-          <Kotak judul="Non-kayu" isi="Supplier, tanpa cat. Karyawan non-kayu yang packing." />
-        </div>
+        <Judul judul="Dashboard" sub="Senin–Sabtu dihitung. Cut-off Selasa. Laba kotor dulu, gaji minggu keempat, bagi hasil 40/60 setelah gaji." />
+        <section className="rounded-2xl bg-white p-4 shadow-sm">
+          <h2 className="font-medium">Belum dipetakan</h2>
+          <p className="mt-1 text-3xl font-semibold text-emerald-900">{n}</p>
+          <a className="text-sm text-emerald-800" href="/order">Buka order</a>
+        </section>
       </>
     } />
   );
 }
 
-function Kotak({ judul, isi }: { judul: string; isi: string }) {
-  return <section className="rounded-2xl bg-white p-4 shadow-sm"><h2 className="font-medium">{judul}</h2><p className="mt-1 text-sm text-stone-600">{isi}</p></section>;
-}
-
 function OrderBaru() {
-  const q = useQuery({ queryKey: ["order"], queryFn: () => api<Array<{ id: string; no_order: string; catatan: string; nama_pembeli: string }>>("/order") });
+  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/order") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
   return (
     <Bingkai anak={
       <>
-        <h1 className="text-2xl font-semibold">Order</h1>
-        <p className="mt-1 text-sm text-stone-600">Dari ERP, reseller, dan input manual. Nama Shopee dipetakan ke jenis, tidak ditebak.</p>
-        <a className="mt-3 inline-block text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
+        <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
+        <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
         <ul className="mt-4 divide-y rounded-2xl bg-white">
-          {(q.data ?? []).slice(0, 30).map((o) => (
-            <li key={o.id} className="px-4 py-3 text-sm">
-              <span className="font-medium">{o.catatan || o.no_order}</span>
-              <span className="ml-2 text-stone-500">{o.no_order} · {o.nama_pembeli}</span>
+          {(order.data ?? []).slice(0, 40).map((o) => {
+            const p = peta.get(o.produk_id);
+            const belum = p?.sku === "ERP-BELUM";
+            return (
+              <li key={o.id} className="px-4 py-3 text-sm">
+                <span className="font-medium">{belum ? o.catatan || "Belum dipetakan" : p?.nama}</span>
+                <span className="ml-2 text-stone-500">{o.no_order} · {o.nama_pembeli} · {belum ? "menunggu jenis" : p?.jenis_produk === "kayu" ? "kayu" : "non-kayu"}</span>
+              </li>
+            );
+          })}
+        </ul>
+      </>
+    } />
+  );
+}
+
+function Peta() {
+  const qc = useQueryClient();
+  const [pilih, setPilih] = useState<Record<string, string>>({});
+  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/order/belum-peta") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const simpan = useMutation({
+    mutationFn: (body: { nama: string; produk_id: string }) => api("/order/peta", { method: "POST", body }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["belum-peta"] }),
+  });
+  const jenis = (produk.data ?? []).filter((p) => p.sku !== "ERP-BELUM");
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Petakan barang" sub="Cocokkan nama Shopee ke jenis. Non-kayu tidak dicat." />
+        <ul className="space-y-3">
+          {(belum.data ?? []).map((b) => (
+            <li key={b.nama} className="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 text-sm">
+              <span className="min-w-48 font-medium">{b.nama}</span>
+              <span className="text-stone-500">{b.jumlah} order</span>
+              <select className="rounded-lg border px-2 py-1" value={pilih[b.nama] ?? ""} onChange={(e) => setPilih((s) => ({ ...s, [b.nama]: e.target.value }))}>
+                <option value="">Pilih jenis</option>
+                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.jenis_produk === "kayu" ? "kayu" : "non-kayu"}</option>)}
+              </select>
+              <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, produk_id: pilih[b.nama] })}>Simpan</button>
             </li>
           ))}
         </ul>
@@ -83,15 +126,51 @@ function OrderBaru() {
 }
 
 function Produksi() {
-  return <Bingkai anak={<><h1 className="text-2xl font-semibold">Produksi</h1><p className="mt-2 text-sm text-stone-600">Kayu: tukang lalu karyawan cat. Non-kayu: supplier, tanpa cat. Status di sini tidak dikirim ke Shopee.</p></>} />;
+  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/order") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
+  const kayu = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "kayu" && o.butuh_cat);
+  const non = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "non_kayu");
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Produksi" sub="Status di sini tidak dikirim ke Shopee." />
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Kayu, antrian cat</h2><p className="text-sm text-stone-600">{kayu.length} order. Setelah tukang selesai.</p></section>
+          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Non-kayu</h2><p className="text-sm text-stone-600">{non.length} order. Dari supplier, tanpa cat. Karyawan non-kayu yang packing.</p></section>
+        </div>
+      </>
+    } />
+  );
 }
 
 function Keuangan() {
-  return <Bingkai anak={<><h1 className="text-2xl font-semibold">Keuangan</h1><p className="mt-2 text-sm text-stone-600">Pencairan Shopee dari ERP. Toko web dan marketplace lain manual. Iklan dan kas dari modal. Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil setelah itu.</p><a className="mt-3 inline-block text-sm text-emerald-800" href="/pencairan/erp">Tarik dari ERP</a></>} />;
+  const tarik = useMutation({ mutationFn: () => api("/pencairan/erp/order?hari=30", { method: "POST" }) });
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Keuangan" sub="Pencairan Shopee dari ERP. Toko web dan marketplace lain tetap manual. Iklan dan kas dari modal." />
+        <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari"}</button>
+        <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
+      </>
+    } />
+  );
 }
 
 function Pengaturan() {
-  return <Bingkai anak={<><h1 className="text-2xl font-semibold">Pengaturan</h1><p className="mt-2 text-sm text-stone-600">Katalog jenis, harga reseller, tukang, supplier, dan enam toko yang masuk laporan.</p></>} />;
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Pengaturan" sub="Jenis katalog, bukan listing Shopee. Harga reseller per jenis." />
+        <ul className="divide-y rounded-2xl bg-white">
+          {(produk.data ?? []).filter((p) => p.sku !== "ERP-BELUM").map((p) => (
+            <li key={p.id} className="px-4 py-3 text-sm">{p.nama} · {p.jenis_produk === "kayu" ? "kayu" : "non-kayu, tanpa cat"} {p.ukuran}</li>
+          ))}
+        </ul>
+      </>
+    } />
+  );
 }
 
 export default function AppBaru() {
@@ -102,6 +181,7 @@ export default function AppBaru() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/order" element={<OrderBaru />} />
+      <Route path="/order/peta" element={<Peta />} />
       <Route path="/produksi" element={<Produksi />} />
       <Route path="/keuangan" element={<Keuangan />} />
       <Route path="/pengaturan" element={<Pengaturan />} />
