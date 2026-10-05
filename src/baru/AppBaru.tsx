@@ -161,6 +161,7 @@ function Keuangan() {
         <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari dari ERP"}</button>
         {tarik.data ? <p className="mt-3 text-sm">{tarik.data.order} order baru masuk.</p> : null}
         {tarik.isError ? <p className="mt-3 text-sm text-red-700">{tarik.error instanceof Error ? tarik.error.message : "Tarik gagal"}</p> : null}
+        <a className="mt-3 block text-sm text-emerald-800" href="/keuangan/invoice">Invoice penjual lain</a>
         <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
       </>
     } />
@@ -291,8 +292,34 @@ export default function AppBaru() {
       <Route path="/order/peta" element={<Peta />} />
       <Route path="/produksi" element={<Produksi />} />
       <Route path="/keuangan" element={<Keuangan />} />
+      <Route path="/keuangan/invoice" element={<InvoicePenjual />} />
       <Route path="/pengaturan" element={<Pengaturan />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  );
+}
+
+function InvoicePenjual() {
+  const baris = [
+    ["28/09/2026 - Senin", "Partisi Rak Palang", "80x20x200", 375000, 100000, 10000],
+    ["01/10/2026 - Kamis", "Partisi Rak Tengah [tanpa rak]", "80x20x200", 450000, 160000, 10000],
+    ["02/10/2026 - Jumat", "Partisi Rak Palang", "100x20x200", 425000, 120000, 10000],
+  ];
+  const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  const tot = baris.reduce((a, b) => [a[0] + Number(b[3]), a[1] + Number(b[4]), a[2] + Number(b[5])], [0, 0, 0]);
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Invoice penjual lain" sub="Contoh INV/MG.4-002/X/2026 untuk Mandala Wangi. Harga barang dari nota tukang. Cat termasuk packing biasa. Proses tetap 10 ribu." />
+        <table className="w-full bg-white text-sm">
+          <thead><tr className="bg-slate-600 text-left text-white"><th className="p-2">Tanggal</th><th>Nama barang</th><th>Ukuran</th><th>Harga barang</th><th>Jasa pengecatan</th><th>Biaya proses</th><th>Total</th></tr></thead>
+          <tbody>
+            {baris.map((b) => <tr key={String(b[0])} className="border-t"><td className="p-2">{b[0]}</td><td>{b[1]}</td><td>{b[2]}</td><td>{uang(Number(b[3]))}</td><td>{uang(Number(b[4]))}</td><td>{uang(Number(b[5]))}</td><td>{uang(Number(b[3]) + Number(b[4]) + Number(b[5]))}</td></tr>)}
+            <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
+          </tbody>
+        </table>
+        <p className="mt-4 text-sm text-stone-600">Jatuh tempo 3 hari setelah tanggal invoice. Pembayaran ke rekening yang tercantum di invoice. Packing kayu belum masuk.</p>
+      </>
+    } />
   );
 }
