@@ -14,7 +14,7 @@ const menu = [
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ];
 
-type Order = { id: string; no_order: string; nama_barang?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string };
+type Order = { id: string; no_order: string; nama_barang?: string; varian?: string; qty?: number; keterangan?: string; tgl_pesan?: string; status_peta?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string; sumber?: string };
 type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number; produk_id?: string };
 type Belum = { nama: string; jumlah: number };
 
@@ -68,23 +68,45 @@ function Dashboard() {
   );
 }
 
+function sumberLabel(s?: string) {
+  if (s === "erp") return "Shopee";
+  if (s === "reseller") return "Reseller";
+  if (s === "web") return "Toko web";
+  return "Input manual";
+}
 function OrderBaru() {
   const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
+  const baris = order.data ?? [];
   return (
     <Bingkai anak={
       <>
         <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
         <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
-        <ul className="mt-4 divide-y rounded-2xl bg-white">
-          {(order.data ?? []).map((o) => {
-            return (
-              <li key={o.id} className="px-4 py-3 text-sm">
-                <span className="font-medium">{o.nama_barang || o.catatan || "Tanpa nama produk"}</span>
-                <span className="ml-2 text-stone-500">{o.no_order} · {o.toko} · {o.pembeli || o.nama_pembeli} · {o.jenis ? (o.kayu ? "kayu" : "non-kayu") : "belum dipetakan"}</span>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="mt-4 overflow-x-auto rounded-2xl bg-white">
+          <table className="min-w-[920px] w-full text-left text-sm">
+            <thead className="bg-stone-100 text-stone-700">
+              <tr>
+                {["Jenis Pesanan", "Tgl Pesanan", "Nama Toko/Reseller", "Nama Produk", "Varian", "Qty", "Status Pemetaan", "Sumber Pesanan", "Keterangan"].map((h) => <th key={h} className="px-3 py-2 font-medium">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {baris.map((o) => (
+                <tr key={o.id} className="border-t">
+                  <td className="px-3 py-2">{o.jenis ? (o.kayu ? "Kayu" : "Non-kayu") : "Belum diketahui"}</td>
+                  <td className="px-3 py-2">{o.tgl_pesan || "-"}</td>
+                  <td className="px-3 py-2">{o.toko || o.pembeli || "-"}</td>
+                  <td className="px-3 py-2">{o.nama_barang || o.catatan || "-"}</td>
+                  <td className="px-3 py-2">{o.varian || "-"}</td>
+                  <td className="px-3 py-2">{o.qty ?? 1}</td>
+                  <td className="px-3 py-2">{o.status_peta || (o.jenis ? "Sudah" : "Belum")}</td>
+                  <td className="px-3 py-2">{sumberLabel(o.sumber)}</td>
+                  <td className="px-3 py-2">{o.keterangan || o.no_order || "-"}</td>
+                </tr>
+              ))}
+              {baris.length === 0 ? <tr><td className="px-3 py-4 text-stone-500" colSpan={9}>Belum ada order.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
       </>
     } />
   );
