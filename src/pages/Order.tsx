@@ -73,7 +73,8 @@ export default function OrderPage() {
         const p = produk.get(o.produk_id);
         return (
           <>
-            <Typography.Text strong>{p?.nama ?? "—"}</Typography.Text> <Typography.Text type="secondary">{p?.ukuran}</Typography.Text>
+            <Typography.Text strong>{p?.sku === "ERP-BELUM" ? (o.catatan || "Belum dipetakan") : (p?.nama ?? "—")}</Typography.Text>{" "}
+            <Typography.Text type="secondary">{p?.sku === "ERP-BELUM" ? "belum dipetakan" : p?.ukuran}</Typography.Text>
             {o.warna && redup(`Warna: ${o.warna}`)}
             {!o.butuh_cat && p?.jenis_produk === "kayu" && <Lencana>polos</Lencana>}
           </>
