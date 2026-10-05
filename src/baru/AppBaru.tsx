@@ -158,16 +158,34 @@ function Produksi() {
 }
 
 function Keuangan() {
-  const tarik = useMutation({ mutationFn: () => api<{ order: number }>("/baru/tarik?hari=30", { method: "POST" }) });
+  const qc = useQueryClient();
+  const laporan = useQuery({ queryKey: ["laporan"], queryFn: () => api<{ pendapatan: number; laba_kotor: number; kasus: { id: string; no_order: string; nama_barang: string; pembeli: string; sumber: string; pendapatan: number; barang: number; cat: number; packing: number; admin: number; proses: number; laba_kotor: number; pihak?: string; dokumen?: string; invoice?: string }[] }>("/baru/laporan") });
+  const isi = useMutation({ mutationFn: () => api("/baru/uji", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan"] }) });
+  const tarik = useMutation({ mutationFn: () => api<{ order: number }>("/baru/tarik?hari=30", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan"] }) });
+  const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n || 0);
+  const baris = laporan.data?.kasus ?? [];
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Keuangan" sub="Pencairan Shopee dari ERP. Toko web dan marketplace lain tetap manual. Iklan dan kas dari modal." />
-        <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari dari ERP"}</button>
-        {tarik.data ? <p className="mt-3 text-sm">{tarik.data.order} order baru masuk.</p> : null}
-        {tarik.isError ? <p className="mt-3 text-sm text-red-700">{tarik.error instanceof Error ? tarik.error.message : "Tarik gagal"}</p> : null}
-        <a className="mt-3 block text-sm text-emerald-800" href="/keuangan/invoice">Invoice penjual lain</a>
-        <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
+        <Judul judul="Keuangan" sub="Senin–Sabtu. Shopee dari pencairan. Reseller dari invoice. Toko web diinput manual." />
+        <div className="mb-3 flex flex-wrap gap-2">
+          <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => isi.mutate()}>Tampilkan 3 contoh</button>
+          <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order Shopee"}</button>
+        </div>
+        <div className="mb-3 grid gap-3 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-4"><p className="text-sm text-stone-500">Pendapatan</p><p className="text-2xl font-semibold">{uang(laporan.data?.pendapatan ?? 0)}</p></section>
+          <section className="rounded-2xl bg-white p-4"><p className="text-sm text-stone-500">Laba kotor</p><p className="text-2xl font-semibold">{uang(laporan.data?.laba_kotor ?? 0)}</p></section>
+        </div>
+        <div className="overflow-auto rounded-2xl bg-white">
+          <table className="w-full text-left text-sm">
+            <thead className="text-stone-500"><tr><th className="px-3 py-2">Order</th><th>Sumber</th><th>Pihak</th><th>Dokumen</th><th>Pendapatan</th><th>Laba kotor</th></tr></thead>
+            <tbody>
+              {baris.map((k) => <tr key={k.id} className="border-t"><td className="px-3 py-2">{k.nama_barang}<br /><span className="text-stone-500">{k.no_order}</span></td><td>{k.sumber}</td><td>{k.pihak}</td><td>{k.dokumen}<br />{k.invoice}</td><td>{uang(k.pendapatan)}</td><td>{uang(k.laba_kotor)}</td></tr>)}
+              {baris.length === 0 ? <tr><td className="px-3 py-3 text-stone-500" colSpan={6}>Belum ada angka. Klik Tampilkan 3 contoh.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        <a className="mt-3 block text-sm text-emerald-800" href="/keuangan/invoice">Contoh invoice penjual lain</a>
       </>
     } />
   );
