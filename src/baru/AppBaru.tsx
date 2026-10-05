@@ -107,8 +107,12 @@ function Peta() {
         <Judul judul="Petakan barang" sub="Ketik nama atau ukuran, jangan gulir daftar panjang. Non-kayu tidak dicat." />
         <ul className="space-y-3">
           {(belum.data ?? []).map((b) => {
-            const kata = (cari[b.nama] ?? "").trim().toLowerCase();
-            const cocok = jenis.filter((p) => !kata || `${p.nama} ${p.ukuran}`.toLowerCase().includes(kata)).slice(0, 12);
+            const kata = (cari[b.nama] ?? b.nama).trim().toLowerCase();
+            const token = kata.split(/[^a-z0-9]+/).filter((x) => x.length > 3);
+            const cocok = jenis.filter((p) => {
+              const teks = `${p.nama} ${p.ukuran}`.toLowerCase();
+              return token.length === 0 || token.some((k) => teks.includes(k));
+            }).slice(0, 12);
             return (
               <li key={b.nama} className="rounded-2xl bg-white p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
@@ -116,7 +120,7 @@ function Peta() {
                   <span className="text-stone-500">{b.jumlah} order</span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-start gap-2">
-                  <input className="rounded-lg border px-2 py-1" placeholder="Cari produk atau ukuran" value={cari[b.nama] ?? ""} onChange={(e) => setCari((s) => ({ ...s, [b.nama]: e.target.value }))} />
+                  <input className="rounded-lg border px-2 py-1" placeholder="Cari, kosongkan untuk ikut nama order" value={cari[b.nama] ?? ""} onChange={(e) => setCari((s) => ({ ...s, [b.nama]: e.target.value }))} />
                   <div className="flex max-h-36 flex-col overflow-auto rounded-lg border">
                     {cocok.map((p) => (
                       <button key={p.id} className={`px-2 py-1 text-left ${pilih[b.nama] === p.id ? "bg-emerald-800 text-white" : ""}`} onClick={() => setPilih((s) => ({ ...s, [b.nama]: p.id }))}>
