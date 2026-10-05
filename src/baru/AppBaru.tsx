@@ -74,14 +74,65 @@ function sumberLabel(s?: string) {
   if (s === "web") return "Toko web";
   return "Input manual";
 }
+function templatePesanan() {
+  const isi = "tgl_pesan,toko,nama_barang,varian,qty,keterangan,sumber\n2026-10-06,Mandala Wangi,Partisi Rak Palang,100x20x200,1,,reseller\n";
+  const blob = new Blob([isi], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "template-pesanan.csv";
+  a.click();
+}
 function OrderBaru() {
+  const qc = useQueryClient();
   const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
+  const pihak = useQuery({ queryKey: ["pihak"], queryFn: () => api<{ reseller: { kode: string; nama: string }[] }>("/baru/pihak") });
+  const [form, setForm] = useState<"reseller" | "manual" | null>(null);
+  const [isi, setIsi] = useState({ tgl_pesan: "", toko: "", nama_barang: "", varian: "", qty: "1", keterangan: "" });
   const baris = order.data ?? [];
+  const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=30", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["order"] }) });
+  const simpan = useMutation({
+    mutationFn: () => api("/baru/order", { method: "POST", body: { ...isi, qty: Number(isi.qty || 1), sumber: form === "reseller" ? "reseller" : "manual" } }),
+    onSuccess: () => { setForm(null); void qc.invalidateQueries({ queryKey: ["order"] }); },
+  });
+  async function impor(file: File) {
+    const teks = await file.text();
+    const [kepala, ...isiFile] = teks.trim().split(/\r?\n/);
+    const kolom = kepala.split(",");
+    const barisFile = isiFile.filter(Boolean).map((baris) => {
+      const nilai = baris.split(",");
+      return Object.fromEntries(kolom.map((k, i) => [k.trim(), nilai[i] ?? ""]));
+    });
+    await api("/baru/order/impor", { method: "POST", body: { baris: barisFile } });
+    void qc.invalidateQueries({ queryKey: ["order"] });
+  }
   return (
     <Bingkai anak={
       <>
         <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
-        <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
+        <div className="mb-3 flex flex-wrap gap-2">
+          <a className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" href="/order/peta">Kelola Pesanan</a>
+          <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik Pesanan dari ERP"}</button>
+          <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("reseller")}>Input Pesanan Reseller</button>
+          <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("manual")}>Input Pesanan Manual</button>
+          <label className="rounded-lg border px-3 py-2 text-sm">Import Pesanan dari Excel<input className="hidden" type="file" accept=".csv,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void impor(f); }} /></label>
+          <button className="rounded-lg border px-3 py-2 text-sm" onClick={templatePesanan}>Download Template</button>
+        </div>
+        {form ? (
+          <form className="mb-3 grid gap-2 rounded-2xl bg-white p-3 text-sm md:grid-cols-3" onSubmit={(e) => { e.preventDefault(); simpan.mutate(); }}>
+            <input className="rounded-lg border px-2 py-1" type="date" value={isi.tgl_pesan} onChange={(e) => setIsi({ ...isi, tgl_pesan: e.target.value })} />
+            {form === "reseller" ? (
+              <select className="rounded-lg border px-2 py-1" value={isi.toko} onChange={(e) => setIsi({ ...isi, toko: e.target.value })}>
+                <option value="">Pilih reseller</option>
+                {(pihak.data?.reseller ?? []).map((r) => <option key={r.kode} value={r.nama}>{r.kode} {r.nama}</option>)}
+              </select>
+            ) : <input className="rounded-lg border px-2 py-1" placeholder="Nama toko" value={isi.toko} onChange={(e) => setIsi({ ...isi, toko: e.target.value })} />}
+            <input className="rounded-lg border px-2 py-1" placeholder="Nama produk" value={isi.nama_barang} onChange={(e) => setIsi({ ...isi, nama_barang: e.target.value })} />
+            <input className="rounded-lg border px-2 py-1" placeholder="Varian" value={isi.varian} onChange={(e) => setIsi({ ...isi, varian: e.target.value })} />
+            <input className="rounded-lg border px-2 py-1" placeholder="Qty" value={isi.qty} onChange={(e) => setIsi({ ...isi, qty: e.target.value })} />
+            <input className="rounded-lg border px-2 py-1" placeholder="Keterangan" value={isi.keterangan} onChange={(e) => setIsi({ ...isi, keterangan: e.target.value })} />
+            <button className="rounded-lg bg-emerald-800 px-3 py-2 text-white">Simpan</button>
+          </form>
+        ) : null}
         <div className="mt-4 overflow-x-auto rounded-2xl bg-white">
           <table className="min-w-[920px] w-full text-left text-sm">
             <thead className="bg-stone-100 text-stone-700">
