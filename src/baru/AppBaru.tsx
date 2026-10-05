@@ -300,13 +300,13 @@ export default function AppBaru() {
 }
 
 function InvoicePenjual() {
-  const baris = [
-    ["28/09/2026 - Senin", "Partisi Rak Palang", "80x20x200", 375000, 100000, 10000],
-    ["01/10/2026 - Kamis", "Partisi Rak Tengah [tanpa rak]", "80x20x200", 450000, 160000, 10000],
-    ["02/10/2026 - Jumat", "Partisi Rak Palang", "100x20x200", 425000, 120000, 10000],
+  const baris: { tanggal: string; nama: string; ukuran: string; barang: number; cat: number; proses: number }[] = [
+    { tanggal: "28/09/2026 - Senin", nama: "Partisi Rak Palang", ukuran: "80x20x200", barang: 375000, cat: 100000, proses: 10000 },
+    { tanggal: "01/10/2026 - Kamis", nama: "Partisi Rak Tengah [tanpa rak]", ukuran: "80x20x200", barang: 450000, cat: 160000, proses: 10000 },
+    { tanggal: "02/10/2026 - Jumat", nama: "Partisi Rak Palang", ukuran: "100x20x200", barang: 425000, cat: 120000, proses: 10000 },
   ];
   const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
-  const tot = baris.reduce((a, b) => [a[0] + Number(b[3]), a[1] + Number(b[4]), a[2] + Number(b[5])], [0, 0, 0]);
+  const tot = baris.reduce((a, b) => [a[0] + b.barang, a[1] + b.cat, a[2] + b.proses], [0, 0, 0]);
   return (
     <Bingkai anak={
       <>
@@ -314,7 +314,7 @@ function InvoicePenjual() {
         <table className="w-full bg-white text-sm">
           <thead><tr className="bg-slate-600 text-left text-white"><th className="p-2">Tanggal</th><th>Nama barang</th><th>Ukuran</th><th>Harga barang</th><th>Jasa pengecatan</th><th>Biaya proses</th><th>Total</th></tr></thead>
           <tbody>
-            {baris.map((b) => <tr key={String(b[0])} className="border-t"><td className="p-2">{b[0]}</td><td>{b[1]}</td><td>{b[2]}</td><td>{uang(Number(b[3]))}</td><td>{uang(Number(b[4]))}</td><td>{uang(Number(b[5]))}</td><td>{uang(Number(b[3]) + Number(b[4]) + Number(b[5]))}</td></tr>)}
+            {baris.map((b) => <tr key={b.tanggal + b.nama} className="border-t"><td className="p-2">{b.tanggal}</td><td>{b.nama}</td><td>{b.ukuran}</td><td>{uang(b.barang)}</td><td>{uang(b.cat)}</td><td>{uang(b.proses)}</td><td>{uang(b.barang + b.cat + b.proses)}</td></tr>)}
             <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
           </tbody>
         </table>
