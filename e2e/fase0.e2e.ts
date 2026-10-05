@@ -98,23 +98,13 @@ test("tagihan penjual lain: catat pembayaran dengan tanggal", async ({ page }) =
   expect(body.tanggal).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 });
 
-test("beranda: kas bisa dipakai terpisah dari dana cadangan, tagihan Selasa ini, yang perlu dikerjakan", async ({ page }) => {
+test("beranda: alur baru, bukan wizard", async ({ page }) => {
   await pasangApiTiruan(page);
   await page.goto("/");
-  await expect(page.getByText("Kas bisa dipakai")).toBeVisible();
-  await expect(page.getByText("Rp9.100.000", { exact: true })).toBeVisible(); // 10.100.000 − Dana cadangan 1.000.000
-  await expect(page.getByText(/Dana cadangan Rp1\.000\.000/)).toBeVisible();
-  await expect(page.getByText("Rp945.000", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/Semua belum dibayar Rp1\.795\.000/)).toBeVisible();
-  await expect(page.getByText("Status semua order (sepanjang waktu)")).toBeVisible();
-
-  const tugas = page.locator(".ant-card", { hasText: "Yang perlu dikerjakan" });
-  await expect(tugas.locator('[data-tugas="selasa"]')).toContainText("Tutup Kas Mingguan");
-  await expect(tugas.locator('[data-tugas="tukang"]')).toContainText("Bayar tukang & supplier Rp500.000");
-  await expect(tugas.locator('[data-tugas="penjual-lain"]')).toContainText("Rp945.000 jatuh tempo Selasa ini");
-  await expect(tugas.locator('[data-tugas="kas-iklan"]')).toContainText("di bawah 20% plafon");
-  await tugas.locator('[data-tugas="selasa"]').getByRole("link").first().click();
-  await expect(page).toHaveURL(/\/selasa$/);
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Tarik order" })).toBeVisible();
+  await page.getByRole("link", { name: "Petakan barang" }).click();
+  await expect(page).toHaveURL(/\/order\/peta$/);
 });
 
 test("tutup kas mingguan: wizard langkah demi langkah dengan status", async ({ page }) => {

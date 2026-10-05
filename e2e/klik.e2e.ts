@@ -5,7 +5,7 @@ import { pasangApiTiruan } from "./mock-api";
 test("semua menu navigasi bisa diklik (menu dikelompokkan, URL lama tetap)", async ({ page }, info) => {
   await pasangApiTiruan(page);
   await page.goto("/");
-  await expect(page.getByText("Kas bisa dipakai").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
   if (!hp(info.project.name)) {
     const samping = page.locator('aside[aria-label="Menu samping"]');

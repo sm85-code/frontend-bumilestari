@@ -4,7 +4,7 @@ import { isPemilik, useAuth } from "./auth/AuthContext";
 import Layout from "./components/Layout";
 import { Memuat } from "./components/ui";
 const Akun = lazy(() => import("./pages/Akun"));
-const Beranda = lazy(() => import("./pages/Beranda"));
+const Beranda = lazy(() => import("./pages/DashboardBaru"));
 const KasKecil = lazy(() => import("./pages/KasKecil"));
 const Keuangan = lazy(() => import("./pages/Keuangan"));
 const LaporanKasKecilPage = lazy(() => import("./pages/LaporanKasKecil"));

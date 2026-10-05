@@ -16,6 +16,14 @@ export default function PencairanErpPage() {
     mutationFn: (body: { saluran_id: string; akun_erp_id: string }) => api("/pencairan/erp/pasang", { method: "POST", body }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["saluran"] }),
   });
+  const buat = useMutation({
+    mutationFn: async (toko: { id: string; nama: string }) => {
+      const ada = (saluran.data ?? []).find((s) => s.nama.toLowerCase() === toko.nama.toLowerCase());
+      const id = ada?.id ?? (await api<{ id: string }>("/saluran", { method: "POST", body: { nama: toko.nama, jenis: "marketplace" } })).id;
+      await api("/pencairan/erp/pasang", { method: "POST", body: { saluran_id: id, akun_erp_id: toko.id } });
+    },
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["saluran"] }),
+  });
   const tarik = useMutation({
     mutationFn: () => api<{ saluran: { saluran: string; baris: number; catatan?: string }[] }>("/pencairan/erp/tarik?hari=15", { method: "POST" }),
   });
@@ -38,6 +46,7 @@ export default function PencairanErpPage() {
               {(saluran.data ?? []).map((s) => <option key={s.id} value={s.id}>{s.nama}</option>)}
             </Select>
             <Button disabled={!peta[t.id] || pasang.isPending} onClick={() => pasang.mutate({ saluran_id: peta[t.id], akun_erp_id: t.id })}>Simpan</Button>
+            <Button disabled={buat.isPending} onClick={() => buat.mutate(t)}>Buat saluran toko ini</Button>
           </div>
         ))}
       </Card>
