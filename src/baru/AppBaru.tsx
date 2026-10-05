@@ -161,6 +161,7 @@ function Keuangan() {
         <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari dari ERP"}</button>
         {tarik.data ? <p className="mt-3 text-sm">{tarik.data.order} order baru masuk.</p> : null}
         {tarik.isError ? <p className="mt-3 text-sm text-red-700">{tarik.error instanceof Error ? tarik.error.message : "Tarik gagal"}</p> : null}
+        <a className="mt-3 block text-sm text-emerald-800" href="/keuangan/invoice">Invoice penjual lain</a>
         <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
       </>
     } />
@@ -291,8 +292,34 @@ export default function AppBaru() {
       <Route path="/order/peta" element={<Peta />} />
       <Route path="/produksi" element={<Produksi />} />
       <Route path="/keuangan" element={<Keuangan />} />
+      <Route path="/keuangan/invoice" element={<InvoicePenjual />} />
       <Route path="/pengaturan" element={<Pengaturan />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  );
+}
+
+function InvoicePenjual() {
+  const baris: { tanggal: string; nama: string; ukuran: string; barang: number; cat: number; proses: number }[] = [
+    { tanggal: "28/09/2026 - Senin", nama: "Partisi Rak Palang", ukuran: "80x20x200", barang: 375000, cat: 100000, proses: 10000 },
+    { tanggal: "01/10/2026 - Kamis", nama: "Partisi Rak Tengah [tanpa rak]", ukuran: "80x20x200", barang: 450000, cat: 160000, proses: 10000 },
+    { tanggal: "02/10/2026 - Jumat", nama: "Partisi Rak Palang", ukuran: "100x20x200", barang: 425000, cat: 120000, proses: 10000 },
+  ];
+  const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+  const tot = baris.reduce((a, b) => [a[0] + b.barang, a[1] + b.cat, a[2] + b.proses], [0, 0, 0]);
+  return (
+    <Bingkai anak={
+      <>
+        <Judul judul="Invoice penjual lain" sub="Jasa pengecatan sudah termasuk packing biasa. Packing kayu kolom sendiri, sebelum biaya proses." />
+        <table className="w-full bg-white text-sm">
+          <thead><tr className="bg-slate-600 text-left text-white"><th className="p-2">Tanggal</th><th>Nama barang</th><th>Ukuran</th><th>Harga barang</th><th>Jasa pengecatan</th><th>Packing kayu</th><th>Biaya proses</th><th>Total</th></tr></thead>
+          <tbody>
+            {baris.map((b) => <tr key={b.tanggal + b.nama} className="border-t"><td className="p-2">{b.tanggal}</td><td>{b.nama}</td><td>{b.ukuran}</td><td>{uang(b.barang)}</td><td>{uang(b.cat)}</td><td>{uang(0)}</td><td>{uang(b.proses)}</td><td>{uang(b.barang + b.cat + b.proses)}</td></tr>)}
+            <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(0)}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
+          </tbody>
+        </table>
+        <p className="mt-4 text-sm text-stone-600">Contoh ini tidak memakai packing kayu, jadi kolomnya Rp0. Kalau ada, kolom itu terisi dan ikut total. Jatuh tempo 3 hari setelah tanggal invoice.</p>
+      </>
+    } />
   );
 }
