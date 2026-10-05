@@ -153,31 +153,57 @@ function Keuangan() {
   );
 }
 
+type Varian = { id: string; nama: string; nilai: { id: string; nilai: string }[] };
+type ProdukInduk = { id: string; nama: string; kayu: boolean; varian: Varian[] };
+
 function Pengaturan() {
   const qc = useQueryClient();
   const [nama, setNama] = useState("");
-  const [ukuran, setUkuran] = useState("");
-  const [harga, setHarga] = useState("");
   const [kayu, setKayu] = useState(true);
-  const produk = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
-  const simpan = useMutation({
-    mutationFn: () => api("/baru/jenis", { method: "POST", body: { nama, ukuran, kayu, harga_reseller: Number(harga || 0) } }),
-    onSuccess: () => { setNama(""); setUkuran(""); setHarga(""); void qc.invalidateQueries({ queryKey: ["jenis"] }); },
+  const [sumbu, setSumbu] = useState<Record<string, string>>({});
+  const [nilai, setNilai] = useState<Record<string, string>>({});
+  const produk = useQuery({ queryKey: ["produk-induk"], queryFn: () => api<ProdukInduk[]>("/baru/produk") });
+  const segar = () => { void qc.invalidateQueries({ queryKey: ["produk-induk"] }); void qc.invalidateQueries({ queryKey: ["produk"] }); };
+  const simpanProduk = useMutation({
+    mutationFn: () => api("/baru/produk", { method: "POST", body: { nama, kayu } }),
+    onSuccess: () => { setNama(""); segar(); },
+  });
+  const simpanVarian = useMutation({
+    mutationFn: (produkId: string) => api("/baru/varian", { method: "POST", body: { produk_id: produkId, nama: sumbu[produkId] } }),
+    onSuccess: () => segar(),
+  });
+  const simpanNilai = useMutation({
+    mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId] } }),
+    onSuccess: () => segar(),
   });
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Pengaturan" sub="Jenis katalog, bukan listing Shopee. Harga reseller per jenis." />
-        <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpan.mutate(); }}>
-          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama jenis" value={nama} onChange={(e) => setNama(e.target.value)} required />
-          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Ukuran" value={ukuran} onChange={(e) => setUkuran(e.target.value)} />
-          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Harga reseller" inputMode="numeric" value={harga} onChange={(e) => setHarga(e.target.value)} />
+        <Judul judul="Pengaturan" sub="Produk diketik sekali. Varian dan nilainya ditambah di bawahnya." />
+        <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpanProduk.mutate(); }}>
+          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama produk" value={nama} onChange={(e) => setNama(e.target.value)} required />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
-          <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" type="submit">Simpan jenis</button>
+          <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" type="submit">Simpan produk</button>
         </form>
-        <ul className="divide-y rounded-2xl bg-white">
+        <ul className="space-y-3">
           {(produk.data ?? []).map((p) => (
-            <li key={p.id} className="px-4 py-3 text-sm">{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {p.ukuran} {p.harga_reseller ? `· reseller ${p.harga_reseller}` : ""}</li>
+            <li key={p.id} className="rounded-2xl bg-white p-4 text-sm">
+              <p className="font-medium">{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"}</p>
+              <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); simpanVarian.mutate(p.id); }}>
+                <input className="rounded-lg border px-3 py-1" placeholder="Nama varian, misalnya ukuran" value={sumbu[p.id] ?? ""} onChange={(e) => setSumbu((s) => ({ ...s, [p.id]: e.target.value }))} required />
+                <button className="rounded-lg border px-3 py-1" type="submit">Tambah varian</button>
+              </form>
+              {p.varian.map((v) => (
+                <div key={v.id} className="mt-3">
+                  <p className="text-stone-600">{v.nama}</p>
+                  <p>{v.nilai.map((n) => n.nilai).join(", ") || "Belum ada nilai"}</p>
+                  <form className="mt-1 flex gap-2" onSubmit={(e) => { e.preventDefault(); simpanNilai.mutate(v.id); }}>
+                    <input className="rounded-lg border px-3 py-1" placeholder="Nilai, misalnya 50 x 20 x 200" value={nilai[v.id] ?? ""} onChange={(e) => setNilai((s) => ({ ...s, [v.id]: e.target.value }))} required />
+                    <button className="rounded-lg border px-3 py-1" type="submit">Tambah nilai</button>
+                  </form>
+                </div>
+              ))}
+            </li>
           ))}
         </ul>
       </>
