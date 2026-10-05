@@ -351,7 +351,7 @@ function Pihak() {
 
 function Uji() {
   const qc = useQueryClient();
-  const laporan = useQuery({ queryKey: ["laporan-uji"], queryFn: () => api<{pendapatan:number;laba_kotor:number;kasus:{no_order:string;pembeli:string;pendapatan:number;laba_kotor:number}[]}>("/baru/laporan") });
+  const laporan = useQuery({ queryKey: ["laporan-uji"], queryFn: () => api<{pendapatan:number;laba_kotor:number;kasus:{no_order:string;pembeli:string;pendapatan:number;laba_kotor:number;pihak?:string;peran?:string;dokumen?:string;invoice?:string}[]}>("/baru/laporan") });
   const isi = useMutation({ mutationFn: () => api("/baru/uji", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan-uji"] }) });
   const hapus = useMutation({ mutationFn: () => api("/baru/uji", { method: "DELETE" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan-uji"] }) });
   const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n || 0);
@@ -363,7 +363,7 @@ function Uji() {
         <button className="rounded-lg border px-3 py-1" onClick={() => hapus.mutate()}>Hapus 3 kasus</button>
       </div>
       <ul className="mt-3 space-y-1">
-        {(laporan.data?.kasus ?? []).map((k) => <li key={k.no_order}>{k.no_order} · {k.pembeli} · pendapatan {uang(k.pendapatan)} · laba kotor {uang(k.laba_kotor)}</li>)}
+        {(laporan.data?.kasus ?? []).map((k) => <li key={k.no_order}>{k.no_order} · {k.pembeli} · {k.peran} {k.pihak} · {k.dokumen} · {k.invoice} · pendapatan {uang(k.pendapatan)} · laba kotor {uang(k.laba_kotor)}</li>)}
       </ul>
       {laporan.data ? <p className="mt-2">Total pendapatan {uang(laporan.data.pendapatan)}. Laba kotor {uang(laporan.data.laba_kotor)}.</p> : null}
     </section>
