@@ -163,6 +163,7 @@ function Pengaturan() {
   const [sumbu, setSumbu] = useState<Record<string, string>>({});
   const [nilai, setNilai] = useState<Record<string, string>>({});
   const produk = useQuery({ queryKey: ["produk-induk"], queryFn: () => api<ProdukInduk[]>("/baru/produk") });
+  const jenis = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const segar = () => { void qc.invalidateQueries({ queryKey: ["produk-induk"] }); void qc.invalidateQueries({ queryKey: ["produk"] }); };
   const simpanProduk = useMutation({
     mutationFn: () => api("/baru/produk", { method: "POST", body: { nama, kayu } }),
@@ -185,6 +186,11 @@ function Pengaturan() {
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
           <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" type="submit">Simpan produk</button>
         </form>
+        <ul className="mb-4 divide-y rounded-2xl bg-white">
+          {(jenis.data ?? []).map((j) => (
+            <li key={j.id} className="px-4 py-3 text-sm">{j.nama} · {j.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {j.ukuran}</li>
+          ))}
+        </ul>
         <ul className="space-y-3">
           {(produk.data ?? []).map((p) => (
             <li key={p.id} className="rounded-2xl bg-white p-4 text-sm">
