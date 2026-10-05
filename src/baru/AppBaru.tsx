@@ -110,7 +110,7 @@ function Peta() {
               <span className="text-stone-500">{b.jumlah} order</span>
               <select className="rounded-lg border px-2 py-1" value={pilih[b.nama] ?? ""} onChange={(e) => setPilih((s) => ({ ...s, [b.nama]: e.target.value }))}>
                 <option value="">Pilih jenis</option>
-                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.kayu ? "kayu" : "non-kayu"}</option>)}
+                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {p.ukuran}</option>)}
               </select>
               <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, jenis_id: pilih[b.nama] })}>Simpan</button>
             </li>
