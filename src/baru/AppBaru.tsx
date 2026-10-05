@@ -14,7 +14,7 @@ const menu = [
   { ke: "/pengaturan", label: "Pengaturan", ikon: Settings },
 ];
 
-type Order = { id: string; no_order: string; catatan: string; nama_pembeli: string; produk_id: string; status: string; butuh_cat: boolean };
+type Order = { id: string; no_order: string; nama_barang?: string; catatan?: string; pembeli?: string; nama_pembeli?: string; produk_id?: string; jenis?: string; kayu?: boolean; status: string; toko?: string };
 type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number };
 type Belum = { nama: string; jumlah: number };
 
@@ -82,8 +82,8 @@ function OrderBaru() {
             const belum = p?.sku === "ERP-BELUM";
             return (
               <li key={o.id} className="px-4 py-3 text-sm">
-                <span className="font-medium">{belum ? o.catatan || "Belum dipetakan" : p?.nama}</span>
-                <span className="ml-2 text-stone-500">{o.no_order} · {o.nama_pembeli} · {belum ? "menunggu jenis" : p?.jenis_produk === "kayu" ? "kayu" : "non-kayu"}</span>
+                <span className="font-medium">{o.nama_barang || o.catatan || "Tanpa nama produk"}</span>
+                <span className="ml-2 text-stone-500">{o.no_order} · {o.toko} · {o.pembeli || o.nama_pembeli} · {o.jenis ? (o.kayu ? "kayu" : "non-kayu") : "belum dipetakan"}</span>
               </li>
             );
           })}
