@@ -92,6 +92,7 @@ function OrderBaru() {
 function Peta() {
   const qc = useQueryClient();
   const [pilih, setPilih] = useState<Record<string, string>>({});
+  const [cari, setCari] = useState<Record<string, string>>({});
   const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/baru/belum-peta") });
   const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const simpan = useMutation({
@@ -102,19 +103,32 @@ function Peta() {
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Petakan barang" sub="Cocokkan nama Shopee ke jenis. Non-kayu tidak dicat." />
+        <Judul judul="Petakan barang" sub="Ketik nama atau ukuran, jangan gulir daftar panjang. Non-kayu tidak dicat." />
         <ul className="space-y-3">
-          {(belum.data ?? []).map((b) => (
-            <li key={b.nama} className="flex flex-wrap items-center gap-2 rounded-2xl bg-white p-3 text-sm">
-              <span className="min-w-48 font-medium">{b.nama}</span>
-              <span className="text-stone-500">{b.jumlah} order</span>
-              <select className="rounded-lg border px-2 py-1" value={pilih[b.nama] ?? ""} onChange={(e) => setPilih((s) => ({ ...s, [b.nama]: e.target.value }))}>
-                <option value="">Pilih jenis</option>
-                {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {p.ukuran}</option>)}
-              </select>
-              <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, jenis_id: pilih[b.nama] })}>Simpan</button>
-            </li>
-          ))}
+          {(belum.data ?? []).map((b) => {
+            const kata = (cari[b.nama] ?? "").trim().toLowerCase();
+            const cocok = jenis.filter((p) => !kata || `${p.nama} ${p.ukuran}`.toLowerCase().includes(kata)).slice(0, 12);
+            return (
+              <li key={b.nama} className="rounded-2xl bg-white p-3 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-48 font-medium">{b.nama}</span>
+                  <span className="text-stone-500">{b.jumlah} order</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-start gap-2">
+                  <input className="rounded-lg border px-2 py-1" placeholder="Cari produk atau ukuran" value={cari[b.nama] ?? ""} onChange={(e) => setCari((s) => ({ ...s, [b.nama]: e.target.value }))} />
+                  <div className="flex max-h-36 flex-col overflow-auto rounded-lg border">
+                    {cocok.map((p) => (
+                      <button key={p.id} className={`px-2 py-1 text-left ${pilih[b.nama] === p.id ? "bg-emerald-800 text-white" : ""}`} onClick={() => setPilih((s) => ({ ...s, [b.nama]: p.id }))}>
+                        {p.nama} · {p.kayu ? "kayu" : "non-kayu"} {p.ukuran}
+                      </button>
+                    ))}
+                    {cocok.length === 0 ? <span className="px-2 py-1 text-stone-500">Tidak ketemu</span> : null}
+                  </div>
+                  <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, jenis_id: pilih[b.nama] })}>Simpan</button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </>
     } />
