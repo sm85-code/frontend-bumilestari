@@ -75,7 +75,7 @@ function OrderBaru() {
         <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
         <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
         <ul className="mt-4 divide-y rounded-2xl bg-white">
-          {(order.data ?? []).slice(0, 40).map((o) => {
+          {(order.data ?? []).map((o) => {
             return (
               <li key={o.id} className="px-4 py-3 text-sm">
                 <span className="font-medium">{o.nama_barang || o.catatan || "Tanpa nama produk"}</span>
@@ -96,7 +96,7 @@ function Peta() {
   const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const simpan = useMutation({
     mutationFn: (body: { nama: string; jenis_id: string }) => api("/baru/peta", { method: "POST", body }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["belum-peta"] }),
+    onSuccess: () => { void qc.invalidateQueries({ queryKey: ["belum-peta"] }); void qc.invalidateQueries({ queryKey: ["order"] }); },
   });
   const jenis = (produk.data ?? []).filter((p) => p.sku !== "ERP-BELUM");
   return (
@@ -139,12 +139,14 @@ function Produksi() {
 }
 
 function Keuangan() {
-  const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=30", { method: "POST" }) });
+  const tarik = useMutation({ mutationFn: () => api<{ order: number }>("/baru/tarik?hari=30", { method: "POST" }) });
   return (
     <Bingkai anak={
       <>
         <Judul judul="Keuangan" sub="Pencairan Shopee dari ERP. Toko web dan marketplace lain tetap manual. Iklan dan kas dari modal." />
         <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari dari ERP"}</button>
+        {tarik.data ? <p className="mt-3 text-sm">{tarik.data.order} order baru masuk.</p> : null}
+        {tarik.isError ? <p className="mt-3 text-sm text-red-700">{tarik.error instanceof Error ? tarik.error.message : "Tarik gagal"}</p> : null}
         <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
       </>
     } />
