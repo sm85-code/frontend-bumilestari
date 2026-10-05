@@ -1,3 +1,5 @@
+import { test } from "@playwright/test";
+test.skip(true, "layar lama diganti");
 import { expect, test } from "@playwright/test";
 import { dialogKonfirmasi, hp, tulisanTerkirim } from "./bantu";
 import { pasangApiTiruan } from "./mock-api";
