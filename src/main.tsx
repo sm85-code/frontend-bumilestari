@@ -1,6 +1,4 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App as AntApp, ConfigProvider } from "antd";
-import idID from "antd/locale/id_ID";
 import "@fontsource-variable/plus-jakarta-sans";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
@@ -8,8 +6,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext";
-import App from "./App";
-import { tema } from "./theme";
+import AppBaru from "./baru/AppBaru";
 import "./index.css";
 
 dayjs.locale("id");
@@ -22,13 +19,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ConfigProvider theme={tema} locale={idID}>
-          <AntApp>
             <AuthProvider>
-              <App />
+              <AppBaru />
             </AuthProvider>
-          </AntApp>
-        </ConfigProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
