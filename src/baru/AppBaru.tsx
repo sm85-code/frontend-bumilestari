@@ -51,7 +51,7 @@ function Judul({ judul, sub }: { judul: string; sub: string }) {
 }
 
 function Dashboard() {
-  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/v2/belum-peta") });
+  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/baru/belum-peta") });
   const n = (belum.data ?? []).reduce((a, b) => a + b.jumlah, 0);
   return (
     <Bingkai anak={
@@ -68,14 +68,14 @@ function Dashboard() {
 }
 
 function OrderBaru() {
-  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/v2/order") });
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
   return (
     <Bingkai anak={
       <>
         <Judul judul="Order" sub="Dari ERP, reseller, dan input manual. Nama yang beda tidak digabung otomatis." />
-        <a className="text-sm text-emerald-800" href="/v2/peta">Petakan barang</a>
+        <a className="text-sm text-emerald-800" href="/order/peta">Petakan barang</a>
         <ul className="mt-4 divide-y rounded-2xl bg-white">
           {(order.data ?? []).slice(0, 40).map((o) => {
             const p = peta.get(o.produk_id);
@@ -96,10 +96,10 @@ function OrderBaru() {
 function Peta() {
   const qc = useQueryClient();
   const [pilih, setPilih] = useState<Record<string, string>>({});
-  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/v2/belum-peta") });
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const belum = useQuery({ queryKey: ["belum-peta"], queryFn: () => api<Belum[]>("/baru/belum-peta") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const simpan = useMutation({
-    mutationFn: (body: { nama: string; produk_id: string }) => api("/v2/peta", { method: "POST", body }),
+    mutationFn: (body: { nama: string; jenis_id: string }) => api("/baru/peta", { method: "POST", body }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["belum-peta"] }),
   });
   const jenis = (produk.data ?? []).filter((p) => p.sku !== "ERP-BELUM");
@@ -116,7 +116,7 @@ function Peta() {
                 <option value="">Pilih jenis</option>
                 {jenis.map((p) => <option key={p.id} value={p.id}>{p.nama} · {p.jenis_produk === "kayu" ? "kayu" : "non-kayu"}</option>)}
               </select>
-              <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, produk_id: pilih[b.nama] })}>Simpan</button>
+              <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" disabled={!pilih[b.nama]} onClick={() => simpan.mutate({ nama: b.nama, jenis_id: pilih[b.nama] })}>Simpan</button>
             </li>
           ))}
         </ul>
@@ -126,8 +126,8 @@ function Peta() {
 }
 
 function Produksi() {
-  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/v2/order") });
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const order = useQuery({ queryKey: ["order"], queryFn: () => api<Order[]>("/baru/order") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const peta = new Map((produk.data ?? []).map((p) => [p.id, p]));
   const kayu = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "kayu" && o.butuh_cat);
   const non = (order.data ?? []).filter((o) => peta.get(o.produk_id)?.jenis_produk === "non_kayu");
@@ -145,7 +145,7 @@ function Produksi() {
 }
 
 function Keuangan() {
-  const tarik = useMutation({ mutationFn: () => api("/v2/tarik-order?hari=30", { method: "POST" }) });
+  const tarik = useMutation({ mutationFn: () => api("/baru/order", { method: "POST" }) });
   return (
     <Bingkai anak={
       <>
@@ -158,7 +158,7 @@ function Keuangan() {
 }
 
 function Pengaturan() {
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/produk") });
+  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
   return (
     <Bingkai anak={
       <>
@@ -181,7 +181,7 @@ export default function AppBaru() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/order" element={<OrderBaru />} />
-      <Route path="/v2/peta" element={<Peta />} />
+      <Route path="/baru/peta" element={<Peta />} />
       <Route path="/produksi" element={<Produksi />} />
       <Route path="/keuangan" element={<Keuangan />} />
       <Route path="/pengaturan" element={<Pengaturan />} />
