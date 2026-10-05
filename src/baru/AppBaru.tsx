@@ -15,7 +15,7 @@ const menu = [
 ];
 
 type Order = { id: string; no_order: string; catatan: string; nama_pembeli: string; produk_id: string; status: string; butuh_cat: boolean };
-type Produk = { id: string; nama: string; sku: string; jenis_produk: string; ukuran: string };
+type Produk = { id: string; nama: string; sku?: string; jenis_produk?: string; kayu?: boolean; ukuran: string; harga_reseller?: number };
 type Belum = { nama: string; jumlah: number };
 
 function Bingkai({ anak }: { anak: React.ReactNode }) {
@@ -158,14 +158,30 @@ function Keuangan() {
 }
 
 function Pengaturan() {
-  const produk = useQuery({ queryKey: ["produk"], queryFn: () => api<Produk[]>("/baru/jenis") });
+  const qc = useQueryClient();
+  const [nama, setNama] = useState("");
+  const [ukuran, setUkuran] = useState("");
+  const [harga, setHarga] = useState("");
+  const [kayu, setKayu] = useState(true);
+  const produk = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
+  const simpan = useMutation({
+    mutationFn: () => api("/baru/jenis", { method: "POST", body: { nama, ukuran, kayu, harga_reseller: Number(harga || 0) } }),
+    onSuccess: () => { setNama(""); setUkuran(""); setHarga(""); void qc.invalidateQueries({ queryKey: ["jenis"] }); },
+  });
   return (
     <Bingkai anak={
       <>
         <Judul judul="Pengaturan" sub="Jenis katalog, bukan listing Shopee. Harga reseller per jenis." />
+        <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpan.mutate(); }}>
+          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama jenis" value={nama} onChange={(e) => setNama(e.target.value)} required />
+          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Ukuran" value={ukuran} onChange={(e) => setUkuran(e.target.value)} />
+          <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Harga reseller" inputMode="numeric" value={harga} onChange={(e) => setHarga(e.target.value)} />
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
+          <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" type="submit">Simpan jenis</button>
+        </form>
         <ul className="divide-y rounded-2xl bg-white">
-          {(produk.data ?? []).filter((p) => p.sku !== "ERP-BELUM").map((p) => (
-            <li key={p.id} className="px-4 py-3 text-sm">{p.nama} · {p.jenis_produk === "kayu" ? "kayu" : "non-kayu, tanpa cat"} {p.ukuran}</li>
+          {(produk.data ?? []).map((p) => (
+            <li key={p.id} className="px-4 py-3 text-sm">{p.nama} · {p.kayu ? "kayu, perlu cat" : "non-kayu, tanpa cat"} {p.ukuran} {p.harga_reseller ? `· reseller ${p.harga_reseller}` : ""}</li>
           ))}
         </ul>
       </>
@@ -181,7 +197,7 @@ export default function AppBaru() {
     <Routes>
       <Route path="/" element={<Dashboard />} />
       <Route path="/order" element={<OrderBaru />} />
-      <Route path="/baru/peta" element={<Peta />} />
+      <Route path="/order/peta" element={<Peta />} />
       <Route path="/produksi" element={<Produksi />} />
       <Route path="/keuangan" element={<Keuangan />} />
       <Route path="/pengaturan" element={<Pengaturan />} />
