@@ -69,7 +69,7 @@ function Dashboard() {
 }
 
 function sumberLabel(s?: string) {
-  if (s === "erp") return "Shopee";
+  if (s === "erp") return "ERP";
   if (s === "reseller") return "Reseller";
   if (s === "web") return "Toko web";
   return "Input manual";
@@ -88,11 +88,13 @@ function OrderBaru() {
   const pihak = useQuery({ queryKey: ["pihak"], queryFn: () => api<{ reseller: { kode: string; nama: string }[] }>("/baru/pihak") });
   const [form, setForm] = useState<"reseller" | "manual" | null>(null);
   const [kelola, setKelola] = useState<Order | null>(null);
+  const [saring, setSaring] = useState("belum");
   const [cari, setCari] = useState("");
   const katalog = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const [isi, setIsi] = useState({ tgl_pesan: "", toko: "", nama_barang: "", varian: "", qty: "1", keterangan: "" });
-  const baris = order.data ?? [];
-  const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=30", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["order"] }) });
+  const semua = order.data ?? [];
+  const baris = semua.filter((o) => saring === "semua" || (saring === "belum" ? !o.jenis : Boolean(o.jenis)));
+  const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=15", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["order"] }) });
   const simpan = useMutation({
     mutationFn: () => api("/baru/order", { method: "POST", body: { ...isi, qty: Number(isi.qty || 1), sumber: form === "reseller" ? "reseller" : "manual" } }),
     onSuccess: () => { setForm(null); void qc.invalidateQueries({ queryKey: ["order"] }); },
@@ -118,6 +120,11 @@ function OrderBaru() {
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={() => setForm("manual")}>Input Pesanan Manual</button>
           <label className="rounded-lg border px-3 py-2 text-sm">Import Pesanan dari Excel<input className="hidden" type="file" accept=".csv,text/csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) void impor(f); }} /></label>
           <button className="rounded-lg border px-3 py-2 text-sm" onClick={templatePesanan}>Download Template</button>
+          <select className="rounded-lg border px-3 py-2 text-sm" value={saring} onChange={(e) => setSaring(e.target.value)}>
+            <option value="belum">Belum dipetakan</option>
+            <option value="sudah">Sudah dipetakan</option>
+            <option value="semua">Semua</option>
+          </select>
         </div>
         {form ? (
           <form className="mb-3 grid gap-2 rounded-2xl bg-white p-3 text-sm md:grid-cols-3" onSubmit={(e) => { e.preventDefault(); simpan.mutate(); }}>
