@@ -310,15 +310,15 @@ function InvoicePenjual() {
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Invoice penjual lain" sub="Contoh INV/MG.4-002/X/2026 untuk Mandala Wangi. Harga barang dari nota tukang. Cat termasuk packing biasa. Proses tetap 10 ribu." />
+        <Judul judul="Invoice penjual lain" sub="Jasa pengecatan sudah termasuk packing biasa. Packing kayu kolom sendiri, sebelum biaya proses." />
         <table className="w-full bg-white text-sm">
-          <thead><tr className="bg-slate-600 text-left text-white"><th className="p-2">Tanggal</th><th>Nama barang</th><th>Ukuran</th><th>Harga barang</th><th>Jasa pengecatan</th><th>Biaya proses</th><th>Total</th></tr></thead>
+          <thead><tr className="bg-slate-600 text-left text-white"><th className="p-2">Tanggal</th><th>Nama barang</th><th>Ukuran</th><th>Harga barang</th><th>Jasa pengecatan</th><th>Packing kayu</th><th>Biaya proses</th><th>Total</th></tr></thead>
           <tbody>
-            {baris.map((b) => <tr key={b.tanggal + b.nama} className="border-t"><td className="p-2">{b.tanggal}</td><td>{b.nama}</td><td>{b.ukuran}</td><td>{uang(b.barang)}</td><td>{uang(b.cat)}</td><td>{uang(b.proses)}</td><td>{uang(b.barang + b.cat + b.proses)}</td></tr>)}
-            <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
+            {baris.map((b) => <tr key={b.tanggal + b.nama} className="border-t"><td className="p-2">{b.tanggal}</td><td>{b.nama}</td><td>{b.ukuran}</td><td>{uang(b.barang)}</td><td>{uang(b.cat)}</td><td>{uang(0)}</td><td>{uang(b.proses)}</td><td>{uang(b.barang + b.cat + b.proses)}</td></tr>)}
+            <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(0)}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
           </tbody>
         </table>
-        <p className="mt-4 text-sm text-stone-600">Jatuh tempo 3 hari setelah tanggal invoice. Pembayaran ke rekening yang tercantum di invoice. Packing kayu belum masuk.</p>
+        <p className="mt-4 text-sm text-stone-600">Contoh ini tidak memakai packing kayu, jadi kolomnya Rp0. Kalau ada, kolom itu terisi dan ikut total. Jatuh tempo 3 hari setelah tanggal invoice.</p>
       </>
     } />
   );
