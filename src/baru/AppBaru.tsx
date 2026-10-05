@@ -61,6 +61,7 @@ function Dashboard() {
           <h2 className="font-medium">Belum dipetakan</h2>
           <p className="mt-1 text-3xl font-semibold text-emerald-900">{n}</p>
           <a className="text-sm text-emerald-800" href="/order">Buka order</a>
+          <Uji />
         </section>
       </>
     } />
@@ -344,6 +345,27 @@ function Pihak() {
         {daftarT.map((t, i) => <input key={t.id} className="rounded-lg border px-2 py-1" value={t.nama} placeholder={`Tukang ${i + 1}`} onChange={(e) => setTukang(daftarT.map((x) => x.id === t.id ? { ...x, nama: e.target.value } : x))} />)}
       </div>
       <button className="mt-2 rounded-lg border px-3 py-1" onClick={() => simpan.mutate()}>Simpan nama</button>
+    </section>
+  );
+}
+
+function Uji() {
+  const qc = useQueryClient();
+  const laporan = useQuery({ queryKey: ["laporan-uji"], queryFn: () => api<{pendapatan:number;laba_kotor:number;kasus:{no_order:string;pembeli:string;pendapatan:number;laba_kotor:number}[]}>("/baru/laporan") });
+  const isi = useMutation({ mutationFn: () => api("/baru/uji", { method: "POST" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan-uji"] }) });
+  const hapus = useMutation({ mutationFn: () => api("/baru/uji", { method: "DELETE" }), onSuccess: () => void qc.invalidateQueries({ queryKey: ["laporan-uji"] }) });
+  const uang = (n: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n || 0);
+  return (
+    <section className="mt-4 rounded-2xl bg-white p-4 text-sm">
+      <h2 className="font-medium">Tiga kasus percobaan</h2>
+      <div className="mt-2 flex gap-2">
+        <button className="rounded-lg bg-emerald-800 px-3 py-1 text-white" onClick={() => isi.mutate()}>Isi 3 kasus</button>
+        <button className="rounded-lg border px-3 py-1" onClick={() => hapus.mutate()}>Hapus 3 kasus</button>
+      </div>
+      <ul className="mt-3 space-y-1">
+        {(laporan.data?.kasus ?? []).map((k) => <li key={k.no_order}>{k.no_order} · {k.pembeli} · pendapatan {uang(k.pendapatan)} · laba kotor {uang(k.laba_kotor)}</li>)}
+      </ul>
+      {laporan.data ? <p className="mt-2">Total pendapatan {uang(laporan.data.pendapatan)}. Laba kotor {uang(laporan.data.laba_kotor)}.</p> : null}
     </section>
   );
 }
