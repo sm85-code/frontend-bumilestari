@@ -145,12 +145,12 @@ function Produksi() {
 }
 
 function Keuangan() {
-  const tarik = useMutation({ mutationFn: () => api("/baru/order", { method: "POST" }) });
+  const tarik = useMutation({ mutationFn: () => api("/baru/tarik?hari=30", { method: "POST" }) });
   return (
     <Bingkai anak={
       <>
         <Judul judul="Keuangan" sub="Pencairan Shopee dari ERP. Toko web dan marketplace lain tetap manual. Iklan dan kas dari modal." />
-        <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari"}</button>
+        <button className="rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => tarik.mutate()}>{tarik.isPending ? "Menarik…" : "Tarik order 30 hari dari ERP"}</button>
         <p className="mt-3 text-sm text-stone-600">Gaji dicadangkan tiap minggu, dibayar minggu keempat. Bagi hasil 40/60 setelah gaji.</p>
       </>
     } />
