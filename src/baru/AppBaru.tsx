@@ -216,6 +216,7 @@ function Pengaturan() {
   return (
     <Bingkai anak={
       <>
+        <Pihak />
         <Judul judul="Pengaturan" sub="Produk diketik sekali. Harga tukang dalam rupiah. Cat tidak ikut di sini." />
         <button className="mb-4 rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => impor.mutate()}>{impor.isPending ? "Mengisi…" : "Isi katalog dari daftar harga"}</button>
         {impor.data ? <p className="mb-3 text-sm">{impor.data.produk} produk, {impor.data.nilai} harga tukang masuk.</p> : null}
@@ -321,5 +322,28 @@ function InvoicePenjual() {
         <p className="mt-4 text-sm text-stone-600">Contoh ini tidak memakai packing kayu, jadi kolomnya Rp0. Kalau ada, kolom itu terisi dan ikut total. Nomor: INV/MG.1-001/X/2026. INV form invoice, MG.1 minggu ke-1, 001 kode reseller, X Oktober, 2026 tahun. Jatuh tempo 3 hari setelah tanggal invoice.</p>
       </>
     } />
+  );
+}
+
+function Pihak() {
+  const qc = useQueryClient();
+  const data = useQuery({ queryKey: ["pihak"], queryFn: () => api<{ reseller: { kode: string; nama: string }[]; tukang: { id: string; nama: string }[] }>("/baru/pihak") });
+  const [reseller, setReseller] = useState<{ kode: string; nama: string }[] | null>(null);
+  const [tukang, setTukang] = useState<{ id: string; nama: string }[] | null>(null);
+  const daftarR = reseller ?? data.data?.reseller ?? [];
+  const daftarT = tukang ?? data.data?.tukang ?? [];
+  const simpan = useMutation({
+    mutationFn: () => api("/baru/pihak", { method: "PATCH", body: { reseller: daftarR, tukang: daftarT } }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["pihak"] }),
+  });
+  return (
+    <section className="mb-4 rounded-2xl bg-white p-3 text-sm">
+      <p className="font-medium">Empat reseller dan lima tukang</p>
+      <div className="mt-2 grid gap-2 md:grid-cols-2">
+        {daftarR.map((r) => <input key={r.kode} className="rounded-lg border px-2 py-1" value={r.nama} placeholder={`Reseller ${r.kode}`} onChange={(e) => setReseller(daftarR.map((x) => x.kode === r.kode ? { ...x, nama: e.target.value } : x))} />)}
+        {daftarT.map((t, i) => <input key={t.id} className="rounded-lg border px-2 py-1" value={t.nama} placeholder={`Tukang ${i + 1}`} onChange={(e) => setTukang(daftarT.map((x) => x.id === t.id ? { ...x, nama: e.target.value } : x))} />)}
+      </div>
+      <button className="mt-2 rounded-lg border px-3 py-1" onClick={() => simpan.mutate()}>Simpan nama</button>
+    </section>
   );
 }
