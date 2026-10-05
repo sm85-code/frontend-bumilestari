@@ -104,15 +104,11 @@ function Peta() {
   return (
     <Bingkai anak={
       <>
-        <Judul judul="Petakan barang" sub="Ketik nama atau ukuran, jangan gulir daftar panjang. Non-kayu tidak dicat." />
+        <Judul judul="Petakan barang" sub="Kosongkan cari untuk semua produk. Ketik hanya jika ingin menyaring." />
         <ul className="space-y-3">
           {(belum.data ?? []).map((b) => {
-            const kata = (cari[b.nama] ?? b.nama).trim().toLowerCase();
-            const token = kata.split(/[^a-z0-9]+/).filter((x) => x.length > 3);
-            const cocok = jenis.filter((p) => {
-              const teks = `${p.nama} ${p.ukuran}`.toLowerCase();
-              return token.length === 0 || token.some((k) => teks.includes(k));
-            }).slice(0, 12);
+            const kata = (cari[b.nama] ?? "").trim().toLowerCase();
+            const cocok = jenis.filter((p) => `${p.nama} ${p.ukuran}`.toLowerCase().includes(kata));
             return (
               <li key={b.nama} className="rounded-2xl bg-white p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
@@ -120,8 +116,8 @@ function Peta() {
                   <span className="text-stone-500">{b.jumlah} order</span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-start gap-2">
-                  <input className="rounded-lg border px-2 py-1" placeholder="Cari, kosongkan untuk ikut nama order" value={cari[b.nama] ?? ""} onChange={(e) => setCari((s) => ({ ...s, [b.nama]: e.target.value }))} />
-                  <div className="flex max-h-36 flex-col overflow-auto rounded-lg border">
+                  <input className="rounded-lg border px-2 py-1" placeholder="Cari, kosong = semua produk" value={cari[b.nama] ?? ""} onChange={(e) => setCari((s) => ({ ...s, [b.nama]: e.target.value }))} />
+                  <div className="flex max-h-64 min-w-64 flex-col overflow-auto rounded-lg border">
                     {cocok.map((p) => (
                       <button key={p.id} className={`px-2 py-1 text-left ${pilih[b.nama] === p.id ? "bg-emerald-800 text-white" : ""}`} onClick={() => setPilih((s) => ({ ...s, [b.nama]: p.id }))}>
                         {p.nama} · {p.kayu ? "kayu" : "non-kayu"} {p.ukuran}
@@ -148,9 +144,10 @@ function Produksi() {
     <Bingkai anak={
       <>
         <Judul judul="Produksi" sub="Status di sini tidak dikirim ke Shopee." />
-        <div className="grid gap-4 md:grid-cols-2">
-          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Kayu, antrian cat</h2><p className="text-sm text-stone-600">{kayu.length} order. Setelah tukang selesai.</p></section>
-          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Non-kayu</h2><p className="text-sm text-stone-600">{non.length} order. Dari supplier, tanpa cat. Karyawan non-kayu yang packing.</p></section>
+        <a className="text-sm text-emerald-800" href="/order/peta">Petakan yang belum</a>
+        <div className="mt-3 grid gap-4 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Kayu, antrian cat</h2><p className="text-sm text-stone-600">{kayu.length} order. Setelah tukang selesai.</p>{kayu.map((o) => <p key={o.id} className="mt-2 text-sm">{o.nama_barang} · {o.no_order}</p>)}</section>
+          <section className="rounded-2xl bg-white p-4"><h2 className="font-medium">Non-kayu</h2><p className="text-sm text-stone-600">{non.length} order. Dari supplier, tanpa cat.</p>{non.map((o) => <p key={o.id} className="mt-2 text-sm">{o.nama_barang} · {o.no_order}</p>)}</section>
         </div>
       </>
     } />
