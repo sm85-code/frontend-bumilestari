@@ -318,7 +318,7 @@ function InvoicePenjual() {
             <tr className="border-t font-medium"><td className="p-2" colSpan={3}>Grand total</td><td>{uang(tot[0])}</td><td>{uang(tot[1])}</td><td>{uang(0)}</td><td>{uang(tot[2])}</td><td>{uang(tot[0] + tot[1] + tot[2])}</td></tr>
           </tbody>
         </table>
-        <p className="mt-4 text-sm text-stone-600">Contoh ini tidak memakai packing kayu, jadi kolomnya Rp0. Kalau ada, kolom itu terisi dan ikut total. Jatuh tempo 3 hari setelah tanggal invoice.</p>
+        <p className="mt-4 text-sm text-stone-600">Contoh ini tidak memakai packing kayu, jadi kolomnya Rp0. Kalau ada, kolom itu terisi dan ikut total. Nomor: INV/MG.1-001/X/2026. INV form invoice, MG.1 minggu ke-1, 001 kode reseller, X Oktober, 2026 tahun. Jatuh tempo 3 hari setelah tanggal invoice.</p>
       </>
     } />
   );
