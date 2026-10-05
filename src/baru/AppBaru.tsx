@@ -204,8 +204,8 @@ function Pengaturan() {
         <Judul judul="Pengaturan" sub="Produk diketik sekali. Harga tukang dalam rupiah. Cat tidak ikut di sini." />
         <button className="mb-4 rounded-lg bg-emerald-800 px-3 py-2 text-sm text-white" onClick={() => impor.mutate()}>{impor.isPending ? "Mengisi…" : "Isi katalog dari daftar harga"}</button>
         {impor.data ? <p className="mb-3 text-sm">{impor.data.produk} produk, {impor.data.nilai} harga tukang masuk.</p> : null}
-        <button className="mb-4 ml-2 rounded-lg border px-3 py-2 text-sm" onClick={() => cat.mutate()}>{cat.isPending ? "Memasang…" : "Pasang tarif cat partisi"}</button>
-        {cat.data ? <p className="mb-3 text-sm">{cat.data.nilai} ukuran dapat tarif cat. Packing kayu belum ikut.</p> : null}
+        <button className="mb-4 ml-2 rounded-lg border px-3 py-2 text-sm" onClick={() => cat.mutate()}>{cat.isPending ? "Memasang…" : "Pasang tarif cat, termasuk packing biasa"}</button>
+        {cat.data ? <p className="mb-3 text-sm">{cat.data.nilai} ukuran dapat tarif cat, sudah termasuk packing biasa. Packing kayu belum ikut.</p> : null}
         <form className="mb-4 flex flex-wrap gap-2 rounded-2xl bg-white p-3" onSubmit={(e) => { e.preventDefault(); simpanProduk.mutate(); }}>
           <input className="rounded-lg border px-3 py-2 text-sm" placeholder="Nama produk" value={nama} onChange={(e) => setNama(e.target.value)} required />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={kayu} onChange={(e) => setKayu(e.target.checked)} /> Kayu, perlu cat</label>
