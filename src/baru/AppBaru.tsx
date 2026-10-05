@@ -153,7 +153,7 @@ function Keuangan() {
   );
 }
 
-type Varian = { id: string; nama: string; nilai: { id: string; nilai: string }[] };
+type Varian = { id: string; nama: string; nilai: { id: string; nilai: string; harga_tukang?: number; custom?: boolean }[] };
 type ProdukInduk = { id: string; nama: string; kayu: boolean; varian: Varian[] };
 
 function Pengaturan() {
@@ -162,6 +162,8 @@ function Pengaturan() {
   const [kayu, setKayu] = useState(true);
   const [sumbu, setSumbu] = useState<Record<string, string>>({});
   const [nilai, setNilai] = useState<Record<string, string>>({});
+  const [hargaTukang, setHargaTukang] = useState<Record<string, string>>({});
+  const [custom, setCustom] = useState<Record<string, boolean>>({});
   const produk = useQuery({ queryKey: ["produk-induk"], queryFn: () => api<ProdukInduk[]>("/baru/produk") });
   const jenis = useQuery({ queryKey: ["jenis"], queryFn: () => api<Produk[]>("/baru/jenis") });
   const segar = () => { void qc.invalidateQueries({ queryKey: ["produk-induk"] }); void qc.invalidateQueries({ queryKey: ["produk"] }); };
@@ -174,7 +176,7 @@ function Pengaturan() {
     onSuccess: () => segar(),
   });
   const simpanNilai = useMutation({
-    mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId] } }),
+    mutationFn: (varianId: string) => api("/baru/nilai", { method: "POST", body: { varian_id: varianId, nilai: nilai[varianId], harga_tukang: Number(hargaTukang[varianId] || 0), custom: Boolean(custom[varianId]) } }),
     onSuccess: () => segar(),
   });
   return (
@@ -202,9 +204,11 @@ function Pengaturan() {
               {p.varian.map((v) => (
                 <div key={v.id} className="mt-3">
                   <p className="text-stone-600">{v.nama}</p>
-                  <p>{v.nilai.map((n) => n.nilai).join(", ") || "Belum ada nilai"}</p>
+                  <p>{v.nilai.map((n) => `${n.nilai}${n.custom ? " (custom)" : n.harga_tukang ? ` · tukang ${n.harga_tukang}` : ""}`).join(", ") || "Belum ada nilai"}</p>
                   <form className="mt-1 flex gap-2" onSubmit={(e) => { e.preventDefault(); simpanNilai.mutate(v.id); }}>
                     <input className="rounded-lg border px-3 py-1" placeholder="Nilai, misalnya 50 x 20 x 200" value={nilai[v.id] ?? ""} onChange={(e) => setNilai((s) => ({ ...s, [v.id]: e.target.value }))} required />
+                    <input className="rounded-lg border px-3 py-1" placeholder="Harga tukang" inputMode="numeric" value={hargaTukang[v.id] ?? ""} disabled={Boolean(custom[v.id])} onChange={(e) => setHargaTukang((s) => ({ ...s, [v.id]: e.target.value }))} />
+                    <label className="flex items-center gap-1"><input type="checkbox" checked={Boolean(custom[v.id])} onChange={(e) => setCustom((s) => ({ ...s, [v.id]: e.target.checked }))} /> Custom</label>
                     <button className="rounded-lg border px-3 py-1" type="submit">Tambah nilai</button>
                   </form>
                 </div>
