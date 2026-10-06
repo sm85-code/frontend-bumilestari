@@ -89,3 +89,47 @@ test("sesi habis mengarahkan pengguna ke halaman masuk", async ({ page }) => {
   await expect(page).toHaveURL(/\/masuk$/);
   await expect(page.getByRole("link", { name: "Pengaturan", exact: true })).toHaveCount(0);
 });
+
+test("rentang pesanan dan settlement terpisah serta pagination mengikuti rentang", async ({ page }) => {
+  const calls = await pasangApiTiruan(page, { balasan: { "/keu/saluran/erp/tarik": { dibaca: 100, terproses: 100, gagal: 0, ada_lanjutan: true, halaman_berikutnya: { setelah_at: "2026-10-06T10:00:00+00:00", setelah_ref: "last-order" } } } });
+  await page.goto("/sinkronisasi");
+  const orders = page.getByRole("region", { name: "Pesanan ERP Test", exact: true });
+  const settlements = page.getByRole("region", { name: "Settlement ERP Test", exact: true });
+  await expect(orders.getByRole("button", { name: "Tarik pesanan", exact: true })).toBeDisabled();
+  await orders.getByLabel("Tanggal awal pesanan", { exact: true }).fill("2026-09-01");
+  await orders.getByLabel("Tanggal akhir pesanan", { exact: true }).fill("2026-09-30");
+  await settlements.getByLabel("Tanggal awal settlement", { exact: true }).fill("2026-08-01");
+  await settlements.getByLabel("Tanggal akhir settlement", { exact: true }).fill("2026-08-31");
+  await orders.getByRole("button", { name: "Tarik pesanan", exact: true }).click();
+  await expect(orders.getByRole("button", { name: "Tarik 100 berikutnya (pesanan)", exact: true })).toBeVisible();
+  await orders.getByRole("button", { name: "Tarik 100 berikutnya (pesanan)", exact: true }).click();
+  await expect.poll(() => calls.filter(c => c.path === "/keu/saluran/erp/tarik").length).toBe(2);
+  await settlements.getByRole("button", { name: "Tarik settlement", exact: true }).click();
+  await expect(settlements.getByRole("status")).toContainText("2026-08-01–2026-08-31");
+  const pulls = calls.filter(c => c.path === "/keu/saluran/erp/tarik");
+  const first = new URLSearchParams(pulls[0].cari), next = new URLSearchParams(pulls[1].cari), payout = new URLSearchParams(pulls[2].cari);
+  expect(first.get("tanggal_awal")).toBe("2026-09-01");
+  expect(first.get("tanggal_akhir")).toBe("2026-09-30");
+  expect(next.get("setelah_ref")).toBe("last-order");
+  expect(next.get("tanggal_awal")).toBe("2026-09-01");
+  expect(payout.get("entitas")).toBe("settlement");
+  expect(payout.get("tanggal_awal")).toBe("2026-08-01");
+  expect(payout.has("setelah_ref")).toBe(false);
+  await orders.getByLabel("Tanggal awal pesanan", { exact: true }).fill("2026-09-05");
+  await expect(orders.getByRole("button", { name: "Tarik 100 berikutnya (pesanan)", exact: true })).toHaveCount(0);
+  await orders.getByRole("button", { name: "Tarik pesanan", exact: true }).click();
+  await expect.poll(() => calls.filter(c => c.path === "/keu/saluran/erp/tarik").length).toBe(4);
+  const fresh = new URLSearchParams(calls.filter(c => c.path === "/keu/saluran/erp/tarik")[3].cari);
+  expect(fresh.get("tanggal_awal")).toBe("2026-09-05");
+  expect(fresh.has("setelah_at")).toBe(false);
+});
+
+test("rentang tanggal terbalik tidak dapat ditarik", async ({ page }) => {
+  const calls = await pasangApiTiruan(page);
+  await page.goto("/sinkronisasi");
+  const orders = page.getByRole("region", { name: "Pesanan ERP Test", exact: true });
+  await orders.getByLabel("Tanggal awal pesanan", { exact: true }).fill("2026-09-30");
+  await orders.getByLabel("Tanggal akhir pesanan", { exact: true }).fill("2026-09-01");
+  await expect(orders.getByRole("button", { name: "Tarik pesanan", exact: true })).toBeDisabled();
+  expect(calls.filter(c => c.path.includes("/tarik"))).toHaveLength(0);
+});

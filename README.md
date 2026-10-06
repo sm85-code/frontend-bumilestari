@@ -23,7 +23,7 @@ npm run dev
 | `/produksi` | Alokasi kuantitas/biaya vendor dan pembatalan dengan alasan |
 | `/keuangan` | Draf kas manual, posting, rekonsiliasi dan posting settlement neto |
 | `/impor` | Template CSV, pratinjau CSV/XLSX, penerapan batch, riwayat |
-| `/sinkronisasi` | Pull Store/ERP inkremental maksimal 100 data, tinjau/retry inbox |
+| `/sinkronisasi` | Rentang tanggal terpisah untuk pesanan/settlement, penarikan 100 data per batch, tinjau/retry inbox |
 | `/pengaturan` | Produk, akun, pelanggan UMKM/reseller, saluran, delapan slot vendor |
 | `/akun` | Profil, ganti kata sandi, logout |
 | `/kas-kecil` | Kas kecil existing untuk staff |
@@ -49,3 +49,9 @@ npm run test:e2e
 E2E memakai API tiruan pada build produksi, dengan viewport laptop dan mobile. Jika Chromium tersedia dari sistem, gunakan `PW_CHROMIUM_PATH=/path/to/chromium npm run test:e2e`. Tes mencakup menu, role/password guard, nominal presisi, slot vendor, impor invalid, dan penolakan posting settlement yang belum rekonsiliasi.
 
 Dokumentasi backend lengkap: `sm85-arch/docs/keu-stage4.md`. Alur iPaymu tidak diubah oleh modul keu ini.
+
+## Rentang tanggal sinkronisasi
+
+Pilih tanggal awal dan akhir sebelum menarik data pada masing-masing saluran. Form pesanan dan settlement terpisah. Pesanan Store memakai `PesananStore.created_at`; pesanan ERP memakai `Pesanan.dipesan_at` dengan fallback `created_at`; settlement ERP memakai `SettlementPesanan.dirilis_at`. Kedua batas tanggal inklusif dalam Asia/Jakarta (WIB).
+
+Klik Tarik pesanan/Tarik settlement untuk memulai rentang dari awal. Jika masih ada data, klik Tarik 100 berikutnya untuk melanjutkan rentang yang sama. Mengubah tanggal menghapus posisi halaman form tersebut. Penarikan ulang tetap dideduplikasi backend. Posisi rentang terpisah dari cursor inkremental global sehingga data historis tetap dapat ditarik. Rentang tidak disimpan lintas reload halaman. Settlement tanpa tanggal cair tidak masuk filter tanggal; dukungan settlement Store tetap belum tersedia.
