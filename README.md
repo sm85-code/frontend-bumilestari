@@ -1,79 +1,51 @@
-# Frontend Bumi Lestari
+# BUMI Lestari
 
-Aplikasi web (PWA) untuk keuangan UMKM dan pengelolaan order Bumi Lestari.
-Backend: [`sm85-code/sm85-arch`](https://github.com/sm85-code/sm85-arch), tenant `bumi_lestari` (`/api/bumi-lestari`).
+Frontend React/Vite untuk `keu.ampelkuning.com`. Entrypoint `src/main.tsx` memakai `src/baru/AppBaru.tsx`; modul aktif berada di `src/baru/keu` dan terhubung ke `/api/bumi-lestari/keu` pada backend `sm85-arch`.
 
-## Teknologi
-React 19, Vite, TypeScript (strict), Ant Design 6, TanStack Query, React Router, vite-plugin-pwa. Tes: Vitest (unit) dan
-Playwright (klik/e2e dengan API tiruan).
+## Jalankan dan build
 
-## Prinsip tampilan
-- **Bukan mobile-first**: dipakai di laptop dan HP. Laptop (lebar ≥768px) memakai menu samping dan area konten lebar; HP memakai
-  header ringkas dan navigasi bawah.
-- **Data tabular selalu tabel**, termasuk di HP (digulir ke samping, kolom pertama tetap terlihat). Tidak diubah menjadi kartu
-  supaya data tetap terbaca menyeluruh. Gunakan komponen `DataTabel` dan `BarisTotal` di `src/components/ui.tsx`.
-- Kartu hanya untuk ringkasan angka (mis. Beranda).
-
-## Menjalankan
-```bash
-npm install
-cp .env.example .env     # isi VITE_API_PROXY (dev) atau VITE_API_URL (produksi)
-npm run dev              # http://localhost:5173
-npm test                 # tes unit (vitest)
-npm run build && npm run test:e2e   # tes klik Playwright dengan API tiruan (laptop + HP); CI menjalankannya otomatis.
-                         # Tanpa Chromium bawaan Playwright: PW_CHROMIUM_PATH=/path/ke/chromium npm run test:e2e
-npm run build            # tsc + vite build -> dist/
+```sh
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-- **Dev:** isi `VITE_API_PROXY` dengan alamat backend; Vite meneruskan `/api` ke sana sehingga cookie login berjalan tanpa CORS.
-- **Produksi:** isi `VITE_API_URL` dengan alamat backend. Alamat frontend harus ditambahkan ke `CORS_ORIGINS` di backend
-  (login memakai cookie lintas situs, `COOKIE_SECURE=true`, `COOKIE_SAMESITE=none`).
+- Development: isi `VITE_API_PROXY` dengan origin backend; proxy Vite meneruskan `/api`.
+- DigitalOcean Static Site: isi `VITE_API_URL` pada environment **build** dengan origin backend, build `npm run build`, output `dist`. Tambahkan `https://keu.ampelkuning.com` pada environment `CORS_ORIGINS` backend dengan mempertahankan origin lain. API memakai cookie existing dan `credentials: include`.
+- Deploy backend keu dan verifikasi migrasinya sebelum mengaktifkan FE ini. CI bukan verifikasi database Neon/live deployment.
 
-## Istilah
-Dipakai konsisten di semua layar (glosarium spesifikasi alur keuangan): **Penjual lain** (bukan reseller), **Tukang & supplier**
-(bukan pemasok), **Plafon** (batas saldo Kas kecil/Kas iklan, bukan jatah), **Kas utama**, **Dana cadangan** (sisihan gaji,
-tidak dihitung sebagai kas yang bisa dipakai), **Tagihan rutin** (langganan & utilitas), **Profil saya**, **Kata sandi**.
+## Modul aktif
 
-## Menu
-Menu dikelompokkan; URL tidak berubah.
+| Route | Fungsi |
+| --- | --- |
+| `/` | Dashboard keu: kas posted, nilai pesanan, estimasi biaya vendor, antrian |
+| `/order` | Pesanan manual, pemetaan item sumber ke produk, status produksi |
+| `/produksi` | Alokasi kuantitas/biaya vendor dan pembatalan dengan alasan |
+| `/keuangan` | Draf kas manual, posting, rekonsiliasi dan posting settlement neto |
+| `/impor` | Template CSV, pratinjau CSV/XLSX, penerapan batch, riwayat |
+| `/sinkronisasi` | Pull Store/ERP inkremental maksimal 100 data, tinjau/retry inbox |
+| `/pengaturan` | Produk, akun, pelanggan UMKM/reseller, saluran, delapan slot vendor |
+| `/akun` | Profil, ganti kata sandi, logout |
+| `/kas-kecil` | Kas kecil existing untuk staff |
 
-| Grup | Menu | Rute | Isi |
-|---|---|---|---|
-| Mingguan | Beranda | `/` | Kas bisa dipakai vs Dana cadangan, laba bulan ini, bayar tukang Selasa ini, tagihan penjual lain jatuh tempo Selasa ini (dan semua yang belum dibayar), **Yang perlu dikerjakan**, akun kas, order bulan ini + status semua order (sepanjang waktu), kas kecil/iklan, pratinjau bagi hasil |
-| Mingguan | Tutup Kas Mingguan | `/selasa` | Wizard langkah demi langkah, biasanya tiap Selasa (Selesai/Belum/Dilewati): 1 terima bayar penjual lain, 2 pencairan marketplace *(segera hadir)*, 3 tarik saldo ke Kas utama, 4 bayar tukang & supplier, 5 lunasi talangan *(segera hadir)*, 6 sisihkan dana gaji, 7 isi kas kecil & kas iklan (iklan hanya admin) |
-| Penjualan | Order | `/order` | Daftar order, order baru, pindah status (alur kayu/non kayu/polos), batalkan |
-| Penjualan | Tagihan penjual lain | `/penjual-lain` | Invoice mingguan per penjual lain (PDF, WhatsApp), catat pembayaran diterima (tanggal bisa dipilih), riwayat |
-| Pembelian | Bayar tukang & supplier | `/pesanan-tukang` | Siap dibayar per tukang & supplier, **Catat pembayaran** (1 transaksi + rincian), PDF/WhatsApp rekap, riwayat |
-| Uang | Kas & transaksi | `/keuangan` | Saldo akun kas & plafon, riwayat transaksi dan transfer. Sebagian besar tercatat otomatis; **Catat manual** hanya untuk yang jarang |
-| Uang | Kas kecil | `/kas-kecil` | Saldo, catat pengeluaran, riwayat |
-| Uang | Gaji & tagihan rutin | `/gaji` | Karyawan tetap, gaji bulanan (siapkan/bayar, tanggal bisa dipilih), tagihan rutin |
-| Uang | Bagi hasil | `/bagi-hasil` | Pratinjau, simpan, bayar bagi hasil admin/owner (tanggal bisa dipilih) |
-| Laporan | Laba rugi | `/laporan` | Laporan umum bulanan |
-| Laporan | Kas kecil | `/laporan/kas-kecil` | Laporan kas kecil per bulan + cek uang fisik |
-| Pengaturan | Data master | `/master` | Produk, tukang & supplier, penjual lain, harga grosir, saluran, akun kas & kategori, pengguna (admin), profil UMKM + proporsi bagi hasil (ubah: admin) |
-| Pengaturan | Profil saya | `/akun` | Data diri, ganti kata sandi (wajib bila masih bawaan) |
+`Protected` memerlukan session. `PasswordRequired` mengarahkan pengguna dengan kata sandi bawaan ke `/akun`. `FinanceOnly` hanya mengizinkan owner/admin; staff diarahkan ke `/kas-kecil`. Backend menerapkan role/password guard juga. Respons 401 mengakhiri session FE dan membersihkan query cache; pergantian pengguna membersihkan data pengguna sebelumnya.
 
-Di HP: navigasi bawah Beranda, Order, Tutup kas, Kas, **Lainnya** (`/lainnya`, berisi menu lengkap per grup).
+Nominal tetap string desimal dari API. Format uang dan perkalian harga memakai string/BigInt, bukan floating point. Pencatatan draf belum memengaruhi kas. Settlement hanya diposting setelah alokasi neto lengkap; posting berulang tidak menggandakan kas.
 
-**Menu staf** (peran `staff`): **Kas kecil** (`/kas-kecil`: saldo besar, Catat pengeluaran dengan 4 tombol kategori, 10 catatan
-terakhir, tanpa tombol batal — "Salah catat? Minta admin membatalkan."), **Riwayat bulan ini** (`/laporan/kas-kecil`, bulan
-berjalan), **Profil saya** (`/akun`, termasuk tombol buka panduan). Panduan hari pertama tampil sekali per pengguna (disimpan di
-`localStorage`).
+Slot `tk-1`–`tk-5` dan `sup-1`–`sup-3` berasal dari DB; nama/kontak diisi pengguna, bukan default yang dikarang. Data lama `bl_*`/`bl2_*` tidak otomatis dimasukkan ke saldo keu. Modul lama yang tidak dimount tetap tersedia dalam source; tes lama yang sebelumnya sudah dinonaktifkan tidak diaktifkan pada refactor ini.
 
-## Aturan kategori (form manual)
-Diatur di `src/lib/kategori.ts` (nama dicocokkan dengan seeder backend):
-- Tidak ada kategori bawaan: form menampilkan "Pilih kategori" dan tombol Simpan aktif setelah kategori dipilih.
-- Staf / pengeluaran dari Kas kecil: hanya **Transport, Packing, Operasional, Lainnya** (Pengeluaran lain).
-- Kas & transaksi menyembunyikan **kategori sistem** yang dicatat otomatis dari halaman asalnya: Bagi hasil, Gaji karyawan,
-  Biaya produksi / pembelian barang, Langganan & utilitas (Tagihan rutin), Penjualan reseller (Penjualan penjual lain).
-- Pemasukan **marketplace** (mis. Penjualan marketplace / Shopee) juga disembunyikan: nanti hanya masuk dari impor file Excel
-  marketplace.
-- Transaksi otomatis (`ref_jenis` terisi) dan transfer sisihan dana tidak bisa dibatalkan dari Kas & transaksi; tampil
-  "Otomatis dari …" dengan tautan ke halaman asal.
+Import menggunakan template keu, maksimal 5 MB/10.000 baris, tanpa formula Excel. File gagal validasi tidak dapat diterapkan. Referensi DB diperiksa saat penerapan dan seluruh batch rollback jika satu referensi gagal. Pull dipicu pengguna, belum scheduler otomatis. Store hanya menyediakan order pada integrasi ini, bukan bukti pencairan settlement.
 
-Catatan: aturan di atas baru ditegakkan di frontend; backend menyusul (Fase 1). Status langkah Tutup Kas Mingguan yang ditandai
-manual (Tandai selesai / Lewati) dan tanda "cek fisik kas kecil" di Beranda sementara disimpan di `localStorage` perangkat.
+## Verifikasi
 
-Laporan kas iklan terpisah dikerjakan admin nanti (backend belum membukanya).
+```sh
+npm run typecheck
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
 
-Logo: `public/logo.png` (sementara; ganti dengan logo final, ikon PWA di `public/icon-*.png`).
+E2E memakai API tiruan pada build produksi, dengan viewport laptop dan mobile. Jika Chromium tersedia dari sistem, gunakan `PW_CHROMIUM_PATH=/path/to/chromium npm run test:e2e`. Tes mencakup menu, role/password guard, nominal presisi, slot vendor, impor invalid, dan penolakan posting settlement yang belum rekonsiliasi.
+
+Dokumentasi backend lengkap: `sm85-arch/docs/keu-stage4.md`. Alur iPaymu tidak diubah oleh modul keu ini.
