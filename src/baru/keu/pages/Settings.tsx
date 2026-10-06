@@ -1,3 +1,4 @@
+import ProductMaster from "../components/ProductMaster";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { keu, money, useKeuAction, useResource } from "../api";
@@ -6,13 +7,12 @@ import { Button, Empty, ErrorMessage, Field, Heading, inputClass, Loading, Pager
 
 type Resource = "produk" | "akun" | "pelanggan" | "saluran";
 type FieldConfig = { name: string; label: string; options?: string[]; optional?: boolean };
-const configs: Record<Resource, FieldConfig[]> = {
-  produk: [{ name: "sku", label: "SKU" }, { name: "nama", label: "Nama produk" }, { name: "jenis", label: "Jenis", options: ["kayu", "non_kayu"] }, { name: "biaya_acuan", label: "Biaya acuan (contoh 125000.00)" }],
+const configs: Record<Exclude<Resource, "produk">, FieldConfig[]> = {
   akun: [{ name: "kode", label: "Kode akun" }, { name: "nama", label: "Nama akun" }, { name: "jenis", label: "Jenis", options: ["kas", "bank", "ewallet"] }, { name: "saldo_awal", label: "Saldo awal (contoh 125000.00)" }],
   pelanggan: [{ name: "nama", label: "Nama pelanggan" }, { name: "segmen", label: "Segmen", options: ["", "umkm", "reseller"], optional: true }, { name: "kontak", label: "Kontak", optional: true }],
   saluran: [{ name: "nama", label: "Nama saluran" }, { name: "sistem", label: "Sumber", options: ["manual", "store", "marketplace_erp"] }, { name: "akun_ref", label: "Referensi akun" }],
 };
-function Master({ resource }: { resource: Resource }) {
+function Master({ resource }: { resource: Exclude<Resource, "produk"> }) {
   const [offset, setOffset] = useState(0);
   const data = useResource<Record<string, string | boolean | null>>(`/${resource}`, offset);
   const action = useKeuAction();
@@ -45,5 +45,5 @@ function VendorSlot({ slot }: { slot: Slot }) {
 export default function Settings() {
   const [resource, setResource] = useState<Resource>("produk");
   const slots = useQuery({ queryKey: ["keu", "vendor-slot"], queryFn: () => keu<Slot[]>("/vendor-slot") });
-  return <><Heading title="Pengaturan">Master keuangan dan vendor. Slot serta nama vendor dibaca dari database.</Heading><Panel title="Tukang kayu dan supplier"><ErrorMessage error={slots.error} />{slots.isLoading ? <Loading /> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{slots.data?.map(slot => <VendorSlot key={`${slot.kode}:${slot.vendor_id ?? "empty"}`} slot={slot} />)}</div>}</Panel><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{Object.keys(configs).map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div><Master key={resource} resource={resource} /></>;
+  return <><Heading title="Pengaturan">Master keuangan dan vendor. Slot serta nama vendor dibaca dari database.</Heading><Panel title="Tukang kayu dan supplier"><ErrorMessage error={slots.error} />{slots.isLoading ? <Loading /> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{slots.data?.map(slot => <VendorSlot key={`${slot.kode}:${slot.vendor_id ?? "empty"}`} slot={slot} />)}</div>}</Panel><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{["produk", ...Object.keys(configs)].map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div>{resource === "produk" ? <ProductMaster /> : <Master key={resource} resource={resource} />}</>;
 }
