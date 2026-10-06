@@ -133,3 +133,25 @@ test("rentang tanggal terbalik tidak dapat ditarik", async ({ page }) => {
   await expect(orders.getByRole("button", { name: "Tarik pesanan", exact: true })).toBeDisabled();
   expect(calls.filter(c => c.path.includes("/tarik"))).toHaveLength(0);
 });
+
+test("backfill Store memakai rentang manual dan menjelaskan alur internal", async ({ page }) => {
+  const calls = await pasangApiTiruan(page, { data: { "/keu/saluran": { rows: [{ id: "store", nama: "Store Test", sistem: "store", akun_ref: "store", aktif: true }], total: 1 } }, balasan: { "/keu/saluran/store/tarik": { dibaca: 1, terproses: 1, gagal: 0, ada_lanjutan: false, halaman_berikutnya: null } } });
+  await page.goto("/sinkronisasi");
+  await expect(page.getByRole("heading", { name: "Penarikan pesanan historis" })).toBeVisible();
+  await expect(page.getByText(/tidak mengirim callback atau perubahan status/)).toBeVisible();
+  const orders = page.getByRole("region", { name: "Pesanan Store Test" });
+  await orders.getByLabel("Tanggal awal pesanan").fill("2026-09-01");
+  await orders.getByLabel("Tanggal akhir pesanan").fill("2026-09-30");
+  await orders.getByRole("button", { name: "Tarik pesanan", exact: true }).click();
+  await expect(orders.getByRole("status")).toContainText("Penarikan rentang selesai.");
+  expect(calls).toHaveLength(1);
+  expect(calls[0].path).toBe("/keu/saluran/store/tarik");
+  const params = new URLSearchParams(calls[0].cari);
+  expect(params.get("entitas")).toBe("order");
+  expect(params.get("tanggal_awal")).toBe("2026-09-01");
+  expect(params.get("tanggal_akhir")).toBe("2026-09-30");
+  expect(params.has("setelah_at")).toBe(false);
+  await expect(page.getByRole("region", { name: "Settlement Store Test" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Periksa produk draf dan simpan sebagai master" }).click();
+  await expect(page).toHaveURL(/\/pengaturan$/);
+});

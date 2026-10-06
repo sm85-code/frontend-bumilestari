@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { query } from "../../../lib/api";
 import { useChoices, useKeuAction, useResource } from "../api";
@@ -48,6 +49,12 @@ export default function Sync() {
   return <>
     <Heading title="Sinkronisasi">Tarik data Store dan ERP ke tenant BUMI. Pilih rentang tanggal terpisah untuk pesanan dan settlement.</Heading>
     <ErrorMessage error={channels.error ?? inbox.error ?? retry.error} />
+    <Panel title="Penarikan pesanan historis">
+      <p className="text-sm text-stone-600">Pilih tanggal awal dan akhir untuk menarik transaksi terlewat, termasuk pesanan sumber yang sudah dikirim atau selesai. Rentang manual melewati posisi sinkronisasi terakhir. Pesanan baru tetap berstatus draf di BUMI; status sumber tidak mengubah tahap produksi internal.</p>
+      <ol className="my-3 list-inside list-decimal space-y-1 text-sm"><li><Link className="underline" to="/pengaturan">Periksa produk draf dan simpan sebagai master</Link>.</li><li><Link className="underline" to="/order">Periksa pesanan dan pemetaan produk</Link>.</li><li><Link className="underline" to="/produksi">Alokasikan ke tukang kayu atau supplier</Link>.</li><li><Link className="underline" to="/keuangan">Rekonsiliasi settlement dan posting kas</Link>.</li></ol>
+      <p className="text-sm text-stone-600">Tanggal pesanan memakai tanggal transaksi asli dalam WIB. Kas memakai tanggal pencairan asli settlement, bukan tanggal penarikan. Store belum menyediakan data settlement; penarikan order Store tidak membuat pencairan kas otomatis. Penarikan ulang tidak menggandakan pesanan atau mengulang tahap produksi yang sudah dikerjakan.</p>
+      <p className="mt-2 text-sm font-medium text-emerald-900">Hanya pencatatan internal BUMI: tidak mengirim callback atau perubahan status ke Store, ERP, maupun Shopee.</p>
+    </Panel>
     <Panel title="Saluran sumber">
       {channels.isLoading ? <Loading /> : !sources.length ? <Empty>Tambahkan saluran Store atau akun ERP di Pengaturan.</Empty> : sources.map(channel => <article key={channel.id} className="mb-4 rounded-xl border p-3">
         <h2 className="font-semibold">{channel.nama}</h2><p className="mb-3 text-sm text-stone-600">{channel.sistem} · {channel.akun_ref}</p>
