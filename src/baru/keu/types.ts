@@ -1,7 +1,8 @@
 export type Money = string;
 export interface Page<T> { rows: T[]; total: number; limit: number; offset: number }
 export interface Channel { id: string; nama: string; sistem: "manual" | "store" | "marketplace_erp"; akun_ref: string; aktif: boolean }
-export interface Product { id: string; nama: string; sku: string; jenis: "kayu" | "non_kayu"; biaya_acuan: Money; aktif: boolean }
+export interface ProductVariant { kategori: string; nilai: string }
+export interface Product { id: string; nama: string; nama_asli: string; sku: string; sku_induk: string | null; gambar_url: string; varian_list: ProductVariant[]; jenis: "kayu" | "non_kayu" | null; harga_jual: Money; biaya_acuan: Money; aktif: boolean; status: "draf" | "master" }
 export interface Account { id: string; kode: string; nama: string; jenis: string; saldo_awal: Money }
 export interface Customer { id: string; nama: string; segmen: "umkm" | "reseller" | null; kontak: string }
 export interface Category { id: string; nama: string; jenis: "pemasukan" | "pengeluaran" }
