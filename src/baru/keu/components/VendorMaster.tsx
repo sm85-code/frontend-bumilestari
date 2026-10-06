@@ -1,3 +1,4 @@
+import MasterActions from "./MasterActions";
 import { useState } from "react";
 import { useKeuAction, useResource } from "../api";
 import type { Vendor } from "../types";
@@ -61,7 +62,7 @@ export default function VendorMaster() {
       {data.data.rows.map(vendor => <tr key={vendor.id} className="border-b">
         <td className="px-3 py-2">{vendor.kode}</td><td className="px-3 py-2">{vendor.nama}</td><td className="px-3 py-2">{vendor.tipe === "kayu" ? "Tukang kayu" : "Supplier"}</td><td className="px-3 py-2">{vendor.kontak || "—"}</td>
         <td className="max-w-xs whitespace-pre-wrap px-3 py-2">{[vendor.alamat, vendor.keterangan].filter(Boolean).join("\n") || "—"}</td><td className="px-3 py-2">{vendor.aktif ? "Aktif" : "Nonaktif"}</td>
-        <td className="px-3 py-2"><div className="flex flex-wrap gap-2"><Button disabled={action.isPending} aria-label={`Edit ${vendor.nama}`} onClick={() => open(vendor)}>Edit</Button><Button disabled={action.isPending || !!editing} aria-label={`${vendor.aktif ? "Nonaktifkan" : "Aktifkan"} ${vendor.nama}`} onClick={() => void toggle(vendor)}>{vendor.aktif ? "Nonaktifkan" : "Aktifkan"}</Button></div></td>
+        <td className="px-3 py-2"><div className="flex flex-wrap gap-2"><Button disabled={action.isPending} aria-label={`Edit ${vendor.nama}`} onClick={() => open(vendor)}>Edit</Button><Button disabled={action.isPending || !!editing} aria-label={`${vendor.aktif ? "Nonaktifkan" : "Aktifkan"} ${vendor.nama}`} onClick={() => void toggle(vendor)}>{vendor.aktif ? "Nonaktifkan" : "Aktifkan"}</Button></div><MasterActions showStatus={false} resource="vendor" id={vendor.id} nama={vendor.nama} aktif={vendor.aktif} /></td>
       </tr>)}
     </Table>}
     <Pager offset={offset} total={data.data?.total ?? 0} onChange={setOffset} />

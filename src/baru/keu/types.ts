@@ -3,8 +3,8 @@ export interface Page<T> { rows: T[]; total: number; limit: number; offset: numb
 export interface Channel { id: string; nama: string; sistem: "manual" | "store" | "marketplace_erp"; akun_ref: string; aktif: boolean }
 export interface ProductVariant { kategori: string; nilai: string }
 export interface Product { id: string; nama: string; nama_asli: string; sku: string; sku_induk: string | null; gambar_url: string; varian_list: ProductVariant[]; jenis: "kayu" | "non_kayu" | null; harga_jual: Money; biaya_acuan: Money; aktif: boolean; status: "draf" | "master" }
-export interface Account { id: string; kode: string; nama: string; jenis: string; saldo_awal: Money }
-export interface Customer { id: string; nama: string; segmen: "umkm" | "reseller" | null; kontak: string }
+export interface Account { id: string; kode: string; nama: string; jenis: string; saldo_awal: Money; aktif: boolean }
+export interface Customer { id: string; nama: string; segmen: "umkm" | "reseller" | null; kontak: string; aktif: boolean }
 export interface Category { id: string; nama: string; jenis: "pemasukan" | "pengeluaran" }
 export interface Vendor { id: string; kode: string; nama: string; jenis: "tukang_kayu" | "supplier"; tipe: "kayu" | "non_kayu"; kontak: string; alamat: string; keterangan: string; aktif: boolean; status: "aktif" | "non_aktif" }
 export interface Item { id: string; pesanan_id: string; sumber_ref: string; produk_id: string | null; nama_snapshot: string; varian_snapshot: string; qty: number; harga_satuan: Money; subtotal_sumber: Money }
