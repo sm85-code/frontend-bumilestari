@@ -3,8 +3,8 @@ import { api, query } from "../../lib/api";
 import type { Page } from "./types";
 
 export const keu = <T,>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}) => api<T>(`/keu${path}`, init);
-export function useResource<T>(path: string, offset = 0, search = "") {
-  return useQuery({ queryKey: ["keu", path, offset, search], queryFn: ({ signal }) => keu<Page<T>>(`${path}${query({ limit: 50, offset, search })}`, { signal }) });
+export function useResource<T>(path: string, offset = 0, search = "", status?: "pengerjaan" | "batal" | "semua") {
+  return useQuery({ queryKey: ["keu", path, offset, search, status], queryFn: ({ signal }) => keu<Page<T>>(`${path}${query({ limit: 50, offset, search, status })}`, { signal }) });
 }
 export function useChoices<T>(path: string) {
   return useQuery({ queryKey: ["keu", "choices", path], queryFn: async ({ signal }) => {
