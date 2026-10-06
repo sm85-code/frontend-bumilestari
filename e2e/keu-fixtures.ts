@@ -5,7 +5,7 @@ export function keuFixtures() {
   const item = { id: "i", pesanan_id: "o", sumber_ref: "item-test", produk_id: "p", nama_snapshot: "Kayu Test", varian_snapshot: "", qty: 2, harga_satuan: "10.00", subtotal_sumber: "20.00" };
   return {
     "/keu/dashboard": { saldo_kas: "9007199254740993.01", kas_masuk: "18.00", kas_keluar: "0.00", nilai_pesanan: "20.00", biaya_vendor: "0.00", pesanan: 1, belum_dipetakan: 0, settlement_draf: 1, masukan_gagal: 0 },
-    "/keu/saluran": page(channels), "/keu/produk": page(products), "/keu/akun": page([{ id: "a", nama: "Kas", kode: "KAS", jenis: "kas", saldo_awal: "0.00" }]), "/keu/pelanggan": page([]),
+    "/keu/saluran": page(channels), "/keu/produk": page(products), "/keu/akun": page([{ id: "a", nama: "Kas", kode: "KAS", jenis: "kas", saldo_awal: "0.00", aktif: true }]), "/keu/pelanggan": page([]),
     "/keu/kategori": [{ id: "income", nama: "Penjualan", jenis: "pemasukan" }, { id: "expense", nama: "Operasional", jenis: "pengeluaran" }],
     "/keu/sumber": { erp: [{ id: "erp-account", nama: "ERP Test" }], erp_tersedia: true, store_tersedia: true },
     "/keu/vendor": page([{ id: "v", kode: "VENDOR-1", nama: "Vendor Test", tipe: "kayu", jenis: "tukang_kayu", kontak: "", alamat: "", keterangan: "", aktif: true, status: "aktif" }]),

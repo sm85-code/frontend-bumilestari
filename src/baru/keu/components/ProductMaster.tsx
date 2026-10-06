@@ -1,3 +1,4 @@
+import MasterActions from "./MasterActions";
 import { useState } from "react";
 import { money, useKeuAction, useResource } from "../api";
 import type { Product, ProductVariant } from "../types";
@@ -74,8 +75,8 @@ export default function ProductMaster() {
           <td className="max-w-sm px-3 py-2 break-words"><strong>{product.nama}</strong><div className="text-stone-600">{product.sku}</div><div className="text-xs">Induk: {product.sku_induk ?? "—"}</div><div className="text-xs text-stone-500">{product.nama_asli}</div></td>
           <td className="px-3 py-2">{product.varian_list?.map((row, index) => <div key={index}>{row.kategori}: {row.nilai}</div>)}</td>
           <td className="px-3 py-2 whitespace-nowrap">Jual: {money(product.harga_jual)}<br />Modal: {money(product.biaya_acuan)}</td>
-          <td className="px-3 py-2">{product.status === "draf" ? "Draf · perlu pemetaan" : "Master"}<br />{product.jenis === "kayu" ? "Kayu" : product.jenis === "non_kayu" ? "Non-Kayu" : "Jenis belum ditetapkan"}</td>
-          <td className="px-3 py-2"><Button onClick={() => setEditing(product)} aria-label={`Edit produk ${product.sku}`}>Edit / Petakan</Button></td>
+          <td className="px-3 py-2">{product.status === "draf" ? "Draf · perlu pemetaan" : product.aktif ? "Master" : "Master · Nonaktif"}<br />{product.jenis === "kayu" ? "Kayu" : product.jenis === "non_kayu" ? "Non-Kayu" : "Jenis belum ditetapkan"}</td>
+          <td className="px-3 py-2"><Button onClick={() => setEditing(product)} aria-label={`Edit produk ${product.sku}`}>Edit / Petakan</Button><MasterActions resource="produk" id={product.id} nama={product.sku} aktif={product.aktif} /></td>
         </tr>)}
       </Table>}
       <Pager offset={offset} total={data.data?.total ?? 0} onChange={setOffset} />
