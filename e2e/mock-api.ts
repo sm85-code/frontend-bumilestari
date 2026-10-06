@@ -1,3 +1,4 @@
+import { keuFixtures } from "./keu-fixtures";
 import type { Page, Route } from "@playwright/test";
 
 /** API Bumi Lestari tiruan untuk tes klik: data tetap, permintaan tulis dicatat di `panggilan`. */
@@ -264,7 +265,7 @@ export interface OpsiTiruan {
 /** Pasang API tiruan pada halaman. Mengembalikan daftar permintaan tulis (POST/PATCH/PUT) yang terjadi. */
 export async function pasangApiTiruan(page: Page, opsi: OpsiTiruan = {}): Promise<Panggilan[]> {
   const panggilan: Panggilan[] = [];
-  const data = { ...peta(PENGGUNA[opsi.peran ?? "admin"]), ...opsi.data };
+  const data: Record<string, unknown> = { ...peta(PENGGUNA[opsi.peran ?? "admin"]), ...keuFixtures(), ...opsi.data };
   const json = (route: Route, body: unknown, status = 200) =>
     route.fulfill({ status, contentType: "application/json", body: JSON.stringify(body) });
   await page.route("**/api/bumi-lestari/**", async (route) => {

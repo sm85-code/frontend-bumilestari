@@ -98,18 +98,21 @@ export function pesanError(body: unknown, status: number): string {
 
 export const PESAN_OFFLINE = "Tidak bisa terhubung ke server. Periksa internet lalu coba lagi.";
 
-export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+export async function api<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${PREFIX}${path}`, {
       method: init.method ?? (init.body !== undefined ? "POST" : "GET"),
       credentials: "include",
+      signal: init.signal,
       headers: init.body !== undefined ? { "Content-Type": "application/json" } : undefined,
       body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiError(0, PESAN_OFFLINE);
   }
+  if (res.status === 401) window.dispatchEvent(new Event("bumi-session-ended"));
   const teks = await res.text();
   const body = teks ? safeJson(teks) : null;
   if (!res.ok) throw new ApiError(res.status, pesanError(body, res.status));
@@ -121,9 +124,11 @@ export async function unggah<T>(path: string, form: FormData): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${PREFIX}${path}`, { method: "POST", credentials: "include", body: form });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiError(0, PESAN_OFFLINE);
   }
+  if (res.status === 401) window.dispatchEvent(new Event("bumi-session-ended"));
   const teks = await res.text();
   const body = teks ? safeJson(teks) : null;
   if (!res.ok) throw new ApiError(res.status, pesanError(body, res.status));

@@ -120,7 +120,7 @@ export default function Akun() {
             </Button>
           </Card>
         )}
-        <Button variant="pinggir" penuh onClick={() => void keluar()}>
+        <Button variant="pinggir" penuh onClick={() => { void keluar().catch(setError); }}>
           Keluar
         </Button>
       </div>
