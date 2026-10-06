@@ -31,15 +31,6 @@ test("wajib ganti password memblokir modul keu", async ({ page }) => {
   await expect(page.getByText("Demi keamanan, ganti kata sandi bawaan Anda dulu sebelum memakai aplikasi.")).toBeVisible();
 });
 
-test("delapan slot vendor dinamis dapat disimpan", async ({ page }) => {
-  const calls = await pasangApiTiruan(page);
-  await page.goto("/pengaturan");
-  await expect(page.getByLabel("Nama sup-3", { exact: true })).toBeVisible();
-  await page.getByLabel("Nama tk-2", { exact: true }).fill("Vendor Baru");
-  await page.getByRole("button", { name: "Simpan tk-2", exact: true }).click();
-  await expect.poll(() => calls.find(c => c.path === "/keu/vendor-slot/tk-2")?.body).toEqual({ nama: "Vendor Baru", kontak: "", jenis: "tukang_kayu" });
-});
-
 test("kesalahan impor tidak dapat diterapkan", async ({ page }) => {
   const batch = { id: "batch", nama_file: "bad.csv", jenis: "order", status: "draf", rows: [{ id: "row", nomor_baris: 2, sumber_ref: "bad", status: "gagal", kesalahan: [{ pesan: "Kuantitas tidak valid" }] }] };
   await pasangApiTiruan(page, { balasan: { "/keu/impor/pratinjau": batch } });
@@ -82,10 +73,11 @@ test("retry pesanan mempertahankan referensi dan nominal presisi", async ({ page
 });
 
 test("sesi habis mengarahkan pengguna ke halaman masuk", async ({ page }) => {
-  await pasangApiTiruan(page, { galat: { "/keu/vendor-slot/tk-2": { status: 401, detail: "Sesi berakhir" } } });
+  await pasangApiTiruan(page, { galat: { "/keu/vendor": { status: 401, detail: "Sesi berakhir" } } });
   await page.goto("/pengaturan");
-  await page.getByLabel("Nama tk-2", { exact: true }).fill("Vendor Baru");
-  await page.getByRole("button", { name: "Simpan tk-2", exact: true }).click();
+  await page.getByRole("button", { name: "+ Tambah Vendor", exact: true }).click();
+  await page.getByLabel("Nama vendor", { exact: true }).fill("Vendor Baru");
+  await page.getByRole("button", { name: "Simpan vendor", exact: true }).click();
   await expect(page).toHaveURL(/\/masuk$/);
   await expect(page.getByRole("link", { name: "Pengaturan", exact: true })).toHaveCount(0);
 });

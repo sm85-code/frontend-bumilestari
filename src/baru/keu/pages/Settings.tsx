@@ -2,7 +2,7 @@ import ProductMaster from "../components/ProductMaster";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { keu, money, useKeuAction, useResource } from "../api";
-import type { Slot } from "../types";
+import VendorMaster from "../components/VendorMaster";
 import { Button, Empty, ErrorMessage, Field, Heading, inputClass, Loading, Pager, Panel, Table } from "../components/UI";
 
 type Resource = "produk" | "akun" | "pelanggan" | "saluran";
@@ -33,17 +33,7 @@ function Master({ resource }: { resource: Exclude<Resource, "produk"> }) {
     {data.isLoading ? <Loading /> : !data.data?.rows.length ? <Empty /> : <Table headers={["Nama", "Kode / sumber", "Rincian"]}>{data.data.rows.map(row => <tr key={String(row.id)} className="border-b"><td className="px-3 py-2">{String(row.nama)}</td><td>{String(row.sku ?? row.kode ?? row.sistem ?? row.segmen ?? "—")}</td><td>{row.biaya_acuan ? money(String(row.biaya_acuan)) : row.saldo_awal ? money(String(row.saldo_awal)) : String(row.kontak ?? row.akun_ref ?? "—")}</td></tr>)}</Table>}
     <Pager offset={offset} total={data.data?.total ?? 0} onChange={setOffset} /></Panel>;
 }
-function VendorSlot({ slot }: { slot: Slot }) {
-  const action = useKeuAction();
-  async function save(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const body = { ...Object.fromEntries(new FormData(event.currentTarget)), jenis: slot.jenis };
-    try { await action.mutateAsync({ path: `/vendor-slot/${slot.kode}`, method: "PUT", body }); } catch { /* The mutation error is shown below. */ }
-  }
-  return <form onSubmit={event => void save(event)} className="rounded-lg border p-3"><p className="mb-2 font-medium">{slot.kode} · {slot.jenis === "tukang_kayu" ? "Tukang kayu" : "Supplier"}</p><div className="grid gap-2"><Field label={`Nama ${slot.kode}`}><input name="nama" required maxLength={255} defaultValue={slot.vendor?.nama ?? ""} className={inputClass} /></Field><Field label={`Kontak ${slot.kode}`}><input name="kontak" maxLength={255} defaultValue={slot.vendor?.kontak ?? ""} className={inputClass} /></Field><Button type="submit" disabled={action.isPending}>Simpan {slot.kode}</Button><ErrorMessage error={action.error} /></div></form>;
-}
 export default function Settings() {
   const [resource, setResource] = useState<Resource>("produk");
-  const slots = useQuery({ queryKey: ["keu", "vendor-slot"], queryFn: () => keu<Slot[]>("/vendor-slot") });
-  return <><Heading title="Pengaturan">Master keuangan dan vendor. Slot serta nama vendor dibaca dari database.</Heading><Panel title="Tukang kayu dan supplier"><ErrorMessage error={slots.error} />{slots.isLoading ? <Loading /> : <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{slots.data?.map(slot => <VendorSlot key={`${slot.kode}:${slot.vendor_id ?? "empty"}`} slot={slot} />)}</div>}</Panel><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{["produk", ...Object.keys(configs)].map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div>{resource === "produk" ? <ProductMaster /> : <Master key={resource} resource={resource} />}</>;
+  return <><Heading title="Pengaturan">Kelola master keuangan, produk, dan daftar vendor.</Heading><VendorMaster /><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{["produk", ...Object.keys(configs)].map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div>{resource === "produk" ? <ProductMaster /> : <Master key={resource} resource={resource} />}</>;
 }

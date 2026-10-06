@@ -6,8 +6,7 @@ export interface Product { id: string; nama: string; nama_asli: string; sku: str
 export interface Account { id: string; kode: string; nama: string; jenis: string; saldo_awal: Money }
 export interface Customer { id: string; nama: string; segmen: "umkm" | "reseller" | null; kontak: string }
 export interface Category { id: string; nama: string; jenis: "pemasukan" | "pengeluaran" }
-export interface Vendor { id: string; nama: string; jenis: "tukang_kayu" | "supplier"; kontak: string }
-export interface Slot { jenis: Vendor["jenis"]; nomor: number; kode: string; vendor_id: string | null; vendor: Vendor | null }
+export interface Vendor { id: string; kode: string; nama: string; jenis: "tukang_kayu" | "supplier"; tipe: "kayu" | "non_kayu"; kontak: string; alamat: string; keterangan: string; aktif: boolean; status: "aktif" | "non_aktif" }
 export interface Item { id: string; pesanan_id: string; sumber_ref: string; produk_id: string | null; nama_snapshot: string; varian_snapshot: string; qty: number; harga_satuan: Money; subtotal_sumber: Money }
 export interface Order { id: string; saluran_id: string; nomor: string; tanggal: string; status: "draf" | "aktif" | "selesai" | "batal"; status_sumber: string; total_sumber: Money; items: Item[] }
 export interface Allocation { id: string; item_id: string; vendor_id: string; qty: number; biaya_satuan: Money; dibatalkan: boolean }
