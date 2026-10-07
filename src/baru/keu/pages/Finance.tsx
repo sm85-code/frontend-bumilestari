@@ -5,9 +5,11 @@ import type { Account, Category, Channel, Item, PayoutAllocation, Settlement, Tr
 import { Button, Empty, ErrorMessage, Field, Heading, inputClass, Loading, Pager, Panel, Table } from "../components/UI";
 
 import LedgerFinance from "../components/LedgerFinance";
+import { useBook } from "../components/BookSettings";
 import UnpostEntry from "../components/UnpostEntry";
 
 export default function Finance() {
+  const book = useBook();
   const [offset, setOffset] = useState(0);
   const [history, setHistory] = useState(false);
   const transactions = useResource<Transaction>("/transaksi", offset, "", history ? "batal" : "pengerjaan");
@@ -20,19 +22,20 @@ export default function Finance() {
   const action = useKeuAction();
   const [reference, setReference] = useState(() => crypto.randomUUID());
   const [kind, setKind] = useState("keluar");
+  const cashKind = book.data?.aktif ? "masuk" : kind;
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
-    try { await action.mutateAsync({ path: "/transaksi", body: { ...values, sumber_ref: reference } }); setReference(crypto.randomUUID()); form.reset(); } catch { /* Error rendered below. */ }
+    try { await action.mutateAsync({ path: "/transaksi", body: { ...values, jenis: cashKind, sumber_ref: reference } }); setReference(crypto.randomUUID()); form.reset(); } catch { /* Error rendered below. */ }
   }
   return <><Heading title="Keuangan">Catatan manual dibuat sebagai draf. Kas berubah setelah posting; settlement dicatat sebesar neto.</Heading><ErrorMessage error={transactions.error ?? settlements.error ?? accounts.error ?? channels.error ?? categories.error ?? action.error} />
     <LedgerFinance />
-    <Panel title="Catatan kas manual"><form onSubmit={event => void save(event)} className="grid gap-3 sm:grid-cols-2">
+    <Panel title={book.data?.aktif ? "Pemasukan kas manual" : "Catatan kas manual"}><form onSubmit={event => void save(event)} className="grid gap-3 sm:grid-cols-2">
       <Field label="Saluran manual"><select required name="saluran_id" className={inputClass}><option value="">Pilih saluran</option>{channels.data?.filter(c => c.aktif && c.sistem === "manual").map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field>
       <Field label="Akun kas"><select required name="akun_id" className={inputClass}><option value="">Pilih akun</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
-      <Field label="Jenis transaksi"><select name="jenis" value={kind} onChange={event => setKind(event.target.value)} className={inputClass}><option value="keluar">Pengeluaran</option><option value="masuk">Pemasukan</option></select></Field>
-      <Field label="Kategori"><select required name="kategori_id" className={inputClass}><option value="">Pilih kategori</option>{categories.data?.filter(c => c.jenis === (kind === "masuk" ? "pemasukan" : "pengeluaran")).map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field>
+      <Field label="Jenis transaksi"><select name="jenis" value={cashKind} onChange={event => setKind(event.target.value)} className={inputClass}>{!book.data?.aktif && <option value="keluar">Pengeluaran</option>}<option value="masuk">Pemasukan</option></select></Field>
+      <Field label="Kategori"><select required name="kategori_id" className={inputClass}><option value="">Pilih kategori</option>{categories.data?.filter(c => c.jenis === (cashKind === "masuk" ? "pemasukan" : "pengeluaran")).map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field>
       <Field label="Tanggal"><input required type="date" name="tanggal" defaultValue={today()} className={inputClass} /></Field><Field label="Jumlah"><input required name="jumlah" inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" className={inputClass} /></Field>
       <Field label="Keterangan"><input name="keterangan" maxLength={2000} className={inputClass} /></Field><Button type="submit" disabled={action.isPending}>Simpan draf kas</Button>
     </form></Panel>

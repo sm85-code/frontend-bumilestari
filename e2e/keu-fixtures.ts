@@ -4,6 +4,15 @@ export function keuFixtures() {
   const products = [{ id: "p", nama: "Kayu Test", sku: "TEST", sku_induk: "PARENT", nama_asli: "Kayu Test nama panjang", gambar_url: "", varian_list: [], harga_jual: "10.00", status: "master", jenis: "kayu", biaya_acuan: "5.00", aktif: true }];
   const item = { id: "i", pesanan_id: "o", sumber_ref: "item-test", produk_id: "p", nama_snapshot: "Kayu Test", varian_snapshot: "", qty: 2, harga_satuan: "10.00", subtotal_sumber: "20.00" };
   return {
+    "/keu/pengeluaran": page([]),
+    "/keu/pengeluaran/kategori": [
+      ["cat", "bahan", "Cat"], ["dempul", "bahan", "Dempul"], ["amplas", "bahan", "Amplas"],
+      ["lem", "bahan", "Lem"], ["paku", "bahan", "Paku"], ["bahan_lain", "bahan", "Bahan pendukung lainnya"],
+      ["sewa", "operasional", "Sewa gudang"], ["listrik", "operasional", "Listrik"], ["internet", "operasional", "Internet"],
+      ["pemeliharaan", "operasional", "Pemeliharaan / perbaikan mesin"], ["atk", "operasional", "ATK"], ["operasional_lain", "operasional", "Operasional lainnya"],
+      ["gaji", "gaji_iklan", "Gaji karyawan"], ["insentif", "gaji_iklan", "Insentif pengelola"],
+      ["ads_shopee", "gaji_iklan", "Shopee Ads"], ["ads_tiktok", "gaji_iklan", "TikTok Ads"], ["ads_tokopedia", "gaji_iklan", "Tokopedia Ads"], ["iklan_lain", "gaji_iklan", "Pemasaran / iklan lainnya"],
+    ].map(([id, tab, nama]) => ({ id, tab, nama })),
     "/keu/buku": { aktif: false, pengaturan: null },
     "/keu/dashboard": { saldo_kas: "9007199254740993.01", kas_masuk: "18.00", kas_keluar: "0.00", nilai_pesanan: "20.00", biaya_vendor: "0.00", pesanan: 1, belum_dipetakan: 0, settlement_draf: 1, masukan_gagal: 0 },
     "/keu/saluran": page(channels), "/keu/produk": page(products), "/keu/akun": page([{ id: "a", nama: "Kas", kode: "KAS", jenis: "kas", saldo_awal: "0.00", aktif: true }]), "/keu/pelanggan": page([]),
