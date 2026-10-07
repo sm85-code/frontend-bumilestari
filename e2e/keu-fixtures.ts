@@ -4,6 +4,7 @@ export function keuFixtures() {
   const products = [{ id: "p", nama: "Kayu Test", sku: "TEST", sku_induk: "PARENT", nama_asli: "Kayu Test nama panjang", gambar_url: "", varian_list: [], harga_jual: "10.00", status: "master", jenis: "kayu", biaya_acuan: "5.00", aktif: true }];
   const item = { id: "i", pesanan_id: "o", sumber_ref: "item-test", produk_id: "p", nama_snapshot: "Kayu Test", varian_snapshot: "", qty: 2, harga_satuan: "10.00", subtotal_sumber: "20.00" };
   return {
+    "/keu/buku": { aktif: false, pengaturan: null },
     "/keu/dashboard": { saldo_kas: "9007199254740993.01", kas_masuk: "18.00", kas_keluar: "0.00", nilai_pesanan: "20.00", biaya_vendor: "0.00", pesanan: 1, belum_dipetakan: 0, settlement_draf: 1, masukan_gagal: 0 },
     "/keu/saluran": page(channels), "/keu/produk": page(products), "/keu/akun": page([{ id: "a", nama: "Kas", kode: "KAS", jenis: "kas", saldo_awal: "0.00", aktif: true }]), "/keu/pelanggan": page([]),
     "/keu/kategori": [{ id: "income", nama: "Penjualan", jenis: "pemasukan" }, { id: "expense", nama: "Operasional", jenis: "pengeluaran" }],

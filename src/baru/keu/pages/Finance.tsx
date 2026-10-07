@@ -4,6 +4,7 @@ import { keu, money, today, useChoices, useKeuAction, useResource } from "../api
 import type { Account, Category, Channel, Item, PayoutAllocation, Settlement, Transaction } from "../types";
 import { Button, Empty, ErrorMessage, Field, Heading, inputClass, Loading, Pager, Panel, Table } from "../components/UI";
 
+import LedgerFinance from "../components/LedgerFinance";
 import UnpostEntry from "../components/UnpostEntry";
 
 export default function Finance() {
@@ -26,6 +27,7 @@ export default function Finance() {
     try { await action.mutateAsync({ path: "/transaksi", body: { ...values, sumber_ref: reference } }); setReference(crypto.randomUUID()); form.reset(); } catch { /* Error rendered below. */ }
   }
   return <><Heading title="Keuangan">Catatan manual dibuat sebagai draf. Kas berubah setelah posting; settlement dicatat sebesar neto.</Heading><ErrorMessage error={transactions.error ?? settlements.error ?? accounts.error ?? channels.error ?? categories.error ?? action.error} />
+    <LedgerFinance />
     <Panel title="Catatan kas manual"><form onSubmit={event => void save(event)} className="grid gap-3 sm:grid-cols-2">
       <Field label="Saluran manual"><select required name="saluran_id" className={inputClass}><option value="">Pilih saluran</option>{channels.data?.filter(c => c.aktif && c.sistem === "manual").map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field>
       <Field label="Akun kas"><select required name="akun_id" className={inputClass}><option value="">Pilih akun</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
@@ -42,8 +44,11 @@ export default function Finance() {
 function NewSettlement({ channels }: { channels: Channel[] }) {
   const action = useKeuAction();
   const [reference, setReference] = useState(() => crypto.randomUUID());
-  return <Panel title="Settlement manual"><p className="mb-3 text-sm text-stone-600">Untuk dokumen manual atau ERP yang belum tersinkron. Bruto − potongan + penyesuaian wajib sama dengan neto.</p><form className="grid gap-3 sm:grid-cols-2" onSubmit={event => { event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form)); void action.mutateAsync({ path: "/settlement", body: { ...values, sumber_ref: reference } }).then(() => { setReference(crypto.randomUUID()); form.reset(); }).catch(() => {}); }}>
-    <Field label="Saluran settlement"><select required name="saluran_id" className={inputClass}><option value="">Pilih saluran</option>{channels.filter(c => c.aktif && c.sistem !== "store").map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field><Field label="Tanggal cair"><input required type="date" name="tanggal_cair" defaultValue={today()} className={inputClass} /></Field>
+  const [channel, setChannel] = useState("");
+  const store = channels.find(c => c.id === channel)?.sistem === "store";
+  return <Panel title="Settlement manual"><p className="mb-3 text-sm text-stone-600">Pencatatan internal berdasarkan dokumen pencairan; tidak mengubah Store/ERP asal. Bruto − potongan + penyesuaian wajib sama dengan neto.</p><form className="grid gap-3 sm:grid-cols-2" onSubmit={event => { event.preventDefault(); const form = event.currentTarget; const values = Object.fromEntries(new FormData(form)); const proof = String(values.bukti_pencairan ?? "").trim(); if (!proof) delete values.bukti_pencairan; void action.mutateAsync({ path: proof ? "/settlement/manual-bukti" : "/settlement", body: { ...values, sumber_ref: reference } }).then(() => { setReference(crypto.randomUUID()); form.reset(); }).catch(() => {}); }}>
+    <Field label="Saluran settlement"><select required name="saluran_id" value={channel} onChange={e => setChannel(e.target.value)} className={inputClass}><option value="">Pilih saluran</option>{channels.filter(c => c.aktif).map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field><Field label="Tanggal cair"><input required type="date" name="tanggal_cair" defaultValue={today()} className={inputClass} /></Field>
+    <Field label="Bukti pencairan (wajib untuk Store)"><input name="bukti_pencairan" required={store} minLength={3} maxLength={2000} placeholder="Nomor referensi bank / tautan dokumen" className={inputClass} /></Field>
     {["bruto", "potongan", "penyesuaian", "neto"].map(key => <Field key={key} label={key[0].toUpperCase() + key.slice(1)}><input required name={key} inputMode="decimal" pattern="-?[0-9]+(\.[0-9]{1,2})?" defaultValue={key === "penyesuaian" || key === "potongan" ? "0" : undefined} className={inputClass} /></Field>)}<Button type="submit" disabled={action.isPending}>Simpan draf settlement</Button><ErrorMessage error={action.error} />
   </form></Panel>;
 }

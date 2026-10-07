@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useKeuAction } from "../api";
 import { Button, ErrorMessage, Field, inputClass } from "./UI";
 
-export default function UnpostEntry({ id, resource }: { id: string; resource: "transaksi" | "settlement" }) {
+export default function UnpostEntry({ id, resource }: { id: string; resource: "transaksi" | "settlement" | "jurnal" }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const action = useKeuAction();
@@ -14,7 +14,7 @@ export default function UnpostEntry({ id, resource }: { id: string; resource: "t
       void action.mutateAsync({ path: `/${resource}/${id}/unpost`, body: { alasan: reason.trim() } })
         .then(() => { setReason(""); setOpen(false); }).catch(() => {});
     }}>
-      <p className="text-sm">Pembatalan mengeluarkan jurnal dari saldo kas. Settlement dan jurnal terkait ikut dibatalkan. Riwayat asli tetap tersimpan dan tidak dapat diposting ulang. Periode tutup buku tidak dapat dibatalkan.</p>
+      <p className="text-sm">Pembatalan mengeluarkan jurnal dari saldo kas. Jika terkait settlement, settlement dan jurnal terkait ikut dibatalkan. Riwayat asli tetap tersimpan dan tidak dapat diposting ulang. Periode tutup buku tidak dapat dibatalkan.</p>
       <Field label="Alasan pembatalan"><textarea required minLength={3} maxLength={2000} value={reason} onChange={event => setReason(event.target.value)} className={inputClass} /></Field>
       <ErrorMessage error={action.error} />
       <div className="flex flex-wrap gap-2"><Button type="submit" disabled={action.isPending || reason.trim().length < 3}>Konfirmasi Batal Post</Button><Button disabled={action.isPending} onClick={() => { setOpen(false); action.reset(); }}>Tutup</Button></div>

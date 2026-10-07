@@ -1,3 +1,4 @@
+import BookSettings from "../components/BookSettings";
 import ResetFinance from "../components/ResetFinance";
 import MasterActions from "../components/MasterActions";
 import ProductMaster from "../components/ProductMaster";
@@ -38,5 +39,5 @@ function Master({ resource }: { resource: Exclude<Resource, "produk"> }) {
 }
 export default function Settings() {
   const [resource, setResource] = useState<Resource>("produk");
-  return <><Heading title="Pengaturan">Kelola master keuangan, produk, dan daftar vendor.</Heading><VendorMaster /><ResetFinance /><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{["produk", ...Object.keys(configs)].map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div>{resource === "produk" ? <ProductMaster /> : <Master key={resource} resource={resource} />}</>;
+  return <><Heading title="Pengaturan">Kelola master keuangan, produk, dan daftar vendor.</Heading><BookSettings /><VendorMaster /><ResetFinance /><div role="tablist" aria-label="Master data" className="mb-4 flex flex-wrap gap-2">{["produk", ...Object.keys(configs)].map(key => <button role="tab" aria-selected={resource === key} key={key} className={inputClass} onClick={() => setResource(key as Resource)}>{key}</button>)}</div>{resource === "produk" ? <ProductMaster /> : <Master key={resource} resource={resource} />}</>;
 }
