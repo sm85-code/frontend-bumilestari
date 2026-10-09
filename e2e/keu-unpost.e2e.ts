@@ -23,7 +23,8 @@ test("batal post menghilang dari kas aktif, tersimpan di riwayat dan membatalkan
     }
     return route.fallback();
   });
-  await page.goto("/keuangan");
+  await page.goto("/keuangan?tab=utama");
+  await page.getByRole("tab", { name: "Penerimaan & pencairan", exact: true }).click();
   const cash = page.locator("section").filter({ has: page.getByRole("heading", { name: "Buku kas", exact: true }) });
   const settlements = page.locator("section").filter({ has: page.getByRole("heading", { name: "Rekonsiliasi settlement", exact: true }) });
   await cash.getByRole("button", { name: "Batalkan Post", exact: true }).click();
@@ -49,7 +50,8 @@ test("unpost ditolak periode terkunci mempertahankan alasan dan jurnal", async (
     if (route.request().method() === "POST") return route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ detail: "Periode sudah ditutup" }) });
     return route.fulfill({ contentType: "application/json", body: JSON.stringify({ rows: [{ id: "tx", tanggal: "2026-10-06", akun_id: "a", jenis: "masuk", jumlah: "18.00", status: "terkirim", keterangan: "Jurnal terkunci" }], total: 1, limit: 50, offset: 0 }) });
   });
-  await page.goto("/keuangan");
+  await page.goto("/keuangan?tab=utama");
+  await page.getByRole("tab", { name: "Penerimaan & pencairan", exact: true }).click();
   await page.getByRole("button", { name: "Batalkan Post", exact: true }).click();
   await page.getByLabel("Alasan pembatalan").fill("Koreksi jurnal terkunci");
   await page.getByRole("button", { name: "Konfirmasi Batal Post" }).click();
@@ -61,7 +63,8 @@ test("unpost ditolak periode terkunci mempertahankan alasan dan jurnal", async (
 test("settlement neto nol dapat dibatalkan langsung", async ({ page }) => {
   const calls = await pasangApiTiruan(page);
   await page.route("**/api/bumi-lestari/keu/settlement?**", async route => route.fulfill({ contentType: "application/json", body: JSON.stringify({ rows: [{ ...(keuFixtures()["/keu/settlement"].rows[0] as Settlement), neto: "0.00", status: "terkirim" }], total: 1, limit: 50, offset: 0 }) }));
-  await page.goto("/keuangan");
+  await page.goto("/keuangan?tab=utama");
+  await page.getByRole("tab", { name: "Penerimaan & pencairan", exact: true }).click();
   await page.getByRole("button", { name: "Batalkan Post", exact: true }).click();
   await page.getByLabel("Alasan pembatalan").fill("Koreksi neto nol");
   await page.getByRole("button", { name: "Konfirmasi Batal Post" }).click();

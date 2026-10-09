@@ -44,7 +44,8 @@ test("kesalahan impor tidak dapat diterapkan", async ({ page }) => {
 
 test("settlement gagal rekonsiliasi tetap menampilkan kesalahan", async ({ page }) => {
   const calls = await pasangApiTiruan(page, { galat: { "/keu/settlement/st/posting": { status: 409, detail: "Alokasi belum sama dengan neto" } } });
-  await page.goto("/keuangan");
+  await page.goto("/keuangan?tab=utama");
+  await page.getByRole("tab", { name: "Penerimaan & pencairan", exact: true }).click();
   await page.getByRole("button", { name: "Rekonsiliasi", exact: true }).click();
   await page.getByLabel("Akun penerima settlement", { exact: true }).selectOption("a");
   await page.getByLabel("Kategori settlement", { exact: true }).selectOption("income");

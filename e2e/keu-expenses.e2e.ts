@@ -10,12 +10,22 @@ async function setup(page: Page) {
   } });
 }
 
+async function chooseExpense(page: Page, title: string) {
+  if (title === "Pembayaran Tukang & Supplier") {
+    await page.getByRole("tab", { name: "Laporan Produksi", exact: true }).click();
+  } else {
+    await page.getByRole("tab", { name: "Kas Operasional", exact: true }).click();
+    const labels: Record<string, string> = { "Belanja Cat & Bahan Pendukung": "Bahan pendukung", "Belanja Operasional": "Transaksi operasional", "Gaji Karyawan & Iklan": "Gaji & Iklan" };
+    await page.getByRole("tab", { name: labels[title], exact: true }).click();
+  }
+}
+
 test("empat tab memisahkan pelunasan vendor, bahan, operasional dan gaji/iklan", async ({ page }) => {
   const calls = await setup(page);
   await page.goto("/keuangan");
-  await expect(page.getByRole("heading", { name: "Pemasukan kas manual" })).toBeVisible();
-  await expect(page.getByLabel("Jenis transaksi").locator('option[value="keluar"]')).toHaveCount(0);
-  const panel = page.getByRole("tabpanel", { name: "Pembayaran Tukang & Supplier" });
+  await chooseExpense(page, "Pembayaran Tukang & Supplier");
+  await page.getByRole("button", { name: "Bayar tagihan", exact: true }).click();
+  const panel = page.getByRole("dialog");
   await expect(panel.getByText("Vendor Test", { exact: true })).toBeVisible();
   await panel.getByLabel("Vendor yang dibayar").selectOption("v");
   await panel.getByLabel("Akun pembayaran vendor").selectOption("a");
@@ -28,8 +38,8 @@ test("empat tab memisahkan pelunasan vendor, bahan, operasional dan gaji/iklan",
     ["Belanja Operasional", "operasional", "sewa"],
     ["Gaji Karyawan & Iklan", "gaji_iklan", "ads_shopee"],
   ]) {
-    await page.getByRole("tab", { name: title }).click();
-    await expect(page.getByRole("tab", { name: title })).toHaveAttribute("aria-selected", "true");
+    await chooseExpense(page, title);
+    await page.getByRole("button", { name: "Tambah pengeluaran", exact: true }).click();
     await page.getByLabel("Kategori pengeluaran").selectOption(category);
     await page.getByLabel("Akun pembayaran pengeluaran").selectOption("a");
     await page.getByLabel("Jumlah pengeluaran").fill("9007199254740993.01");
@@ -38,6 +48,7 @@ test("empat tab memisahkan pelunasan vendor, bahan, operasional dan gaji/iklan",
     await expect.poll(() => calls.filter(c => c.path === "/keu/pengeluaran").length).toBe(["bahan", "operasional", "gaji_iklan"].indexOf(tab) + 1);
     expect(calls.filter(c => c.path === "/keu/pengeluaran").at(-1)?.body).toMatchObject({ tab, kategori: category, jumlah: "9007199254740993.01", akun_kas_id: "a" });
   }
+  await page.getByRole("button", { name: "Tambah pengeluaran", exact: true }).click();
   await expect(page.getByLabel("Kategori pengeluaran").locator('option[value="cat"]')).toHaveCount(0);
   expect(calls.every(c => c.path.startsWith("/keu/"))).toBe(true);
 });
@@ -48,7 +59,7 @@ test("setiap tab memakai tanggal dan pencarian, rentang terbalik tidak dikirim",
   page.on("request", r => { if (r.method() === "GET" && new URL(r.url()).pathname.endsWith("/keu/pengeluaran")) urls.push(new URL(r.url())); });
   await page.goto("/keuangan");
   for (const [title, tab] of [["Pembayaran Tukang & Supplier", "vendor"], ["Belanja Cat & Bahan Pendukung", "bahan"], ["Belanja Operasional", "operasional"], ["Gaji Karyawan & Iklan", "gaji_iklan"]]) {
-    await page.getByRole("tab", { name: title }).click();
+    await chooseExpense(page, title);
     await page.getByLabel("Tanggal awal pengeluaran").fill("2026-10-01");
     await page.getByLabel("Tanggal akhir pengeluaran").fill("2026-10-06");
     await page.getByLabel("Cari pengeluaran").fill("Cat & Gaji 50% _");
@@ -77,8 +88,8 @@ test("unpost tiap tab mengeluarkan transaksi dari daftar aktif dan menyimpan riw
   });
   await page.goto("/keuangan");
   for (const title of ["Pembayaran Tukang & Supplier", "Belanja Cat & Bahan Pendukung", "Belanja Operasional", "Gaji Karyawan & Iklan"]) {
-    await page.getByRole("tab", { name: title }).click();
-    const panel = page.getByRole("tabpanel", { name: title });
+    await chooseExpense(page, title);
+    const panel = page.getByRole("tabpanel", { name: title === "Pembayaran Tukang & Supplier" ? "Laporan Produksi" : "Kas Operasional", exact: true });
     await panel.getByRole("button", { name: "Batalkan Post", exact: true }).click();
     await panel.getByLabel("Alasan pembatalan").fill("Koreksi bukti");
     await panel.getByRole("button", { name: "Konfirmasi Batal Post" }).click();

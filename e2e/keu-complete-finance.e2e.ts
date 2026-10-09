@@ -44,6 +44,8 @@ test("mutasi hanya antar akun berbeda, nominal tetap string dan referensi retry 
     return route.fallback();
   });
   await page.goto("/keuangan");
+  await page.getByRole("tab", { name: "Buku kas & transfer", exact: true }).click();
+  await page.getByRole("button", { name: "Transfer / isi kembali kas", exact: true }).click();
   await page.getByLabel("Akun Kas Asal (Kredit)").selectOption("a");
   await expect(page.getByLabel("Akun Kas Tujuan (Debet)").locator('option[value="a"]')).toHaveCount(0);
   await page.getByLabel("Akun Kas Tujuan (Debet)").selectOption("bank");
@@ -95,7 +97,7 @@ test("tiga laporan memakai tanggal pilihan dan menolak rentang terbalik", async 
   const count = ranges.length;
   await page.getByLabel("Tanggal awal laporan").fill("2026-10-07");
   await expect(page.getByRole("alert")).toContainText("tanggal awal tidak boleh melebihi");
-  await expect(page.getByRole("tabpanel")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Arus Kas", exact: true })).toHaveCount(0);
   expect(ranges.length).toBe(count);
 });
 
@@ -113,7 +115,9 @@ test("rekonsiliasi escrow menyimpan tanggal konfirmasi internal", async ({ page 
 test("settlement Store mewajibkan bukti dan mencatat tanpa API pembayaran", async ({ page }) => {
   const calls = await ledgerApi(page);
   await page.route("**/api/bumi-lestari/keu/saluran?**", route => route.fulfill({ contentType: "application/json", body: JSON.stringify(pageOf([{ id: "store", nama: "Store", sistem: "store", aktif: true }])) }));
-  await page.goto("/keuangan");
+  await page.goto("/keuangan?tab=utama");
+  await page.getByRole("tab", { name: "Penerimaan & pencairan", exact: true }).click();
+  await page.getByRole("button", { name: "Tambah pencairan", exact: true }).click();
   await page.getByLabel("Saluran settlement").selectOption("store");
   await expect(page.getByLabel("Bukti pencairan (wajib untuk Store)")).toHaveAttribute("required", "");
   await page.getByLabel("Bruto", { exact: true }).fill("20");
@@ -140,6 +144,7 @@ test("unpost jurnal mutasi menyimpan alasan dan menghilang dari daftar aktif", a
     return route.fulfill({ contentType: "application/json", body: JSON.stringify(pageOf(cancelled === history ? [{ ...journal, status: cancelled ? "dibatalkan" : "terkirim", alasan_batal: cancelled ? "Koreksi Bank" : "" }] : [])) });
   });
   await page.goto("/keuangan");
+  await page.getByRole("tab", { name: "Buku kas & transfer", exact: true }).click();
   const panel = page.locator("section").filter({ has: page.getByRole("heading", { name: "Jurnal Buku Besar", exact: true }) });
   await panel.getByText("Rincian debet / kredit").click();
   await expect(panel.getByText(/Kas · Debet/)).toBeVisible();
