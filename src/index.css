@@ -1,2 +1,7 @@
 @import "tailwindcss";
 body { margin: 0; background: #f4f7f2; color: #1c2416; font-family: "Plus Jakarta Sans", sans-serif; }
+/* Financial tables keep amounts readable on small screens. */
+main td { padding: .75rem; vertical-align: top; }
+main table th { padding: .75rem; }
+main table tbody tr:hover { background: #fafaf9; }
+main input:focus-visible, main select:focus-visible, main button:focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
