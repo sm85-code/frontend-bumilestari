@@ -7,7 +7,6 @@ import { Loading } from "./keu/components/UI";
 const Dashboard = lazy(() => import("./keu/pages/Dashboard"));
 const Orders = lazy(() => import("./keu/pages/Orders"));
 const Production = lazy(() => import("./keu/pages/Production"));
-const Reports = lazy(() => import("./keu/pages/Reports"));
 const Inventory = lazy(() => import("./keu/pages/Inventory"));
 const Receivables = lazy(() => import("./keu/pages/Receivables"));
 const Finance = lazy(() => import("./keu/pages/Finance"));
@@ -30,7 +29,7 @@ export default function AppBaru() {
           <Route path="/order/peta" element={<Orders />} />
           <Route path="/produksi" element={<Production />} />
           <Route path="/keuangan" element={<Finance />} />
-          <Route path="/laporan-keuangan" element={<Reports />} />
+          <Route path="/laporan-keuangan" element={<Navigate to="/keuangan?tab=utama" replace />} />
           <Route path="/persediaan" element={<Inventory />} />
           <Route path="/piutang" element={<Receivables />} />
           <Route path="/pengaturan" element={<Settings />} />

@@ -1,3 +1,4 @@
+import { InputDialog, useCloseFinanceDialog } from "../components/FinanceUI";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { query } from "../../../lib/api";
@@ -29,7 +30,7 @@ export default function Expenses() {
   </Panel>;
 }
 
-function Workspace({ tab }: { tab: Tab }) {
+export function Workspace({ tab }: { tab: Tab }) {
   const [start, setStart] = useState(today().slice(0, 7) + "-01");
   const [end, setEnd] = useState(today());
   const [search, setSearch] = useState("");
@@ -42,7 +43,7 @@ function Workspace({ tab }: { tab: Tab }) {
     enabled: valid,
   });
   return <div className="grid gap-4">
-    {tab === "vendor" ? <VendorPayment /> : <ExpenditureForm tab={tab} />}
+    <InputDialog title={tab === "vendor" ? "Bayar tukang / supplier" : "Catat pengeluaran"} label={tab === "vendor" ? "Bayar tagihan" : "Tambah pengeluaran"}>{tab === "vendor" ? <VendorPayment /> : <ExpenditureForm tab={tab} />}</InputDialog>
     <div className="grid gap-3 sm:grid-cols-3">
       <Field label="Tanggal awal pengeluaran"><input type="date" value={start} className={inputClass} onChange={e => { setStart(e.target.value); setOffset(0); }} /></Field>
       <Field label="Tanggal akhir pengeluaran"><input type="date" value={end} className={inputClass} onChange={e => { setEnd(e.target.value); setOffset(0); }} /></Field>
@@ -67,6 +68,7 @@ function Workspace({ tab }: { tab: Tab }) {
 }
 
 function ExpenditureForm({ tab }: { tab: Exclude<Tab, "vendor"> }) {
+  const close = useCloseFinanceDialog();
   const accounts = useChoices<Account>("/akun");
   const categories = useQuery({ queryKey: ["keu", "pengeluaran-kategori"], queryFn: () => keu<Category[]>("/pengeluaran/kategori") });
   const action = useKeuAction();
@@ -77,7 +79,7 @@ function ExpenditureForm({ tab }: { tab: Exclude<Tab, "vendor"> }) {
       event.preventDefault();
       const form = event.currentTarget;
       void action.mutateAsync({ path: "/pengeluaran", body: { ...Object.fromEntries(new FormData(form)), tab, referensi: reference } })
-        .then(() => { setReference(crypto.randomUUID()); form.reset(); }).catch(() => {});
+        .then(() => { setReference(crypto.randomUUID()); form.reset(); close(); }).catch(() => {});
     }}>
       <Field label="Tanggal pembayaran pengeluaran"><input name="tanggal" type="date" required defaultValue={today()} className={inputClass} /></Field>
       <Field label="Akun pembayaran pengeluaran"><select name="akun_kas_id" required className={inputClass}><option value="">Pilih kas/bank aktif</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
@@ -91,6 +93,7 @@ function ExpenditureForm({ tab }: { tab: Exclude<Tab, "vendor"> }) {
 }
 
 function VendorPayment() {
+  const close = useCloseFinanceDialog();
   const debts = useChoices<VendorDebt>("/utang-vendor");
   const accounts = useChoices<Account>("/akun");
   const action = useKeuAction();
@@ -103,7 +106,7 @@ function VendorPayment() {
       event.preventDefault();
       const form = event.currentTarget;
       void action.mutateAsync({ path: "/vendor/pembayaran", body: { ...Object.fromEntries(new FormData(form)), referensi: reference } })
-        .then(() => { setReference(crypto.randomUUID()); form.reset(); }).catch(() => {});
+        .then(() => { setReference(crypto.randomUUID()); form.reset(); close(); }).catch(() => {});
     }}>
       <Field label="Vendor yang dibayar"><select name="vendor_id" required className={inputClass}><option value="">Pilih vendor</option>{debts.data?.map(v => <option key={v.id} value={v.id}>{v.nama} · Utang {money(v.utang)}</option>)}</select></Field>
       <Field label="Akun pembayaran vendor"><select name="akun_kas_id" required className={inputClass}><option value="">Pilih kas/bank</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
