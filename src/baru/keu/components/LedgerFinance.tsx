@@ -9,6 +9,7 @@ import { Button, Empty, ErrorMessage, Field, inputClass, Loading, Pager, Panel, 
 
 const amountPattern = "[0-9]+(\\.[0-9]{1,2})?";
 export default function LedgerFinance() {
+  const [transferOpen, setTransferOpen] = useState(false);
   const book = useBook();
   const accounts = useChoices<Account>("/akun");
   const chart = useChoices<Coa>("/coa");
@@ -18,7 +19,7 @@ export default function LedgerFinance() {
   const [reference, setReference] = useState(() => crypto.randomUUID());
   const [source, setSource] = useState(""), [target, setTarget] = useState("");
   if (!book.data?.aktif) return <BookNotice />;
-  return <><InputDialog title="Transfer antar kas" label="Transfer / isi kembali kas"><Panel title="Transfer / Mutasi Kas"><ErrorMessage error={action.error ?? accounts.error} /><form className="grid gap-3 sm:grid-cols-2" onSubmit={event => { event.preventDefault(); if (!source || source === target) return; const form = event.currentTarget; const values = Object.fromEntries(new FormData(form)); void action.mutateAsync({ path: "/mutasi", body: { ...values, referensi: reference } }).then(() => { setReference(crypto.randomUUID()); form.reset(); setSource(""); setTarget(""); }).catch(() => {}); }}>
+  return <><InputDialog open={transferOpen} onOpenChange={setTransferOpen} title="Transfer antar kas" label="Transfer / isi kembali kas"><Panel title="Transfer / Mutasi Kas"><ErrorMessage error={action.error ?? accounts.error} /><form className="grid gap-3 sm:grid-cols-2" onSubmit={event => { event.preventDefault(); if (!source || source === target) return; const form = event.currentTarget; const values = Object.fromEntries(new FormData(form)); void action.mutateAsync({ path: "/mutasi", body: { ...values, referensi: reference } }).then(() => { setReference(crypto.randomUUID()); form.reset(); setSource(""); setTarget(""); setTransferOpen(false); }).catch(() => {}); }}>
     <Field label="Tanggal mutasi"><input required type="date" name="tanggal" defaultValue={today()} className={inputClass} /></Field><Field label="Nominal transfer"><input name="nominal" required inputMode="decimal" pattern={amountPattern} className={inputClass} /></Field>
     <Field label="Akun Kas Asal (Kredit)"><select required name="akun_asal_id" value={source} onChange={event => setSource(event.target.value)} className={inputClass}><option value="">Pilih akun asal</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field><Field label="Akun Kas Tujuan (Debet)"><select required name="akun_tujuan_id" value={target} onChange={event => setTarget(event.target.value)} className={inputClass}><option value="">Pilih akun tujuan</option>{accounts.data?.filter(a => a.aktif && a.id !== source).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
     <Field label="Biaya admin bank"><input name="biaya_admin" inputMode="decimal" pattern={amountPattern} defaultValue="0" required className={inputClass} /></Field><Field label="Catatan mutasi"><input name="keterangan" maxLength={2000} className={inputClass} /></Field><Button type="submit" disabled={action.isPending || !source || !target || source === target}>Posting Mutasi Kas</Button>

@@ -9,6 +9,7 @@ import { useBook } from "../components/BookSettings";
 import UnpostEntry from "../components/UnpostEntry";
 
 export default function FinanceRecords() {
+  const [receiptOpen, setReceiptOpen] = useState(false);
   const book = useBook();
   const [offset, setOffset] = useState(0);
   const [history, setHistory] = useState(false);
@@ -27,10 +28,10 @@ export default function FinanceRecords() {
     event.preventDefault();
     const form = event.currentTarget;
     const values = Object.fromEntries(new FormData(form));
-    try { await action.mutateAsync({ path: "/transaksi", body: { ...values, jenis: cashKind, sumber_ref: reference } }); setReference(crypto.randomUUID()); form.reset(); } catch { /* Error rendered below. */ }
+    try { await action.mutateAsync({ path: "/transaksi", body: { ...values, jenis: cashKind, sumber_ref: reference } }); setReference(crypto.randomUUID()); form.reset(); setReceiptOpen(false); } catch { /* Error rendered below. */ }
   }
   return <><Heading title="Penerimaan & Pencairan">Catatan manual dibuat sebagai draf. Kas berubah setelah posting; settlement dicatat sebesar neto.</Heading><ErrorMessage error={transactions.error ?? settlements.error ?? accounts.error ?? channels.error ?? categories.error ?? action.error} />
-    <InputDialog title="Catat penerimaan" label="Tambah penerimaan"><Panel title={book.data?.aktif ? "Pemasukan kas manual" : "Catatan kas manual"}><form onSubmit={event => void save(event)} className="grid gap-3 sm:grid-cols-2">
+    <InputDialog open={receiptOpen} onOpenChange={setReceiptOpen} title="Catat penerimaan" label="Tambah penerimaan"><Panel title={book.data?.aktif ? "Pemasukan kas manual" : "Catatan kas manual"}><form onSubmit={event => void save(event)} className="grid gap-3 sm:grid-cols-2">
       <Field label="Saluran manual"><select required name="saluran_id" className={inputClass}><option value="">Pilih saluran</option>{channels.data?.filter(c => c.aktif && c.sistem === "manual").map(c => <option key={c.id} value={c.id}>{c.nama}</option>)}</select></Field>
       <Field label="Akun kas"><select required name="akun_id" className={inputClass}><option value="">Pilih akun</option>{accounts.data?.filter(a => a.aktif).map(a => <option key={a.id} value={a.id}>{a.nama}</option>)}</select></Field>
       <Field label="Jenis transaksi"><select name="jenis" value={cashKind} onChange={event => setKind(event.target.value)} className={inputClass}>{!book.data?.aktif && <option value="keluar">Pengeluaran</option>}<option value="masuk">Pemasukan</option></select></Field>

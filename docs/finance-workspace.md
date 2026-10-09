@@ -11,8 +11,7 @@ reconciliation remain available alongside reports. Cash transfers and technical
 journals are available under Buku kas & transfer, without permanent input forms.
 
 Input dialogs use Ant Design focus management, Escape/close support and scrollable
-mobile bodies. Successful expense, vendor-payment, settlement and journal inputs
-close their dialogs. Receipt and transfer forms remain open for review after save.
+mobile bodies. Successful financial inputs close their dialogs; failed submissions remain open.
 
 This change reorganizes the frontend only. It does not change accounting policy,
 weekly cash/advertising replenishment budgets, salary recognition, manual inventory
