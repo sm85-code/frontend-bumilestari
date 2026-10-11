@@ -5,3 +5,19 @@ main td { padding: .75rem; vertical-align: top; }
 main table th { padding: .75rem; }
 main table tbody tr:hover { background: #fafaf9; }
 main input:focus-visible, main select:focus-visible, main button:focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
+
+.keu-table table { min-width: 560px; }
+.keu-table table th, .keu-table table td { padding: .875rem 1rem; vertical-align: top; }
+.keu-table table th:first-child, .keu-table table td:first-child { padding-left: 1.25rem; }
+.keu-table table th:last-child, .keu-table table td:last-child { padding-right: 1.25rem; }
+.keu-table thead { background: #eaf2e5; }
+.keu-table thead th { border-bottom: 2px solid #b7cfa9; font-weight: 700; }
+.keu-table tbody tr:last-child { border-bottom: 0; }
+.keu-table td.whitespace-nowrap { font-variant-numeric: tabular-nums; }
+[data-multiline-justify] { text-align: justify !important; text-justify: inter-word; text-align-last: start; }
+@media (max-width: 1023px) {
+  .ant-modal { max-width: calc(100vw - 32px); }
+  .ant-btn, .ant-input, .ant-select-selector { min-height: 44px; }
+}
+
+.keu-table td > button + button { margin-left: .5rem; }

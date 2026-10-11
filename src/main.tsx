@@ -1,5 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@fontsource-variable/plus-jakarta-sans";
+import { ConfigProvider, App as AntApp } from "antd";
+import idID from "antd/locale/id_ID";
+import { tema } from "./theme";
+import MultilineText from "./components/MultilineText";
 import dayjs from "dayjs";
 import "dayjs/locale/id";
 import { StrictMode } from "react";
@@ -18,11 +22,12 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <ConfigProvider theme={tema} locale={idID}><AntApp><BrowserRouter>
             <AuthProvider>
               <AppBaru />
+              <MultilineText />
             </AuthProvider>
-      </BrowserRouter>
+      </BrowserRouter></AntApp></ConfigProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

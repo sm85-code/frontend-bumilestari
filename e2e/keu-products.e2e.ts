@@ -53,6 +53,7 @@ test("draft tidak tersedia untuk input manual atau alokasi vendor", async ({ pag
   await page.goto("/order");
   await page.getByRole("button", { name: "Input pesanan manual" }).click();
   await expect(page.getByLabel("Produk", { exact: true }).locator('option[value="draft"]')).toHaveCount(0);
+  if (await page.getByRole("button", { name: "Menu", exact: true }).isVisible()) await page.getByRole("button", { name: "Menu", exact: true }).click();
   await page.getByRole("link", { name: "Produksi", exact: true }).click();
   await expect(page.getByLabel("Item pesanan").locator('option[value="i"]')).toHaveCount(0);
 });

@@ -63,8 +63,8 @@ export function TautanBulat({ ke, terang }: { ke: string; terang?: boolean }) {
       to={ke}
       aria-label="Buka"
       style={{
-        width: 36,
-        height: 36,
+        width: 44,
+        height: 44,
         borderRadius: 999,
         display: "inline-flex",
         alignItems: "center",
@@ -284,9 +284,9 @@ export function ErrorBox({ error }: { error: unknown }) {
 
 export function Memuat({ teks = "Memuat…" }: { teks?: string }) {
   return (
-    <Flex vertical align="center" gap="small" style={{ padding: 48 }}>
+    <Flex role="status" aria-label={teks} vertical align="center" gap="small" style={{ padding: 48 }}>
       <Spin />
-      <Typography.Text type="secondary">{teks}</Typography.Text>
+      <span className="sr-only">{teks}</span>
     </Flex>
   );
 }

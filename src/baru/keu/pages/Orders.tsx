@@ -54,7 +54,7 @@ function CancelOrder({ order }: { order: Order }) {
     {open ? <form aria-label={`Pembatalan ${order.nomor}`} onSubmit={event => void cancel(event)} className="grid gap-2 rounded border border-amber-200 bg-amber-50 p-3">
       <p className="text-sm">Pesanan ini akan disembunyikan dari pengerjaan dan tidak dihitung sebagai omset. Riwayat tetap tersedia di tab Dibatalkan. Alokasi/settlement yang sudah tercatat harus dikoreksi terlebih dahulu.</p>
       <Field label={`Alasan pembatalan ${order.nomor}`}><input name="alasan" required minLength={3} maxLength={2000} className={inputClass} autoFocus /></Field>
-      <div className="flex flex-wrap gap-2"><Button type="submit" disabled={action.isPending}>{action.isPending ? "Membatalkan…" : "Konfirmasi pembatalan"}</Button><Button disabled={action.isPending} onClick={() => setOpen(false)}>Tutup</Button></div>
+      <div className="flex flex-wrap gap-2"><Button type="submit" disabled={action.isPending}>{action.isPending ? "Membatalkan…" : "Konfirmasi pembatalan"}</Button><Button variant="outline" disabled={action.isPending} onClick={() => setOpen(false)}>Tutup</Button></div>
       <ErrorMessage error={localError ?? action.error} />
     </form> : <Button aria-label={`Abaikan / Batalkan ${order.nomor}`} onClick={() => setOpen(true)}>Abaikan / Batalkan Pesanan</Button>}
   </div>;
