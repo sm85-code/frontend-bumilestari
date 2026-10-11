@@ -22,5 +22,5 @@ export default function Production() {
 function Cancel({ id }: { id: string }) {
   const action = useKeuAction();
   const [open, setOpen] = useState(false);
-  return <>{open ? <form onSubmit={event => { event.preventDefault(); const reason = new FormData(event.currentTarget).get("alasan"); action.mutate({ path: `/alokasi-vendor/${id}/batal`, body: { alasan: reason } }); }}><input aria-label="Alasan pembatalan alokasi" name="alasan" required minLength={3} maxLength={2000} className={inputClass} /><Button type="submit" disabled={action.isPending}>Konfirmasi batal</Button><ErrorMessage error={action.error} /></form> : <Button onClick={() => setOpen(true)}>Batalkan alokasi</Button>}</>;
+  return <>{open ? <form onSubmit={event => { event.preventDefault(); const reason = new FormData(event.currentTarget).get("alasan"); action.mutate({ path: `/alokasi-vendor/${id}/batal`, body: { alasan: reason } }); }}><input aria-label="Alasan pembatalan alokasi" name="alasan" required minLength={3} maxLength={2000} className={inputClass} /><Button variant="danger" type="submit" disabled={action.isPending}>Konfirmasi batal</Button><ErrorMessage error={action.error} /></form> : <Button onClick={() => setOpen(true)}>Batalkan alokasi</Button>}</>;
 }

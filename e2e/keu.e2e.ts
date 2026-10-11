@@ -8,6 +8,7 @@ test("kas presisi dan semua modul keu tersedia", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Rp 9.007.199.254.740.993,01")).toBeVisible();
   for (const [link, title] of [["Import", "Import"], ["Sinkronisasi", "Sinkronisasi"], ["Produksi", "Produksi"], ["Keuangan", "Keuangan"]]) {
+    if (await page.getByRole("button", { name: "Menu", exact: true }).isVisible()) await page.getByRole("button", { name: "Menu", exact: true }).click();
     await page.getByRole("link", { name: link, exact: true }).click();
     await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
   }
